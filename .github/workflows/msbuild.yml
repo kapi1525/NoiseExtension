@@ -28,5 +28,5 @@ jobs:
     
     - uses: actions/upload-artifact@v2
       with:
-        name: build-artifact
+        name: Noise
         path: ./MFX/
