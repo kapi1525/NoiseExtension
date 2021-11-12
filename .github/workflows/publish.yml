@@ -1,9 +1,9 @@
-name: Build
+name: Build and Publish
 
-on: push
-  #release:
-  #  types:
-  #    - published
+on:
+  release:
+    types:
+      - published
 
 jobs:
   Build:
@@ -34,13 +34,8 @@ jobs:
         files: ./MFX/
         dest: Noise.zip
     
-    - uses: actions/upload-artifact@v2
+    - name: Upload assets to GitHub
+      uses: AButler/upload-release-assets@v2.0
       with:
-        name: build-artifact
-        path: ./Noise.zip
-    
-    #- name: Upload assets to GitHub
-    #  uses: AButler/upload-release-assets@v2.0
-    #  with:
-    #    files: 'build/libs/*;LICENSE'
-    #    repo-token: ${{ secrets.GITHUB_TOKEN }}
+        files: 'Noise.zip'
+        repo-token: ${{ secrets.GITHUB_TOKEN }}
