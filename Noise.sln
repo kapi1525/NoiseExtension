@@ -7,12 +7,9 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Noise.Windows", "Noise\Nois
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Noise.Shared", "Noise\Noise.Shared.vcxitems", "{8002A7CE-24A0-4994-BDA4-2B208FA7D7C5}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Noise.Android", "Noise\Noise.Android.vcxproj", "{1BA4DAF2-407F-457C-917B-EE67D3EE7FB5}"
-EndProject
 Global
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
 		Noise\Noise.Shared.vcxitems*{0fc68544-b3e5-4632-9bba-7a84eadfc38e}*SharedItemsImports = 4
-		Noise\Noise.Shared.vcxitems*{1ba4daf2-407f-457c-917b-ee67d3ee7fb5}*SharedItemsImports = 4
 		Noise\Noise.Shared.vcxitems*{8002a7ce-24a0-4994-bda4-2b208fa7d7c5}*SharedItemsImports = 9
 	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -90,54 +87,6 @@ Global
 		{0FC68544-B3E5-4632-9BBA-7A84EADFC38E}.Runtime|x64.Build.0 = Runtime|Win32
 		{0FC68544-B3E5-4632-9BBA-7A84EADFC38E}.Runtime|x86.ActiveCfg = Runtime|Win32
 		{0FC68544-B3E5-4632-9BBA-7A84EADFC38E}.Runtime|x86.Build.0 = Runtime|Win32
-		{1BA4DAF2-407F-457C-917B-EE67D3EE7FB5}.Debug Unicode|ARM.ActiveCfg = Debug|ARM
-		{1BA4DAF2-407F-457C-917B-EE67D3EE7FB5}.Debug Unicode|ARM.Build.0 = Debug|ARM
-		{1BA4DAF2-407F-457C-917B-EE67D3EE7FB5}.Debug Unicode|ARM64.ActiveCfg = Debug|ARM64
-		{1BA4DAF2-407F-457C-917B-EE67D3EE7FB5}.Debug Unicode|ARM64.Build.0 = Debug|ARM64
-		{1BA4DAF2-407F-457C-917B-EE67D3EE7FB5}.Debug Unicode|x64.ActiveCfg = Debug|x64
-		{1BA4DAF2-407F-457C-917B-EE67D3EE7FB5}.Debug Unicode|x64.Build.0 = Debug|x64
-		{1BA4DAF2-407F-457C-917B-EE67D3EE7FB5}.Debug Unicode|x86.ActiveCfg = Debug|x86
-		{1BA4DAF2-407F-457C-917B-EE67D3EE7FB5}.Debug Unicode|x86.Build.0 = Debug|x86
-		{1BA4DAF2-407F-457C-917B-EE67D3EE7FB5}.Debug|ARM.ActiveCfg = Debug|ARM
-		{1BA4DAF2-407F-457C-917B-EE67D3EE7FB5}.Debug|ARM.Build.0 = Debug|ARM
-		{1BA4DAF2-407F-457C-917B-EE67D3EE7FB5}.Debug|ARM64.ActiveCfg = Debug|ARM64
-		{1BA4DAF2-407F-457C-917B-EE67D3EE7FB5}.Debug|ARM64.Build.0 = Debug|ARM64
-		{1BA4DAF2-407F-457C-917B-EE67D3EE7FB5}.Debug|x64.ActiveCfg = Debug|x64
-		{1BA4DAF2-407F-457C-917B-EE67D3EE7FB5}.Debug|x64.Build.0 = Debug|x64
-		{1BA4DAF2-407F-457C-917B-EE67D3EE7FB5}.Debug|x86.ActiveCfg = Debug|x86
-		{1BA4DAF2-407F-457C-917B-EE67D3EE7FB5}.Debug|x86.Build.0 = Debug|x86
-		{1BA4DAF2-407F-457C-917B-EE67D3EE7FB5}.Edittime Unicode|ARM.ActiveCfg = Runtime|ARM
-		{1BA4DAF2-407F-457C-917B-EE67D3EE7FB5}.Edittime Unicode|ARM.Build.0 = Runtime|ARM
-		{1BA4DAF2-407F-457C-917B-EE67D3EE7FB5}.Edittime Unicode|ARM64.ActiveCfg = Runtime|ARM64
-		{1BA4DAF2-407F-457C-917B-EE67D3EE7FB5}.Edittime Unicode|ARM64.Build.0 = Runtime|ARM64
-		{1BA4DAF2-407F-457C-917B-EE67D3EE7FB5}.Edittime Unicode|x64.ActiveCfg = Runtime|x64
-		{1BA4DAF2-407F-457C-917B-EE67D3EE7FB5}.Edittime Unicode|x64.Build.0 = Runtime|x64
-		{1BA4DAF2-407F-457C-917B-EE67D3EE7FB5}.Edittime Unicode|x86.ActiveCfg = Runtime|x86
-		{1BA4DAF2-407F-457C-917B-EE67D3EE7FB5}.Edittime Unicode|x86.Build.0 = Runtime|x86
-		{1BA4DAF2-407F-457C-917B-EE67D3EE7FB5}.Edittime|ARM.ActiveCfg = Runtime|ARM
-		{1BA4DAF2-407F-457C-917B-EE67D3EE7FB5}.Edittime|ARM.Build.0 = Runtime|ARM
-		{1BA4DAF2-407F-457C-917B-EE67D3EE7FB5}.Edittime|ARM64.ActiveCfg = Runtime|ARM64
-		{1BA4DAF2-407F-457C-917B-EE67D3EE7FB5}.Edittime|ARM64.Build.0 = Runtime|ARM64
-		{1BA4DAF2-407F-457C-917B-EE67D3EE7FB5}.Edittime|x64.ActiveCfg = Runtime|x64
-		{1BA4DAF2-407F-457C-917B-EE67D3EE7FB5}.Edittime|x64.Build.0 = Runtime|x64
-		{1BA4DAF2-407F-457C-917B-EE67D3EE7FB5}.Edittime|x86.ActiveCfg = Runtime|x86
-		{1BA4DAF2-407F-457C-917B-EE67D3EE7FB5}.Edittime|x86.Build.0 = Runtime|x86
-		{1BA4DAF2-407F-457C-917B-EE67D3EE7FB5}.Runtime Unicode|ARM.ActiveCfg = Runtime|ARM
-		{1BA4DAF2-407F-457C-917B-EE67D3EE7FB5}.Runtime Unicode|ARM.Build.0 = Runtime|ARM
-		{1BA4DAF2-407F-457C-917B-EE67D3EE7FB5}.Runtime Unicode|ARM64.ActiveCfg = Runtime|ARM64
-		{1BA4DAF2-407F-457C-917B-EE67D3EE7FB5}.Runtime Unicode|ARM64.Build.0 = Runtime|ARM64
-		{1BA4DAF2-407F-457C-917B-EE67D3EE7FB5}.Runtime Unicode|x64.ActiveCfg = Runtime|x64
-		{1BA4DAF2-407F-457C-917B-EE67D3EE7FB5}.Runtime Unicode|x64.Build.0 = Runtime|x64
-		{1BA4DAF2-407F-457C-917B-EE67D3EE7FB5}.Runtime Unicode|x86.ActiveCfg = Runtime|x86
-		{1BA4DAF2-407F-457C-917B-EE67D3EE7FB5}.Runtime Unicode|x86.Build.0 = Runtime|x86
-		{1BA4DAF2-407F-457C-917B-EE67D3EE7FB5}.Runtime|ARM.ActiveCfg = Runtime|ARM
-		{1BA4DAF2-407F-457C-917B-EE67D3EE7FB5}.Runtime|ARM.Build.0 = Runtime|ARM
-		{1BA4DAF2-407F-457C-917B-EE67D3EE7FB5}.Runtime|ARM64.ActiveCfg = Runtime|ARM64
-		{1BA4DAF2-407F-457C-917B-EE67D3EE7FB5}.Runtime|ARM64.Build.0 = Runtime|ARM64
-		{1BA4DAF2-407F-457C-917B-EE67D3EE7FB5}.Runtime|x64.ActiveCfg = Runtime|x64
-		{1BA4DAF2-407F-457C-917B-EE67D3EE7FB5}.Runtime|x64.Build.0 = Runtime|x64
-		{1BA4DAF2-407F-457C-917B-EE67D3EE7FB5}.Runtime|x86.ActiveCfg = Runtime|x86
-		{1BA4DAF2-407F-457C-917B-EE67D3EE7FB5}.Runtime|x86.Build.0 = Runtime|x86
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
