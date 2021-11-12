@@ -4,7 +4,7 @@ on: [push]
 
 jobs:
   Edittime-Unicode:
-    runs-on: windows-latest
+    runs-on: windows-2022
 
     steps:
     - uses: actions/checkout@v2
@@ -24,7 +24,7 @@ jobs:
       run: msbuild -m -p:Configuration="Edittime Unicode" ./Noise./Noise.Windows.vcxproj
   
   Runtime-Unicode:
-    runs-on: windows-latest
+    runs-on: windows-2022
 
     steps:
     - uses: actions/checkout@v2
