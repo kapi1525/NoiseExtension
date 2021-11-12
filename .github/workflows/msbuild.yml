@@ -20,7 +20,7 @@ jobs:
 
     - name: Build
       working-directory: ${{env.GITHUB_WORKSPACE}}
-      run: msbuild -m -p:Configuration="Edittime Unicode" Noise.sln
+      run: msbuild -m -p:Configuration="Edittime Unicode" ./Noise./Noise.Windows.vcxproj
   
   Runtime-Unicode:
     runs-on: windows-latest
@@ -39,4 +39,4 @@ jobs:
 
     - name: Build
       working-directory: ${{env.GITHUB_WORKSPACE}}
-      run: msbuild -m -p:Configuration="Runtime Unicode" Noise.sln
+      run: msbuild -m -p:Configuration="Runtime Unicode" ./Noise./Noise.Windows.vcxproj
