@@ -2,4 +2,7 @@ MFX
 .vs
 DarkEdif Template
 Temp
-DarkExt.PostMinify.json
+
+*.vcxproj.user
+*.PostMinify.json
+*.log
