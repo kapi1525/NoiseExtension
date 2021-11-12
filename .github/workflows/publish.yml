@@ -1,0 +1,46 @@
+name: Build
+
+on: push
+  #release:
+  #  types:
+  #    - published
+
+jobs:
+  Build:
+    runs-on: windows-2022
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Add msbuild to PATH
+      uses: microsoft/setup-msbuild@v1.1
+      with:
+        vs-prerelease: true
+
+    #- name: Restore NuGet packages
+    #  working-directory: ${{env.GITHUB_WORKSPACE}}
+    #  run: nuget restore .
+
+    - name: Build Edittime Unicode
+      working-directory: ${{env.GITHUB_WORKSPACE}}
+      run: msbuild -m -p:Configuration="Edittime Unicode" ./Noise.sln
+
+    - name: Build Runtime Unicode
+      working-directory: ${{env.GITHUB_WORKSPACE}}
+      run: msbuild -m -p:Configuration="Runtime Unicode" ./Noise.sln
+    
+    - uses: papeloto/action-zip@v1
+      with:
+        files: ./MFX/
+        dest: Noise.zip
+    
+    - uses: actions/upload-artifact@v2
+      with:
+        name: build-artifact
+        path: ./Noise.zip
+    
+    #- name: Upload assets to GitHub
+    #  uses: AButler/upload-release-assets@v2.0
+    #  with:
+    #    files: 'build/libs/*;LICENSE'
+    #    repo-token: ${{ secrets.GITHUB_TOKEN }}
