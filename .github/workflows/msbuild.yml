@@ -1,6 +1,6 @@
 name: Build
 
-on: [push]
+on: [push, pull_request]
 
 jobs:
   Build:
@@ -14,9 +14,9 @@ jobs:
       with:
         vs-prerelease: true
 
-    - name: Restore NuGet packages
-      working-directory: ${{env.GITHUB_WORKSPACE}}
-      run: nuget restore .
+    #- name: Restore NuGet packages
+    #  working-directory: ${{env.GITHUB_WORKSPACE}}
+    #  run: nuget restore .
 
     - name: Build Edittime Unicode
       working-directory: ${{env.GITHUB_WORKSPACE}}
