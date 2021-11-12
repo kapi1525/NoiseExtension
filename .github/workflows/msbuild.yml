@@ -20,12 +20,29 @@ jobs:
 
     - name: Build Edittime Unicode
       working-directory: ${{env.GITHUB_WORKSPACE}}
-      run: msbuild -m -p:Configuration="Edittime Unicode" ./Noise.sln
+      run: msbuild -t:"Noise_Windows" -p:Configuration="Edittime Unicode" -p:Platform="Win32" ./Noise.sln
 
     - name: Build Runtime Unicode
       working-directory: ${{env.GITHUB_WORKSPACE}}
-      run: msbuild -m -p:Configuration="Runtime Unicode" ./Noise.sln
+      run: msbuild -t:"Noise_Windows" -p:Configuration="Runtime Unicode" -p:Platform="Win32" ./Noise.sln
+
+    - name: Build Android ARM
+      working-directory: ${{env.GITHUB_WORKSPACE}}
+      run: msbuild -t:"Noise_Android" -p:Configuration="Runtime" -p:Platform="ARM" ./Noise.sln
     
+    - name: Build Android ARM64
+      working-directory: ${{env.GITHUB_WORKSPACE}}
+      run: msbuild -t:"Noise_Android" -p:Configuration="Runtime" -p:Platform="ARM64" ./Noise.sln
+
+    - name: Build Android x86
+      working-directory: ${{env.GITHUB_WORKSPACE}}
+      run: msbuild -t:"Noise_Android" -p:Configuration="Runtime" -p:Platform="x86" ./Noise.sln
+
+    - name: Build Android x64
+      working-directory: ${{env.GITHUB_WORKSPACE}}
+      run: msbuild -t:"Noise_Android" -p:Configuration="Runtime" -p:Platform="x64" ./Noise.sln
+
+
     - uses: actions/upload-artifact@v2
       with:
         name: Noise

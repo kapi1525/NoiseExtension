@@ -11,6 +11,10 @@
 	#define CurLang CurrentLanguage()
 #endif
 
+// PI is only defined in windows SDK
+#ifndef PI
+	#define PI 3.141592741F
+#endif
 
 #include "Edif.h"
 #include "json.h"
