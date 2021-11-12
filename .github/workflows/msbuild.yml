@@ -20,11 +20,11 @@ jobs:
 
     - name: Build Edittime Unicode
       working-directory: ${{env.GITHUB_WORKSPACE}}
-      run: msbuild -t:"Noise_Windows" -p:Configuration="Edittime Unicode" -p:Platform="Win32" ./Noise.sln
+      run: msbuild -t:"Noise_Windows" -p:Configuration="Edittime Unicode" -p:Platform="x86" ./Noise.sln
 
     - name: Build Runtime Unicode
       working-directory: ${{env.GITHUB_WORKSPACE}}
-      run: msbuild -t:"Noise_Windows" -p:Configuration="Runtime Unicode" -p:Platform="Win32" ./Noise.sln
+      run: msbuild -t:"Noise_Windows" -p:Configuration="Runtime Unicode" -p:Platform="x86" ./Noise.sln
 
     - name: Build Android ARM
       working-directory: ${{env.GITHUB_WORKSPACE}}
