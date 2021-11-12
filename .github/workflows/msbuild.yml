@@ -3,7 +3,7 @@ name: Build
 on: [push]
 
 jobs:
-  Edittime-Unicode:
+  Build:
     runs-on: windows-2022
 
     steps:
@@ -18,25 +18,15 @@ jobs:
       working-directory: ${{env.GITHUB_WORKSPACE}}
       run: nuget restore .
 
-    - name: Build
+    - name: Build Edittime Unicode
       working-directory: ${{env.GITHUB_WORKSPACE}}
-      run: msbuild -m -p:Configuration="Edittime Unicode" ./Noise./Noise.Windows.vcxproj
-  
-  Runtime-Unicode:
-    runs-on: windows-2022
+      run: msbuild -m -p:Configuration="Edittime Unicode" ./Noise.sln
 
-    steps:
-    - uses: actions/checkout@v2
+    - name: Build Runtime Unicode
+      working-directory: ${{env.GITHUB_WORKSPACE}}
+      run: msbuild -m -p:Configuration="Runtime Unicode" ./Noise.sln
     
-    - name: Add msbuild to PATH
-      uses: microsoft/setup-msbuild@v1.1
+    - uses: actions/upload-artifact@v2
       with:
-        vs-prerelease: true
-
-    - name: Restore NuGet packages
-      working-directory: ${{env.GITHUB_WORKSPACE}}
-      run: nuget restore .
-
-    - name: Build
-      working-directory: ${{env.GITHUB_WORKSPACE}}
-      run: msbuild -m -p:Configuration="Runtime Unicode" ./Noise./Noise.Windows.vcxproj
+        name: build-artifact
+        path: ./MFX/
