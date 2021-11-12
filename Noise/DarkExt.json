@@ -1,0 +1,294 @@
+{
+	"Identifier": "KGNO",
+	"Dependencies": "",
+	"UK English": {
+		"About": {
+			"Name": "Noise",
+			"Author": "Kapi",
+			"Copyright": "Copyright \u00A9 2021 by Kapi",
+			"Comment": "Generates Noise using many difrent alogrithms",
+			"Help": "Help/Todo.chm",
+			"URL": "https://www.bedziekiedy�.com/"
+		},
+
+		"ActionMenu": [
+			[ 0, "Set Seed" ],
+			"---",
+			[ 1, "Set Noise Type" ],
+			[ 2, "Set Noise Frequency" ],
+			"---",
+			[ 3, "Set Fractal Type" ],
+			[ 4, "Set Fractal Octaves" ],
+			[ 5, "Set Fractal Lacunarity" ],
+			[ 6, "Set Fractal Weighted Strength" ],
+			[ 7, "Set Fractal PingPong Strength" ],
+			"---",
+			[ 8, "Set Cellular Distance Function" ],
+			[ 9, "Set Cellular Return Type" ],
+			[ 10, "Set Cellular Jitter" ],
+			"---"
+		],
+		"ConditionMenu": [
+		],
+		"ExpressionMenu": [
+			[ 0, "Get current seed" ],
+			[ 1, "Convert string to seed" ],
+			"---",
+			[ 2, "Get Noise 3D" ],
+			[ 3, "Get Noise 2D" ],
+			[ 4, "Get Noise 1D" ],
+			[ 5, "Get looping Noise 1D" ],
+			"---",
+			[
+				"Noise Types",
+				[ 6, "OpenSimplex2" ],
+				[ 7, "OpenSimplex2S" ],
+				[ 8, "Cellular" ],
+				[ 9, "Perlin" ],
+				[ 10, "ValueCubic" ],
+				[ 11, "Value" ]
+			],
+			[
+				"Fractal Types",
+				[ 12, "None" ],
+				[ 13, "FBm" ],
+				[ 14, "Rigid" ],
+				[ 15, "PingPong" ]
+			],
+			[
+				"Cellular Distance Functions",
+				[ 16, "Euclidean" ],
+				[ 17, "EuclideanSq" ],
+				[ 18, "Manhattan" ],
+				[ 19, "Hybrid" ]
+			],
+			[
+				"Cellular Return Types",
+				[ 20, "CellValue" ],
+				[ 21, "Distance" ],
+				[ 22, "Distance2" ],
+				[ 23, "Distance2Add" ],
+				[ 24, "Distance2Sub" ],
+				[ 25, "Distance2Mul" ],
+				[ 26, "Distance2Div" ]
+			],
+			"---"
+		],
+
+		"Actions": [
+			{
+				"Title": "Set Seed to %0",
+				"Parameters": [
+					[ "Integer", "Seed" ]
+				]
+			},
+
+			{
+				"Title": "Set Noise Type to %0",
+				"Parameters": [
+					[ "Integer", "Type" ]
+				]
+			},
+			{
+				"Title": "Set Noise Frequency to %0",
+				"Parameters": [
+					[ "Float", "Frequency" ]
+				]
+			},
+
+			{
+				"Title": "Set Fractal Type to %0",
+				"Parameters": [
+					[ "Integer", "Type" ]
+				]
+			},
+			{
+				"Title": "Set Fractal Octaves to %0",
+				"Parameters": [
+					[ "Integer", "Octaves" ]
+				]
+			},
+			{
+				"Title": "Set Fractal Lacunarity to %0",
+				"Parameters": [
+					[ "float", "Lacunarity" ]
+				]
+			},
+			{
+				"Title": "Set Fractal Weighted Strength to %0",
+				"Parameters": [
+					[ "float", "Weighted Strength" ]
+				]
+			},
+			{
+				"Title": "Set Fractal PingPong Strength to %0",
+				"Parameters": [
+					[ "float", "PingPong Strength" ]
+				]
+			},
+
+			{
+				"Title": "Set Cellular Distance Function to %0",
+				"Parameters": [
+					[ "Integer", "Distance Function" ]
+				]
+			},
+			{
+				"Title": "Set Cellular Return Type to %0",
+				"Parameters": [
+					[ "Integer", "Return Type" ]
+				]
+			},
+			{
+				"Title": "Set Cellular Jitter to %0",
+				"Parameters": [
+					[ "float", "Jitter" ]
+				]
+			}
+		],
+		"Conditions": [
+		],
+		"Expressions": [
+			{
+				"Title": "Seed(",
+				"Returns": "Integer"
+			},
+			{
+				"Title": "ToSeed(",
+				"Returns": "Integer",
+				"Parameters": [
+					[ "Text", "String" ]
+				]
+			},
+
+			{
+				"Title": "Noise3D(",
+				"Returns": "Float",
+				"Parameters": [
+					[ "Float", "X" ],
+					[ "Float", "Y" ],
+					[ "Float", "Z" ]
+				]
+			},
+			{
+				"Title": "Noise2D(",
+				"Returns": "Float",
+				"Parameters": [
+					[ "Float", "X" ],
+					[ "Float", "Y" ]
+				]
+			},
+			{
+				"Title": "Noise1D(",
+				"Returns": "Float",
+				"Parameters": [
+					[ "Float", "X" ]
+				]
+			},
+			{
+				"Title": "TODO(",
+				"Returns": "Float",
+				"Parameters": [
+					[ "Float", "X" ]
+				]
+			},
+			
+			{
+				"Title": "Simplex2(",
+				"Returns": "Integer"
+			},
+			{
+				"Title": "Simplex2S(",
+				"Returns": "Integer"
+			},
+			{
+				"Title": "Cellular(",
+				"Returns": "Integer"
+			},
+			{
+				"Title": "Perlin(",
+				"Returns": "Integer"
+			},
+			{
+				"Title": "ValueCubic(",
+				"Returns": "Integer"
+			},
+			{
+				"Title": "Value(",
+				"Returns": "Integer"
+			},
+			
+			{
+				"Title": "None(",
+				"Returns": "Integer"
+			},
+			{
+				"Title": "FBm(",
+				"Returns": "Integer"
+			},
+			{
+				"Title": "Rigid(",
+				"Returns": "Integer"
+			},
+			{
+				"Title": "PingPong(",
+				"Returns": "Integer"
+			},
+
+			{
+				"Title": "Euclidean(",
+				"Returns": "Integer"
+			},
+			{
+				"Title": "EuclideanSq(",
+				"Returns": "Integer"
+			},
+			{
+				"Title": "Manhattan(",
+				"Returns": "Integer"
+			},
+			{
+				"Title": "Hybrid(",
+				"Returns": "Integer"
+			},
+			
+			{
+				"Title": "CellValue(",
+				"Returns": "Integer"
+			},
+			{
+				"Title": "Distance(",
+				"Returns": "Integer"
+			},
+			{
+				"Title": "Distance2(",
+				"Returns": "Integer"
+			},
+			{
+				"Title": "Distance2Add(",
+				"Returns": "Integer"
+			},
+			{
+				"Title": "Distance2Sub(",
+				"Returns": "Integer"
+			},
+			{
+				"Title": "Distance2Mul(",
+				"Returns": "Integer"
+			},
+			{
+				"Title": "Distance2Div(",
+				"Returns": "Integer"
+			}
+		],
+
+		"Properties": [
+			{
+				"Title": "Version",
+				"Info": "Version",
+				"Type": "Text",
+				"DefaultState": "Noise v0.1.0 (Extension v1, SDK v12)"
+			}
+		]
+	}
+}
