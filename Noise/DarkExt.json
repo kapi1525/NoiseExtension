@@ -289,7 +289,7 @@
 				"Title": "Version",
 				"Info": "Version",
 				"Type": "Text",
-				"DefaultState": "Noise v0.2.0 (Extension v2, SDK v12)"
+				"DefaultState": "Noise v0.3.0 (Extension v3, SDK v12)"
 			}
 		]
 	}
