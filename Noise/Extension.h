@@ -19,7 +19,7 @@ public:
 	Edif::Runtime Runtime;
 
 	static const int MinimumBuild = 254;
-	static const int Version = 1;
+	static const int Version = 2;
 
 	// If you change OEFLAGS, make sure you modify RUNDATA so the data is available, or you'll get crashes!
 	// For example, OEFLAGS::VALUES makes use of the AltVals rv struct.
@@ -73,7 +73,7 @@ public:
 		float GetNoise3D(float x, float y, float z);
 		float GetNoise2D(float x, float y);
 		float GetNoise1D(float x);
-		float GetLoopingNoise1D(float x);
+		float GetLoopingNoise1D(float x, float xoffset, float xsize);
 
 		// Noise Types
 		int OpenSimplex2();

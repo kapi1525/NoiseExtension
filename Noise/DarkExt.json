@@ -186,10 +186,12 @@
 				]
 			},
 			{
-				"Title": "TODO(",
+				"Title": "LoopingNoise1D(",
 				"Returns": "Float",
 				"Parameters": [
-					[ "Float", "X" ]
+					[ "Float", "X" ],
+					[ "Float", "X Offset" ],
+					[ "Float", "X Size" ]
 				]
 			},
 			
@@ -287,7 +289,7 @@
 				"Title": "Version",
 				"Info": "Version",
 				"Type": "Text",
-				"DefaultState": "Noise v0.1.0 (Extension v1, SDK v12)"
+				"DefaultState": "Noise v0.2.0 (Extension v2, SDK v12)"
 			}
 		]
 	}

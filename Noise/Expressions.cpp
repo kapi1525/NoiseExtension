@@ -5,7 +5,23 @@ int Extension::GetSeed() {
 }
 
 int Extension::StringToSeed(const TCHAR* String) {
-	return 0;
+	std::string Text = TStringToANSI(std::tstring(String));
+
+	unsigned int Seed = 0;
+
+	for (size_t i = 0; i < Text.length(); i++) {
+		if (Text.at(i) >= '0' && Text.at(i) <= '9') {
+			Seed = Seed * 10;
+			Seed = Seed + (Text.at(i) - 48);
+		}
+		else {
+			Seed = Seed * 100;
+			srand((int)Text.at(i) + i);
+			Seed = Seed + rand() % 99;
+		}
+	}
+
+	return Seed;
 }
 
 
@@ -21,8 +37,14 @@ float Extension::GetNoise1D(float x) {
 	return Noise.GetNoise(x, 0.f);
 }
 
-float Extension::GetLoopingNoise1D(float x) {
-	return Noise.GetNoise(x, 0.f);
+float Extension::GetLoopingNoise1D(float x, float xoffset, float xsize) {
+	float XPos = x - xoffset;
+	float Radius = xsize / ((float)PI * 2.0f);
+	float AngleStep = 360.f / xsize;
+	float Angle = XPos * AngleStep;
+	Angle = Angle * (float)PI / 180.f;
+
+	return Noise.GetNoise((Radius * cos(Angle)), (Radius * sin(Angle)));
 }
 
 
