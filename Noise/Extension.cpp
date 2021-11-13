@@ -16,11 +16,7 @@ Extension::Extension(RuntimeFunctions & runFuncs, EDITDATA * edPtr, void * objCE
 	runFuncs(runFuncs), objCExtPtr(objCExtPtr), Runtime(runFuncs, this->objCExtPtr), FusionDebugger(this)
 #endif
 {
-	/*
-		Link all your action/condition/expression functions to their IDs to match the
-		IDs in the JSON here
-	*/
-	
+	// Actions
 	LinkAction(0, SetSeed);
 
 	LinkAction(1, SetNoiseType);
@@ -36,6 +32,7 @@ Extension::Extension(RuntimeFunctions & runFuncs, EDITDATA * edPtr, void * objCE
 	LinkAction(9, SetCellularReturnType);
 	LinkAction(10, SetCellularJitter);
 
+	// Conditions
 	//LinkCondition(0, AreTwoNumbersEqual);
 
 	LinkExpression(0, GetSeed);
@@ -44,8 +41,9 @@ Extension::Extension(RuntimeFunctions & runFuncs, EDITDATA * edPtr, void * objCE
 	LinkExpression(2, GetNoise3D);
 	LinkExpression(3, GetNoise2D);
 	LinkExpression(4, GetNoise1D);
-	//LinkExpression(5, GetLoopingNoise1D);
+	LinkExpression(5, GetLoopingNoise1D);
 
+	// Expressions
 	LinkExpression(6, OpenSimplex2);
 	LinkExpression(7, OpenSimplex2S);
 	LinkExpression(8, Cellular);
