@@ -35,6 +35,7 @@ Extension::Extension(RuntimeFunctions & runFuncs, EDITDATA * edPtr, void * objCE
 	// Conditions
 	//LinkCondition(0, AreTwoNumbersEqual);
 
+	// Expressions
 	LinkExpression(0, GetSeed);
 	LinkExpression(1, StringToSeed);
 
@@ -43,7 +44,6 @@ Extension::Extension(RuntimeFunctions & runFuncs, EDITDATA * edPtr, void * objCE
 	LinkExpression(4, GetNoise1D);
 	LinkExpression(5, GetLoopingNoise1D);
 
-	// Expressions
 	LinkExpression(6, OpenSimplex2);
 	LinkExpression(7, OpenSimplex2S);
 	LinkExpression(8, Cellular);
