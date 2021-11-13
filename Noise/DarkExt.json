@@ -72,6 +72,11 @@
 				[ 25, "Distance2Mul" ],
 				[ 26, "Distance2Div" ]
 			],
+			"---",
+			[ 27, "Current Noise Type" ],
+			[ 28, "Current Fractal Type" ],
+			[ 29, "Current Cellular Distance Function" ],
+			[ 30, "Current Cellular Return Type" ],
 			"---"
 		],
 
@@ -194,7 +199,7 @@
 					[ "Float", "X Size" ]
 				]
 			},
-			
+
 			{
 				"Title": "Simplex2(",
 				"Returns": "Integer"
@@ -219,7 +224,7 @@
 				"Title": "Value(",
 				"Returns": "Integer"
 			},
-			
+
 			{
 				"Title": "None(",
 				"Returns": "Integer"
@@ -253,7 +258,7 @@
 				"Title": "Hybrid(",
 				"Returns": "Integer"
 			},
-			
+
 			{
 				"Title": "CellValue(",
 				"Returns": "Integer"
@@ -281,6 +286,23 @@
 			{
 				"Title": "Distance2Div(",
 				"Returns": "Integer"
+			},
+
+			{
+				"Title": "NoiseType(",
+				"Returns": "Integer"
+			},
+			{
+				"Title": "FractalType(",
+				"Returns": "Integer"
+			},
+			{
+				"Title": "CellularFunction(",
+				"Returns": "Integer"
+			},
+			{
+				"Title": "CellularReturnType(",
+				"Returns": "Integer"
 			}
 		],
 
@@ -289,7 +311,7 @@
 				"Title": "Version",
 				"Info": "Version",
 				"Type": "Text",
-				"DefaultState": "Noise v0.3.0 (Extension v3, SDK v12)"
+				"DefaultState": "Noise v0.4.0 (Extension v4, SDK v12)"
 			}
 		]
 	}

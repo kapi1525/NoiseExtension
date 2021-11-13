@@ -19,7 +19,7 @@ public:
 	Edif::Runtime Runtime;
 
 	static const int MinimumBuild = 254;
-	static const int Version = 3;
+	static const int Version = 4;
 
 	// If you change OEFLAGS, make sure you modify RUNDATA so the data is available, or you'll get crashes!
 	// For example, OEFLAGS::VALUES makes use of the AltVals rv struct.
@@ -46,6 +46,11 @@ public:
 
 	FastNoiseLite Noise;
 	int Seed = 1337;
+
+	int NoiseType = FastNoiseLite::NoiseType::NoiseType_OpenSimplex2;
+	int FractalType = FastNoiseLite::FractalType::FractalType_None;
+	int CellularFunction = FastNoiseLite::CellularDistanceFunction::CellularDistanceFunction_EuclideanSq;
+	int CellularReturnType = FastNoiseLite::CellularReturnType::CellularReturnType_Distance;
 
 
 	/// Actions
@@ -104,6 +109,12 @@ public:
 		int Distance2Sub();
 		int Distance2Mul();
 		int Distance2Div();
+
+		// Current selections
+		int CurrentNoiseType();
+		int CurrentFractalType();
+		int CurrentCellularFunction();
+		int CUrrentCellularReturnType();
 
 
 	/* These are called if there's no function linked to an ID */

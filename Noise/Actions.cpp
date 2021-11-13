@@ -8,6 +8,7 @@ void Extension::SetSeed(int Seed) {
 
 void Extension::SetNoiseType(int Type) {
 	Noise.SetNoiseType((FastNoiseLite::NoiseType)Type);
+	NoiseType = Type;
 }
 
 void Extension::SetNoiseFrequency(float Frequency) {
@@ -17,6 +18,7 @@ void Extension::SetNoiseFrequency(float Frequency) {
 
 void Extension::SetFractalType(int Type) {
 	Noise.SetFractalType((FastNoiseLite::FractalType)Type);
+	FractalType = Type;
 }
 
 void Extension::SetFractalOctaves(int Octaves) {
@@ -38,10 +40,12 @@ void Extension::SetFractalPingPong(float PingPong) {
 
 void Extension::SetCellularDistanceFunction(int Function) {
 	Noise.SetCellularDistanceFunction((FastNoiseLite::CellularDistanceFunction)Function);
+	CellularFunction = Function;
 }
 
 void Extension::SetCellularReturnType(int Return) {
 	Noise.SetCellularReturnType((FastNoiseLite::CellularReturnType)Return);
+	CellularReturnType = Return;
 }
 
 void Extension::SetCellularJitter(float Jitter) {

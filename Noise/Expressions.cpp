@@ -138,3 +138,21 @@ int Extension::Distance2Mul() {
 int Extension::Distance2Div() {
 	return FastNoiseLite::CellularReturnType_Distance2Div;
 }
+
+
+// Current selections
+int Extension::CurrentNoiseType() {
+	return NoiseType;
+}
+
+int Extension::CurrentFractalType() {
+	return FractalType;
+}
+
+int Extension::CurrentCellularFunction() {
+	return CellularFunction;
+}
+
+int Extension::CUrrentCellularReturnType() {
+	return CellularReturnType;
+}

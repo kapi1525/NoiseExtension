@@ -69,6 +69,11 @@ Extension::Extension(RuntimeFunctions & runFuncs, EDITDATA * edPtr, void * objCE
 	LinkExpression(25, Distance2Mul);
 	LinkExpression(26, Distance2Div);
 
+	LinkExpression(27, CurrentNoiseType);
+	LinkExpression(28, CurrentFractalType);
+	LinkExpression(29, CurrentCellularFunction);
+	LinkExpression(30, CUrrentCellularReturnType);
+
 	/*
 		This is where you'd do anything you'd do in CreateRunObject in the original SDK
 
