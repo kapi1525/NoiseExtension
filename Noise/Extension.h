@@ -43,6 +43,7 @@ public:
 	// As an example:
 	std::tstring exampleDebuggerTextItem;
 
+
 	FastNoiseLite Noise;
 	int Seed = 1337;
 

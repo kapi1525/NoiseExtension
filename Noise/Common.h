@@ -30,11 +30,6 @@ struct EDITDATA
 	// Header - required
 	extHeader		eHeader;
 
-	// Object's data
-
-//	short			swidth;
-//	short			sheight;
-
 	// Keep DarkEdif variables as last. Undefined behaviour otherwise.
 	int				DarkEdif_Prop_Size;
 	char			DarkEdif_Props[];
@@ -42,13 +37,9 @@ struct EDITDATA
 	// =====
 	// DarkEdif functions, use within Extension ctor.
 	// =====
-
-	// Returns property checked or unchecked.
-	bool IsPropChecked(int propID);
-	// Returns std::tstring property setting from property name.
-	std::tstring GetPropertyStr(const char * propName);
-	// Returns std::tstring property string from property ID.
-	std::tstring GetPropertyStr(int propID);
+	bool IsPropChecked(int propID);						// Returns property checked or unchecked.
+	std::tstring GetPropertyStr(const char * propName);	// Returns std::tstring property setting from property name.
+	std::tstring GetPropertyStr(int propID);			// Returns std::tstring property string from property ID.
 };
 
 class Extension;
@@ -58,19 +49,8 @@ struct RUNDATA
 	// Main header - required
 	HeaderObject rHo;
 
-	// Optional headers - depend on the OEFLAGS value, see documentation and examples for more info
-//	rCom			rc;				// Common structure for movements & animations
-//	rMvt			rm;				// Movements
-//	Sprite			rs;				// Sprite (displayable objects)
-//	AltVals			rv;				// Alterable values
-
 	// Required
 	Extension * pExtension;
-
-	/*
-		You shouldn't add any variables or anything here. Add them as members
-		of the Extension class (Extension.h) instead.
-	*/
 };
 
 #include "Extension.h"
