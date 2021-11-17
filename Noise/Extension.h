@@ -56,6 +56,16 @@ public:
 	/// Actions
 		void SetSeed(int Seed);
 
+		// Requests
+		void NoiseRequest3D(const TCHAR* name, int x, int y, int z, int xsize, int ysize, int zsize);
+		void NoiseRequest2D(const TCHAR* name, int x, int y, int xsize, int ysize);
+		void NoiseRequest1D(const TCHAR* name, int x, int xsize);
+		// TODO: void NoiseRequestLooping1D();
+
+		void CleanupRequest(const TCHAR* name);
+		void CleanupRequests();
+
+		// Sets
 		void SetNoiseType(int Type);
 		void SetNoiseFrequency(float Frequency);
 
@@ -70,7 +80,8 @@ public:
 		void SetCellularJitter(float Jitter);
 
 	/// Conditions
-		// None
+		// (not) None
+		bool IsRequestReady(const TCHAR* name);
 
 	/// Expressions
 		int GetSeed();
@@ -80,6 +91,12 @@ public:
 		float GetNoise2D(float x, float y);
 		float GetNoise1D(float x);
 		float GetLoopingNoise1D(float x, float xoffset, float xsize);
+
+		// Requests
+		float GetRequestNoise3D(const TCHAR* name, float x, float y, float z);
+		float GetRequestNoise2D(const TCHAR* name, float x, float y);
+		float GetRequestNoise1D(const TCHAR* name, float x);
+		// TODO: float GetRequestLoopingNoise1D(float x, float xoffset, float xsize);
 
 		// Noise Types
 		int OpenSimplex2();

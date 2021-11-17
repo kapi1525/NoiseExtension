@@ -6,6 +6,30 @@ void Extension::SetSeed(int Seed) {
 }
 
 
+void NoiseRequest3D(const TCHAR* name, int x, int y, int z, int xsize, int ysize, int zsize) {
+
+}
+
+void NoiseRequest2D(const TCHAR* name, int x, int y, int xsize, int ysize) {
+
+}
+
+void NoiseRequest1D(const TCHAR* name, int x, int xsize) {
+
+}
+
+// TODO: void NoiseRequestLooping1D() {}
+
+
+void CleanupRequest(const TCHAR* name) {
+
+}
+
+void CleanupRequests() {
+
+}
+
+
 void Extension::SetNoiseType(int Type) {
 	Noise.SetNoiseType((FastNoiseLite::NoiseType)Type);
 	NoiseType = Type;

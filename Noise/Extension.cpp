@@ -19,6 +19,14 @@ Extension::Extension(RuntimeFunctions & runFuncs, EDITDATA * edPtr, void * objCE
 	// Actions
 	LinkAction(0, SetSeed);
 
+	LinkAction(11, NoiseRequest3D);
+	LinkAction(12, NoiseRequest2D);
+	LinkAction(13, NoiseRequest1D);
+	// TODO: LinkAction(14, NoiseRequest3D);
+	
+	LinkAction(15, CleanupRequest);
+	LinkAction(16, CleanupRequests);
+
 	LinkAction(1, SetNoiseType);
 	LinkAction(2, SetNoiseFrequency);
 
@@ -33,7 +41,7 @@ Extension::Extension(RuntimeFunctions & runFuncs, EDITDATA * edPtr, void * objCE
 	LinkAction(10, SetCellularJitter);
 
 	// Conditions
-	//LinkCondition(0, AreTwoNumbersEqual);
+	LinkCondition(0, IsRequestReady);
 
 	// Expressions
 	LinkExpression(0, GetSeed);
@@ -43,6 +51,11 @@ Extension::Extension(RuntimeFunctions & runFuncs, EDITDATA * edPtr, void * objCE
 	LinkExpression(3, GetNoise2D);
 	LinkExpression(4, GetNoise1D);
 	LinkExpression(5, GetLoopingNoise1D);
+	
+	LinkExpression(31, GetRequestNoise3D);
+	LinkExpression(32, GetRequestNoise2D);
+	LinkExpression(33, GetRequestNoise1D);
+	// TODO: LinkExpression(34, GetRequestLoopingNoise1D);
 
 	LinkExpression(6, OpenSimplex2);
 	LinkExpression(7, OpenSimplex2S);

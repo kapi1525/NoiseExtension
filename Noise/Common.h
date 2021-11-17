@@ -16,6 +16,8 @@
 	#define PI 3.141592741F
 #endif
 
+#include <thread>
+
 #include "Edif.h"
 #include "json.h"
 #include "Resource.h"
