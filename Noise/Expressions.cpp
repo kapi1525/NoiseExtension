@@ -48,15 +48,15 @@ float Extension::GetLoopingNoise1D(float x, float xoffset, float xsize) {
 }
 
 
-float GetRequestNoise3D(const TCHAR* name, float x, float y, float z) {
+float Extension::GetRequestNoise3D(const TCHAR* name, float x, float y, float z) {
 	return 0.f;
 }
 
-float GetRequestNoise2D(const TCHAR* name, float x, float y) {
+float Extension::GetRequestNoise2D(const TCHAR* name, float x, float y) {
 	return 0.f;
 }
 
-float GetRequestNoise1D(const TCHAR* name, float x) {
+float Extension::GetRequestNoise1D(const TCHAR* name, float x) {
 	return 0.f;
 }
 
