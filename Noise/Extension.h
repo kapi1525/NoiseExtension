@@ -1,6 +1,7 @@
 #pragma once
 #include "DarkEdif.h"
 
+
 class Extension
 {
 public:
@@ -44,6 +45,7 @@ public:
 	std::tstring exampleDebuggerTextItem;
 
 
+	std::map<std::tstring, NoiseRequest*> Requests;
 	FastNoiseLite Noise;
 	int Seed = 1337;
 

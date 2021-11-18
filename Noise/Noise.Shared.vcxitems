@@ -22,6 +22,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)..\Inc\Shared\ObjectSelection.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)Common.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)Extension.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)Request.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Lib\Shared\DarkEdif.cpp" />
@@ -34,6 +35,7 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)Conditions.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)Expressions.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)Extension.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)Request.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)Runtime.cpp" />
   </ItemGroup>
 </Project>

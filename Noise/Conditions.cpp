@@ -2,5 +2,5 @@
 
 
 bool Extension::IsRequestReady(const TCHAR* name) {
-    return 0;
+    return Requests[name]->Ready;
 }

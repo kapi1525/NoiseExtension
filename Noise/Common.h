@@ -16,14 +16,18 @@
 	#define PI 3.141592741F
 #endif
 
-#include <thread>
+
+#include <map>
+
+#include "FastNoiseLite.h"
+#include "Request.h"
+
 
 #include "Edif.h"
 #include "json.h"
 #include "Resource.h"
 #include "DarkEdif.h"
 
-#include "FastNoiseLite.h"
 
 // edPtr : Used at edittime and saved in the MFA/CCN/EXE files
 
