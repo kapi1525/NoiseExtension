@@ -6,6 +6,9 @@
 #include "FastNoiseLite.h"
 
 
+#define vector3d std::vector<std::vector<std::vector<float>>>
+
+
 class NoiseRequest {
 public:
 	FastNoiseLite Noise;
@@ -18,7 +21,7 @@ public:
 	size_t ysize = 1;
 	size_t zsize = 1;
 
-	std::vector<std::vector<std::vector<float>>> GeneratedNoise;
+	vector3d GeneratedNoise;
 
 	void Thread();
 };
