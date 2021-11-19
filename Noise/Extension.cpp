@@ -114,9 +114,12 @@ Extension::Extension(RuntimeFunctions & runFuncs, EDITDATA * edPtr, void * objCE
 
 }
 
-Extension::~Extension()
-{
-
+Extension::~Extension() {
+	for (auto const& [key, val] : Requests) {
+		delete val;
+		Requests.erase(key);
+	}
+	Requests.clear();
 }
 
 
