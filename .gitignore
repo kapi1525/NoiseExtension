@@ -6,3 +6,4 @@ Temp
 *.vcxproj.user
 *.PostMinify.json
 *.log
+CHANGELOG.md

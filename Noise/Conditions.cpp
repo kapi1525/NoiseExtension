@@ -2,5 +2,8 @@
 
 
 bool Extension::IsRequestReady(const TCHAR* name) {
-    return Requests[name]->Ready;
+    NoiseRequest* r;
+    r = Requests[name];
+
+    return r->Ready;
 }

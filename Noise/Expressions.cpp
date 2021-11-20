@@ -50,38 +50,30 @@ float Extension::GetLoopingNoise1D(float x, float xoffset, float xsize) {
 
 float Extension::GetRequestNoise3D(const TCHAR* name, float x, float y, float z) {
 	NoiseRequest* r = Requests[name];
-
 	int xt = (int)(((r->xsize + 0.f) / r->x) * x);
 	int yt = (int)(((r->ysize + 0.f) / r->y) * y);
 	int zt = (int)(((r->zsize + 0.f) / r->z) * z);
-
-	//DarkEdif::MsgBox::Info(_T("inf"), _T("%f %f %f, %i %i %i"), x, y, z, xt, yt, zt);
-
 	return r->GeneratedNoise[xt][yt][zt];
 }
 
 float Extension::GetRequestNoise2D(const TCHAR* name, float x, float y) {
 	NoiseRequest* r = Requests[name];
-
 	int xt = (int)(((r->xsize + 0.f) / r->x) * x);
 	int yt = (int)(((r->ysize + 0.f) / r->y) * y);
-
-	//DarkEdif::MsgBox::Info(_T("inf"), _T("%f %f, %i %i"), x, y, xt, yt);
-
 	return r->GeneratedNoise[xt][yt][0];
 }
 
 float Extension::GetRequestNoise1D(const TCHAR* name, float x) {
 	NoiseRequest* r = Requests[name];
-
 	int xt = (int)(((r->xsize + 0.f) / r->x) * x);
-
-	//DarkEdif::MsgBox::Info(_T("inf"), _T("%f, %i"), x, xt);
-
 	return r->GeneratedNoise[xt][0][0];
 }
 
-// TODO: float GetRequestLoopingNoise1D(float x, float xoffset, float xsize) {}
+float Extension::GetRequestLoopingNoise1D(const TCHAR* name, float x) {
+	NoiseRequest* r = Requests[name];
+	int xt = (int)(((r->xsize + 0.f) / r->x) * x);
+	return r->GeneratedNoise[xt][0][0];
+}
 
 
 

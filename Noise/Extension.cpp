@@ -22,7 +22,7 @@ Extension::Extension(RuntimeFunctions & runFuncs, EDITDATA * edPtr, void * objCE
 	LinkAction(11, NoiseRequest3D);
 	LinkAction(12, NoiseRequest2D);
 	LinkAction(13, NoiseRequest1D);
-	// TODO: LinkAction(14, NoiseRequest3D);
+	LinkAction(14, NoiseRequestLooping1D);
 	
 	LinkAction(15, CleanupRequest);
 	LinkAction(16, CleanupRequests);
@@ -115,10 +115,6 @@ Extension::Extension(RuntimeFunctions & runFuncs, EDITDATA * edPtr, void * objCE
 }
 
 Extension::~Extension() {
-	for (auto const& [key, val] : Requests) {
-		delete val;
-		Requests.erase(key);
-	}
 	Requests.clear();
 }
 

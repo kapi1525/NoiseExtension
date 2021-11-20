@@ -196,12 +196,11 @@
 				]
 			},
 			{
-				"Title": "TODO",
+				"Title": "Request Looping Noise 1D array %0 with size %2",
 				"Parameters": [
 					[ "Text", "Name" ],
-					[ "Float", "X" ],
-					[ "Float", "X Offset" ],
-					[ "Integer", "X Size" ]
+					[ "Integer", "Max X (Look in help file for info how it works)" ],
+					[ "Integer", "X Size (Look in help file for info how it works)" ]
 				]
 			},
 			{
@@ -403,8 +402,12 @@
 				]
 			},
 			{
-				"Title": "TODO(",
-				"Returns": "Float"
+				"Title": "RLoopingNoise1D(",
+				"Returns": "Float",
+				"Parameters": [
+					[ "Text", "Name" ],
+					[ "Float", "X" ]
+				]
 			}
 		],
 
@@ -413,7 +416,7 @@
 				"Title": "Version",
 				"Info": "Version",
 				"Type": "Text",
-				"DefaultState": "Noise v0.5.0 (Extension v5, SDK v12)"
+				"DefaultState": "Noise v0.5.0 (Extension: v5, SDK: DarkEdif v12)"
 			}
 		]
 	}

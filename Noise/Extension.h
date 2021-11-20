@@ -62,7 +62,7 @@ public:
 		void NoiseRequest3D(const TCHAR* name, int x, int y, int z, int xsize, int ysize, int zsize);
 		void NoiseRequest2D(const TCHAR* name, int x, int y, int xsize, int ysize);
 		void NoiseRequest1D(const TCHAR* name, int x, int xsize);
-		// TODO: void NoiseRequestLooping1D();
+		void NoiseRequestLooping1D(const TCHAR* name, int x, int xsize);
 
 		void CleanupRequest(const TCHAR* name);
 		void CleanupRequests();
@@ -98,7 +98,7 @@ public:
 		float GetRequestNoise3D(const TCHAR* name, float x, float y, float z);
 		float GetRequestNoise2D(const TCHAR* name, float x, float y);
 		float GetRequestNoise1D(const TCHAR* name, float x);
-		// TODO: float GetRequestLoopingNoise1D(float x, float xoffset, float xsize);
+		float GetRequestLoopingNoise1D(const TCHAR* name, float x);
 
 		// Noise Types
 		int OpenSimplex2();
