@@ -37,6 +37,9 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)..\Inc\Shared\FastNoiseLite.h">
       <Filter>Misc</Filter>
     </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)Request.h">
+      <Filter>Misc</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Lib\Shared\DarkEdif.cpp">
@@ -68,6 +71,9 @@
       <Filter>ACE</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)Runtime.cpp">
+      <Filter>Misc</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)Request.cpp">
       <Filter>Misc</Filter>
     </ClCompile>
   </ItemGroup>

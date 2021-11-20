@@ -1,6 +1,7 @@
 #pragma once
 #include "DarkEdif.h"
 
+
 class Extension
 {
 public:
@@ -19,7 +20,7 @@ public:
 	Edif::Runtime Runtime;
 
 	static const int MinimumBuild = 254;
-	static const int Version = 4;
+	static const int Version = 5;
 
 	// If you change OEFLAGS, make sure you modify RUNDATA so the data is available, or you'll get crashes!
 	// For example, OEFLAGS::VALUES makes use of the AltVals rv struct.
@@ -44,6 +45,7 @@ public:
 	std::tstring exampleDebuggerTextItem;
 
 
+	std::map<std::tstring, NoiseRequest*> Requests;
 	FastNoiseLite Noise;
 	int Seed = 1337;
 
@@ -56,6 +58,16 @@ public:
 	/// Actions
 		void SetSeed(int Seed);
 
+		// Requests
+		void NoiseRequest3D(const TCHAR* name, int x, int y, int z, int xsize, int ysize, int zsize);
+		void NoiseRequest2D(const TCHAR* name, int x, int y, int xsize, int ysize);
+		void NoiseRequest1D(const TCHAR* name, int x, int xsize);
+		// TODO: void NoiseRequestLooping1D();
+
+		void CleanupRequest(const TCHAR* name);
+		void CleanupRequests();
+
+		// Sets
 		void SetNoiseType(int Type);
 		void SetNoiseFrequency(float Frequency);
 
@@ -70,7 +82,8 @@ public:
 		void SetCellularJitter(float Jitter);
 
 	/// Conditions
-		// None
+		// (not) None
+		bool IsRequestReady(const TCHAR* name);
 
 	/// Expressions
 		int GetSeed();
@@ -80,6 +93,12 @@ public:
 		float GetNoise2D(float x, float y);
 		float GetNoise1D(float x);
 		float GetLoopingNoise1D(float x, float xoffset, float xsize);
+
+		// Requests
+		float GetRequestNoise3D(const TCHAR* name, float x, float y, float z);
+		float GetRequestNoise2D(const TCHAR* name, float x, float y);
+		float GetRequestNoise1D(const TCHAR* name, float x);
+		// TODO: float GetRequestLoopingNoise1D(float x, float xoffset, float xsize);
 
 		// Noise Types
 		int OpenSimplex2();

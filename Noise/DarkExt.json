@@ -14,6 +14,13 @@
 		"ActionMenu": [
 			[ 0, "Set Seed" ],
 			"---",
+			[ 11, "Request Noise 3D array" ],
+			[ 12, "Request Noise 2D array" ],
+			[ 13, "Request Noise 1D array" ],
+			[ 14, "Request Looping Noise 1D array" ],
+			[ 15, "Cleanup request" ],
+			[ 16, "Cleanup all requests" ],
+			"---",
 			[ 1, "Set Noise Type" ],
 			[ 2, "Set Noise Frequency" ],
 			"---",
@@ -29,6 +36,8 @@
 			"---"
 		],
 		"ConditionMenu": [
+			[ 0, "Is Noise request ready?" ],
+			"---"
 		],
 		"ExpressionMenu": [
 			[ 0, "Get current seed" ],
@@ -38,6 +47,11 @@
 			[ 3, "Get Noise 2D" ],
 			[ 4, "Get Noise 1D" ],
 			[ 5, "Get looping Noise 1D" ],
+			"---",
+			[ 31, "Get Noise 3D from request" ],
+			[ 32, "Get Noise 2D from request" ],
+			[ 33, "Get Noise 1D from request" ],
+			[ 34, "Get looping Noise 1D from request" ],
 			"---",
 			[
 				"Noise Types",
@@ -149,9 +163,65 @@
 				"Parameters": [
 					[ "float", "Jitter" ]
 				]
+			},
+
+			{
+				"Title": "Request Noise 3D array %0 with size %4 %5 %6",
+				"Parameters": [
+					[ "Text", "Name" ],
+					[ "Integer", "Max X (Look in help file for info how it works)" ],
+					[ "Integer", "Max Y (Look in help file for info how it works)" ],
+					[ "Integer", "Max Z (Look in help file for info how it works)" ],
+					[ "Integer", "X Size (Look in help file for info how it works)" ],
+					[ "Integer", "Y Size (Look in help file for info how it works)" ],
+					[ "Integer", "Z Size (Look in help file for info how it works)" ]
+				]
+			},
+			{
+				"Title": "Request Noise 2D array %0 with size %3 %4",
+				"Parameters": [
+					[ "Text", "Name" ],
+					[ "Integer", "Max X (Look in help file for info how it works)" ],
+					[ "Integer", "Max Y (Look in help file for info how it works)" ],
+					[ "Integer", "X Size (Look in help file for info how it works)" ],
+					[ "Integer", "Y Size (Look in help file for info how it works)" ]
+				]
+			},
+			{
+				"Title": "Request Noise 1D array %0 with size %2",
+				"Parameters": [
+					[ "Text", "Name" ],
+					[ "Integer", "Max X (Look in help file for info how it works)" ],
+					[ "Integer", "X Size (Look in help file for info how it works)" ]
+				]
+			},
+			{
+				"Title": "TODO",
+				"Parameters": [
+					[ "Text", "Name" ],
+					[ "Float", "X" ],
+					[ "Float", "X Offset" ],
+					[ "Integer", "X Size" ]
+				]
+			},
+			{
+				"Title": "Cleanup request %0",
+				"Parameters": [
+					[ "Text", "Name" ]
+				]
+			},
+			{
+				"Title": "Cleanup all reqiests"
 			}
 		],
 		"Conditions": [
+			{
+				"Title": "%o : Is Noise request %0 ready?",
+				"Triggered": false,
+				"Parameters": [
+					[ "Text", "Name" ]
+				]
+			}
 		],
 		"Expressions": [
 			{
@@ -303,6 +373,38 @@
 			{
 				"Title": "CellularReturnType(",
 				"Returns": "Integer"
+			},
+
+			{
+				"Title": "RNoise3D(",
+				"Returns": "Float",
+				"Parameters": [
+					[ "Text", "Name" ],
+					[ "Float", "X" ],
+					[ "Float", "Y" ],
+					[ "Float", "Z" ]
+				]
+			},
+			{
+				"Title": "RNoise2D(",
+				"Returns": "Float",
+				"Parameters": [
+					[ "Text", "Name" ],
+					[ "Float", "X" ],
+					[ "Float", "Y" ]
+				]
+			},
+			{
+				"Title": "RNoise1D(",
+				"Returns": "Float",
+				"Parameters": [
+					[ "Text", "Name" ],
+					[ "Float", "X" ]
+				]
+			},
+			{
+				"Title": "TODO(",
+				"Returns": "Float"
 			}
 		],
 
@@ -311,7 +413,7 @@
 				"Title": "Version",
 				"Info": "Version",
 				"Type": "Text",
-				"DefaultState": "Noise v0.4.0 (Extension v4, SDK v12)"
+				"DefaultState": "Noise v0.5.0 (Extension v5, SDK v12)"
 			}
 		]
 	}
