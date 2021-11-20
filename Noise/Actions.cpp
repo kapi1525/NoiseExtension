@@ -7,8 +7,12 @@ void Extension::SetSeed(int Seed) {
 
 
 void Extension::NoiseRequest3D(const TCHAR* name, int x, int y, int z, int xsize, int ysize, int zsize) {
+	if (x > xsize && x < 0) {
+		DarkEdif::MsgBox::Error(_T("Error"), _T("Failed to create noise request: Max X must be smaller or equal than X Size (%i), but received: %i."), xsize, x);
+		return;
+	}
 	if (xsize <= 0) {
-		DarkEdif::MsgBox::Error(_T("Error"), _T("Failed to create noise request: X size must be greater than 0, but received: %u."), xsize);
+		DarkEdif::MsgBox::Error(_T("Error"), _T("Failed to create noise request: X size must be greater than 0, but received: %i."), xsize);
 		return;
 	}
 	if (name == _T("")) {
@@ -35,52 +39,11 @@ void Extension::NoiseRequest3D(const TCHAR* name, int x, int y, int z, int xsize
 }
 
 void Extension::NoiseRequest2D(const TCHAR* name, int x, int y, int xsize, int ysize) {
-	if (xsize <= 0) {
-		DarkEdif::MsgBox::Error(_T("Error"), _T("Failed to create noise request: X size must be greater than 0, but received: %u."), xsize);
-		return;
-	}
-	if (name == _T("")) {
-		DarkEdif::MsgBox::Error(_T("Error"), _T("Failed to create noise request: Name cant be blank."));
-		return;
-	}
-	if (name == NULL) {
-		DarkEdif::MsgBox::Error(_T("Error"), _T("Failed to create noise request: Somehow you passed NULL as a name."));
-		return;
-	}
-	NoiseRequest* request = new NoiseRequest;
-	request->Noise = Noise;
-	request->x = x;
-	request->y = y;
-	request->xsize = xsize;
-	request->ysize = ysize;
-
-	std::thread generator(&NoiseRequest::Thread, request);
-	generator.detach();
-
-	Requests.insert_or_assign(name, request);
+	NoiseRequest3D(name, x, y, 0, xsize, ysize, 1);
 }
 
 void Extension::NoiseRequest1D(const TCHAR* name, int x, int xsize) {
-	if (xsize <= 0) {
-		DarkEdif::MsgBox::Error(_T("Noise error"), _T("Failed to create noise request: X size must be greater than 0, but received: %u."), xsize);
-		return;
-	}
-	if (name == _T("")) {
-		DarkEdif::MsgBox::Error(_T("Noise error"), _T("Failed to create noise request: Name cant be blank."));
-		return;
-	}
-	if (name == NULL) {
-		DarkEdif::MsgBox::Error(_T("Noise error"), _T("Failed to create noise request: Somehow you passed NULL as a name."));
-		return;
-	}
-	NoiseRequest* request = new NoiseRequest;
-	request->Noise = Noise;
-	request->xsize = xsize;
-
-	std::thread generator(&NoiseRequest::Thread, request);
-	generator.detach();
-
-	Requests.insert_or_assign(name, request);
+	NoiseRequest3D(name, x, 0, 0, xsize, 1, 1);
 }
 
 // TODO: void NoiseRequestLooping1D() {}

@@ -15,11 +15,11 @@ public:
 	bool Ready = false;
 
 	int x = 0;
-	int	y = 0;
+	int y = 0;
 	int z = 0;
-	size_t xsize = 1;
-	size_t ysize = 1;
-	size_t zsize = 1;
+	int xsize = 1;
+	int ysize = 1;
+	int zsize = 1;
 
 	vector3d GeneratedNoise;
 

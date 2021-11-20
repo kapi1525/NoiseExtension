@@ -169,30 +169,30 @@
 				"Title": "Request Noise 3D array %0 with size %4 %5 %6",
 				"Parameters": [
 					[ "Text", "Name" ],
-					[ "Float", "X" ],
-					[ "Float", "Y" ],
-					[ "Float", "Z" ],
-					[ "Integer", "X Size" ],
-					[ "Integer", "Y Size" ],
-					[ "Integer", "Z Size" ]
+					[ "Integer", "Max X (Look in help file for info how it works)" ],
+					[ "Integer", "Max Y (Look in help file for info how it works)" ],
+					[ "Integer", "Max Z (Look in help file for info how it works)" ],
+					[ "Integer", "X Size (Look in help file for info how it works)" ],
+					[ "Integer", "Y Size (Look in help file for info how it works)" ],
+					[ "Integer", "Z Size (Look in help file for info how it works)" ]
 				]
 			},
 			{
 				"Title": "Request Noise 2D array %0 with size %3 %4",
 				"Parameters": [
 					[ "Text", "Name" ],
-					[ "Float", "X" ],
-					[ "Float", "Y" ],
-					[ "Integer", "X Size" ],
-					[ "Integer", "Y Size" ]
+					[ "Integer", "Max X (Look in help file for info how it works)" ],
+					[ "Integer", "Max Y (Look in help file for info how it works)" ],
+					[ "Integer", "X Size (Look in help file for info how it works)" ],
+					[ "Integer", "Y Size (Look in help file for info how it works)" ]
 				]
 			},
 			{
 				"Title": "Request Noise 1D array %0 with size %2",
 				"Parameters": [
 					[ "Text", "Name" ],
-					[ "Float", "X" ],
-					[ "Integer", "X Size" ]
+					[ "Integer", "Max X (Look in help file for info how it works)" ],
+					[ "Integer", "X Size (Look in help file for info how it works)" ]
 				]
 			},
 			{

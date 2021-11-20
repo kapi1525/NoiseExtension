@@ -4,11 +4,18 @@
 
 void NoiseRequest::Thread() {
 	GeneratedNoise = std::vector<std::vector<std::vector<float>>>(xsize, std::vector<std::vector<float>>(ysize, std::vector<float>(zsize)));
+	//DarkEdif::MsgBox::Info(_T("test"), _T("%i %i %i %i %i %i"), x, xsize, y, ysize, z, zsize);
 
-	for (size_t iz = 0; iz < zsize; iz++) {
-		for (size_t iy = 0; iy < ysize; iy++) {
-			for (size_t ix = 0; ix < xsize; ix++) {
-				GeneratedNoise[ix][iy][iz] = Noise.GetNoise((float)ix + x, (float)iy + y, (float)iz + z);
+	float xt, yt, zt;
+
+	for (int iz = 0; iz < zsize; iz++) {
+		for (int iy = 0; iy < ysize; iy++) {
+			for (int ix = 0; ix < xsize; ix++) {
+				xt = (x / (xsize + 0.f)) * ix;
+				yt = (y / (ysize + 0.f)) * iy;
+				zt = (z / (zsize + 0.f)) * iz;
+				GeneratedNoise[ix][iy][iz] = Noise.GetNoise(xt, yt, zt);
+				//DarkEdif::MsgBox::Info(_T("test"), _T("%f %f %f"),xt, yt, zt);
 			}
 		}
 	}
