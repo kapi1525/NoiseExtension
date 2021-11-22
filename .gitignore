@@ -1,8 +1,10 @@
 MFX
 .vs
+.vscode
 DarkEdif Template
 Temp
 
+*.aps
 *.vcxproj.user
 *.PostMinify.json
 *.log

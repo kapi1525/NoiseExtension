@@ -1,8 +1,6 @@
 #pragma once
 
-// #define TGFEXT	// TGF2, MMF2, MMF2 Dev
-#define MMFEXT		// MMF2, MMF2 Dev
-// #define PROEXT	// MMF2 Dev only
+#define MMFEXT
 
 #ifdef RUN_ONLY
 	#define CurLang (*::SDK->json.u.object.values[::SDK->json.u.object.length - 1].value)
@@ -11,28 +9,19 @@
 	#define CurLang CurrentLanguage()
 #endif
 
-// PI is only defined in windows SDK
-#ifndef PI
-	#define PI 3.141592741F
-#endif
-
-
 #include <map>
-
-#include "FastNoiseLite.h"
-#include "Request.h"
-
 
 #include "Edif.h"
 #include "json.h"
-#include "Resource.h"
+#include "resource.h"
 #include "DarkEdif.h"
+
+#include "FastNoiseLite.h"
+#include "request.h"
 
 
 // edPtr : Used at edittime and saved in the MFA/CCN/EXE files
-
-struct EDITDATA
-{
+struct EDITDATA {
 	// Header - required
 	extHeader		eHeader;
 
@@ -50,8 +39,7 @@ struct EDITDATA
 
 class Extension;
 
-struct RUNDATA
-{
+struct RUNDATA {
 	// Main header - required
 	HeaderObject rHo;
 

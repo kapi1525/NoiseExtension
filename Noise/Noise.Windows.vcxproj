@@ -106,11 +106,12 @@
     <ClInclude Include="DarkExt.json">
       <FileType>Document</FileType>
     </ClInclude>
+    <ClInclude Include="resource.h" />
+    <None Include="DarkExt.PostMinify.json" />
     <None Include="Icon.png" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Inc\Windows\MMFMasterHeader.h" />
-    <ClInclude Include="Resource.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Ext.rc" />

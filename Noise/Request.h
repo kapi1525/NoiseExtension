@@ -5,6 +5,10 @@
 #include "DarkEdif.h"
 #include "FastNoiseLite.h"
 
+#ifdef PI
+	#undef PI
+#endif
+#define PI 3.141592741F
 
 #define vector3d(type) std::vector<std::vector<std::vector<type>>>
 #define vector2d(type) std::vector<std::vector<type>>
@@ -15,20 +19,16 @@
 #define init_vector1d(type, xsize) std::vector<type>(xsize)
 
 
-class NoiseRequest {
-public:
-	FastNoiseLite Noise;
-	bool Ready = false;
-	bool Looping = false;
+struct noise_request {
+	FastNoiseLite noise;
+	bool ready;
 
-	int x = 0;
-	int y = 0;
-	int z = 0;
-	int xsize = 1;
-	int ysize = 1;
-	int zsize = 1;
+	int x, y, z;
+	int xsize, ysize, zsize;
 
-	vector3d(float) GeneratedNoise;
-
-	void Thread();
+	vector3d(float) generated_noise;
+	vector1d(std::thread) generators;
 };
+
+void generator_thread(noise_request* request);
+void looping_generator_thread(noise_request* request);

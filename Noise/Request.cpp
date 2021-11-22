@@ -1,44 +1,56 @@
 #include "Common.h"
 
 
+void generator_thread(noise_request* request) {
+	int xsize = request->xsize;
+	int ysize = request->ysize;
+	int zsize = request->zsize;
 
-void NoiseRequest::Thread() {
-	if (!Looping) {
-		GeneratedNoise = init_vector3d(float, xsize, ysize, zsize);
-		//DarkEdif::MsgBox::Info(_T("test"), _T("%i %i %i %i %i %i"), x, xsize, y, ysize, z, zsize);
+	int x = request->x;
+	int y = request->y;
+	int z = request->z;
+	float xt, yt, zt;
 
-		float xt, yt, zt;
+	vector3d(float) generated_noise = init_vector3d(float, xsize, ysize, zsize);
+	FastNoiseLite noise = request->noise;
 
-		for (int iz = 0; iz < zsize; iz++) {
-			for (int iy = 0; iy < ysize; iy++) {
-				for (int ix = 0; ix < xsize; ix++) {
-					xt = (x / (xsize + 0.f)) * ix;
-					yt = (y / (ysize + 0.f)) * iy;
-					zt = (z / (zsize + 0.f)) * iz;
-					GeneratedNoise[ix][iy][iz] = Noise.GetNoise(xt, yt, zt);
-					//DarkEdif::MsgBox::Info(_T("test"), _T("%f %f %f"),xt, yt, zt);
-				}
+
+	for (int iz = 0; iz < zsize; iz++) {
+		for (int iy = 0; iy < ysize; iy++) {
+			for (int ix = 0; ix < xsize; ix++) {
+				xt = (x / (xsize + 0.f)) * ix;
+				yt = (y / (ysize + 0.f)) * iy;
+				zt = (z / (zsize + 0.f)) * iz;
+				generated_noise[ix][iy][iz] = noise.GetNoise(xt, yt, zt);
 			}
 		}
-
-		Ready = true;
 	}
-	else {
-		GeneratedNoise = init_vector3d(float, xsize, 1, 1);
 
-		float xt, Radius, AngleStep, Angle;
+	request->generated_noise = generated_noise;
+	request->ready = true;
+}
 
-		for (int ix = 0; ix < xsize; ix++) {
-			xt = (x / (xsize + 0.f)) * ix;
 
-			Radius = xsize / ((float)PI * 2.0f);
-			AngleStep = 360.f / xsize;
-			Angle = xt * AngleStep;
-			Angle = Angle * (float)PI / 180.f;
+void looping_generator_thread(noise_request* request) {
+	int xsize = request->xsize;
+	int x = request->x;
+	float xt, radius, angle_step, angle;
 
-			GeneratedNoise[ix][0][0] = Noise.GetNoise((Radius * cos(Angle)), (Radius * sin(Angle)));
-		}
+	vector3d(float) generated_noise = init_vector3d(float, xsize, 0, 0);
+	FastNoiseLite noise = request->noise;
 
-		Ready = true;
+
+	for (int ix = 0; ix < xsize; ix++) {
+		xt = (x / (xsize + 0.f)) * ix;
+
+		radius = xsize / (PI * 2.0f);
+		angle_step = 360.f / xsize;
+		angle = xt * angle_step;
+		angle = angle * PI / 180.f;
+
+		generated_noise[ix][0][0] = noise.GetNoise((radius * cos(angle)), (radius * sin(angle)));
 	}
+
+	request->generated_noise = generated_noise;
+	request->ready = true;
 }

@@ -14,29 +14,30 @@
 		"ActionMenu": [
 			[ 0, "Set Seed" ],
 			"---",
-			[ 11, "Request Noise 3D array" ],
-			[ 12, "Request Noise 2D array" ],
-			[ 13, "Request Noise 1D array" ],
-			[ 14, "Request Looping Noise 1D array" ],
-			[ 15, "Cleanup request" ],
-			[ 16, "Cleanup all requests" ],
+			[ 1, "Request Noise 3D array" ],
+			[ 2, "Request Noise 2D array" ],
+			[ 3, "Request Noise 1D array" ],
+			[ 4, "Request Looping Noise 1D array" ],
+			[ 5, "Cleanup request" ],
+			[ 6, "Cleanup all requests" ],
 			"---",
-			[ 1, "Set Noise Type" ],
-			[ 2, "Set Noise Frequency" ],
+			[ 7, "Set Noise Type" ],
+			[ 8, "Set Noise Frequency" ],
 			"---",
-			[ 3, "Set Fractal Type" ],
-			[ 4, "Set Fractal Octaves" ],
-			[ 5, "Set Fractal Lacunarity" ],
-			[ 6, "Set Fractal Weighted Strength" ],
-			[ 7, "Set Fractal PingPong Strength" ],
+			[ 9, "Set Fractal Type" ],
+			[ 10, "Set Fractal Octaves" ],
+			[ 11, "Set Fractal Lacunarity" ],
+			[ 12, "Set Fractal Weighted Strength" ],
+			[ 13, "Set Fractal PingPong Strength" ],
 			"---",
-			[ 8, "Set Cellular Distance Function" ],
-			[ 9, "Set Cellular Return Type" ],
-			[ 10, "Set Cellular Jitter" ],
+			[ 14, "Set Cellular Distance Function" ],
+			[ 15, "Set Cellular Return Type" ],
+			[ 16, "Set Cellular Jitter" ],
 			"---"
 		],
 		"ConditionMenu": [
 			[ 0, "Is Noise request ready?" ],
+			[ 1, "On Noise request ready?" ],
 			"---"
 		],
 		"ExpressionMenu": [
@@ -48,49 +49,50 @@
 			[ 4, "Get Noise 1D" ],
 			[ 5, "Get looping Noise 1D" ],
 			"---",
-			[ 31, "Get Noise 3D from request" ],
-			[ 32, "Get Noise 2D from request" ],
-			[ 33, "Get Noise 1D from request" ],
-			[ 34, "Get looping Noise 1D from request" ],
+			[ 6, "Get Noise 3D from request" ],
+			[ 7, "Get Noise 2D from request" ],
+			[ 8, "Get Noise 1D from request" ],
+			[ 9, "Get looping Noise 1D from request" ],
+			[ 10, "Get number of requests" ],
 			"---",
 			[
 				"Noise Types",
-				[ 6, "OpenSimplex2" ],
-				[ 7, "OpenSimplex2S" ],
-				[ 8, "Cellular" ],
-				[ 9, "Perlin" ],
-				[ 10, "ValueCubic" ],
-				[ 11, "Value" ]
+				[ 11, "OpenSimplex2" ],
+				[ 12, "OpenSimplex2S" ],
+				[ 13, "Cellular" ],
+				[ 14, "Perlin" ],
+				[ 15, "ValueCubic" ],
+				[ 16, "Value" ]
 			],
 			[
 				"Fractal Types",
-				[ 12, "None" ],
-				[ 13, "FBm" ],
-				[ 14, "Rigid" ],
-				[ 15, "PingPong" ]
+				[ 17, "None" ],
+				[ 18, "FBm" ],
+				[ 19, "Rigid" ],
+				[ 20, "PingPong" ]
 			],
 			[
 				"Cellular Distance Functions",
-				[ 16, "Euclidean" ],
-				[ 17, "EuclideanSq" ],
-				[ 18, "Manhattan" ],
-				[ 19, "Hybrid" ]
+				[ 21, "Euclidean" ],
+				[ 22, "EuclideanSq" ],
+				[ 23, "Manhattan" ],
+				[ 24, "Hybrid" ]
 			],
 			[
 				"Cellular Return Types",
-				[ 20, "CellValue" ],
-				[ 21, "Distance" ],
-				[ 22, "Distance2" ],
-				[ 23, "Distance2Add" ],
-				[ 24, "Distance2Sub" ],
-				[ 25, "Distance2Mul" ],
-				[ 26, "Distance2Div" ]
+				[ 25, "CellValue" ],
+				[ 26, "Distance" ],
+				[ 27, "Distance2" ],
+				[ 29, "Distance2Add" ],
+				[ 30, "Distance2Sub" ],
+				[ 31, "Distance2Mul" ],
+				[ 32, "Distance2Div" ]
 			],
 			"---",
-			[ 27, "Current Noise Type" ],
-			[ 28, "Current Fractal Type" ],
-			[ 29, "Current Cellular Distance Function" ],
-			[ 30, "Current Cellular Return Type" ],
+			[ 33, "Current Noise Type" ],
+			[ 34, "Current Fractal Type" ],
+			[ 35, "Current Cellular Distance Function" ],
+			[ 36, "Current Cellular Return Type" ],
 			"---"
 		],
 
@@ -100,6 +102,55 @@
 				"Parameters": [
 					[ "Integer", "Seed" ]
 				]
+			},
+
+
+			{
+				"Title": "Request Noise 3D array %0 with positions from 0 to %1 %2 %3 and size %4 %5 %6",
+				"Parameters": [
+					[ "Text", "Name" ],
+					[ "Integer", "Max X (Look in help file for info how it works)" ],
+					[ "Integer", "Max Y (Look in help file for info how it works)" ],
+					[ "Integer", "Max Z (Look in help file for info how it works)" ],
+					[ "Integer", "X Size (Look in help file for info how it works)" ],
+					[ "Integer", "Y Size (Look in help file for info how it works)" ],
+					[ "Integer", "Z Size (Look in help file for info how it works)" ]
+				]
+			},
+			{
+				"Title": "Request Noise 2D array %0 with positions from 0 to %1 %2 and size %3 %4",
+				"Parameters": [
+					[ "Text", "Name" ],
+					[ "Integer", "Max X (Look in help file for info how it works)" ],
+					[ "Integer", "Max Y (Look in help file for info how it works)" ],
+					[ "Integer", "X Size (Look in help file for info how it works)" ],
+					[ "Integer", "Y Size (Look in help file for info how it works)" ]
+				]
+			},
+			{
+				"Title": "Request Noise 1D array %0 with positions from 0 to %1 and size %2",
+				"Parameters": [
+					[ "Text", "Name" ],
+					[ "Integer", "Max X (Look in help file for info how it works)" ],
+					[ "Integer", "X Size (Look in help file for info how it works)" ]
+				]
+			},
+			{
+				"Title": "Request looping Noise 1D array %0 with positions from 0 to %1 and size %2",
+				"Parameters": [
+					[ "Text", "Name" ],
+					[ "Integer", "Max X (Look in help file for info how it works)" ],
+					[ "Integer", "X Size (Look in help file for info how it works)" ]
+				]
+			},
+			{
+				"Title": "Cleanup request %0",
+				"Parameters": [
+					[ "Text", "Name" ]
+				]
+			},
+			{
+				"Title": "Cleanup all reqiests"
 			},
 
 			{
@@ -163,60 +214,19 @@
 				"Parameters": [
 					[ "float", "Jitter" ]
 				]
-			},
-
-			{
-				"Title": "Request Noise 3D array %0 with size %4 %5 %6",
-				"Parameters": [
-					[ "Text", "Name" ],
-					[ "Integer", "Max X (Look in help file for info how it works)" ],
-					[ "Integer", "Max Y (Look in help file for info how it works)" ],
-					[ "Integer", "Max Z (Look in help file for info how it works)" ],
-					[ "Integer", "X Size (Look in help file for info how it works)" ],
-					[ "Integer", "Y Size (Look in help file for info how it works)" ],
-					[ "Integer", "Z Size (Look in help file for info how it works)" ]
-				]
-			},
-			{
-				"Title": "Request Noise 2D array %0 with size %3 %4",
-				"Parameters": [
-					[ "Text", "Name" ],
-					[ "Integer", "Max X (Look in help file for info how it works)" ],
-					[ "Integer", "Max Y (Look in help file for info how it works)" ],
-					[ "Integer", "X Size (Look in help file for info how it works)" ],
-					[ "Integer", "Y Size (Look in help file for info how it works)" ]
-				]
-			},
-			{
-				"Title": "Request Noise 1D array %0 with size %2",
-				"Parameters": [
-					[ "Text", "Name" ],
-					[ "Integer", "Max X (Look in help file for info how it works)" ],
-					[ "Integer", "X Size (Look in help file for info how it works)" ]
-				]
-			},
-			{
-				"Title": "Request Looping Noise 1D array %0 with size %2",
-				"Parameters": [
-					[ "Text", "Name" ],
-					[ "Integer", "Max X (Look in help file for info how it works)" ],
-					[ "Integer", "X Size (Look in help file for info how it works)" ]
-				]
-			},
-			{
-				"Title": "Cleanup request %0",
-				"Parameters": [
-					[ "Text", "Name" ]
-				]
-			},
-			{
-				"Title": "Cleanup all reqiests"
 			}
 		],
 		"Conditions": [
 			{
 				"Title": "%o : Is Noise request %0 ready?",
 				"Triggered": false,
+				"Parameters": [
+					[ "Text", "Name" ]
+				]
+			},
+			{
+				"Title": "%o : On Noise request %0 ready?",
+				"Triggered": true,
 				"Parameters": [
 					[ "Text", "Name" ]
 				]
@@ -260,13 +270,54 @@
 				]
 			},
 			{
-				"Title": "LoopingNoise1D(",
+				"Title": "Looping1D(",
 				"Returns": "Float",
 				"Parameters": [
 					[ "Float", "X" ],
 					[ "Float", "X Offset" ],
 					[ "Float", "X Size" ]
 				]
+			},
+
+
+			{
+				"Title": "RNoise3D(",
+				"Returns": "Float",
+				"Parameters": [
+					[ "Text", "Name" ],
+					[ "Float", "X" ],
+					[ "Float", "Y" ],
+					[ "Float", "Z" ]
+				]
+			},
+			{
+				"Title": "RNoise2D(",
+				"Returns": "Float",
+				"Parameters": [
+					[ "Text", "Name" ],
+					[ "Float", "X" ],
+					[ "Float", "Y" ]
+				]
+			},
+			{
+				"Title": "RNoise1D(",
+				"Returns": "Float",
+				"Parameters": [
+					[ "Text", "Name" ],
+					[ "Float", "X" ]
+				]
+			},
+			{
+				"Title": "RLooping1D(",
+				"Returns": "Float",
+				"Parameters": [
+					[ "Text", "Name" ],
+					[ "Float", "X" ]
+				]
+			},
+			{
+				"Title": "Requests(",
+				"Returns": "Integer"
 			},
 
 			{
@@ -372,42 +423,6 @@
 			{
 				"Title": "CellularReturnType(",
 				"Returns": "Integer"
-			},
-
-			{
-				"Title": "RNoise3D(",
-				"Returns": "Float",
-				"Parameters": [
-					[ "Text", "Name" ],
-					[ "Float", "X" ],
-					[ "Float", "Y" ],
-					[ "Float", "Z" ]
-				]
-			},
-			{
-				"Title": "RNoise2D(",
-				"Returns": "Float",
-				"Parameters": [
-					[ "Text", "Name" ],
-					[ "Float", "X" ],
-					[ "Float", "Y" ]
-				]
-			},
-			{
-				"Title": "RNoise1D(",
-				"Returns": "Float",
-				"Parameters": [
-					[ "Text", "Name" ],
-					[ "Float", "X" ]
-				]
-			},
-			{
-				"Title": "RLoopingNoise1D(",
-				"Returns": "Float",
-				"Parameters": [
-					[ "Text", "Name" ],
-					[ "Float", "X" ]
-				]
 			}
 		],
 

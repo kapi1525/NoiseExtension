@@ -1,9 +1,7 @@
 #include "Common.h"
 
 
-bool Extension::IsRequestReady(const TCHAR* name) {
-    NoiseRequest* r;
-    r = Requests[name];
-
-    return r->Ready;
+bool Extension::request_ready(const TCHAR* name) {
+    noise_request* r = requests[name];
+    return r->ready;
 }

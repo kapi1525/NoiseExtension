@@ -1,10 +1,16 @@
 #include "Common.h"
 
-int Extension::GetSeed() {
-	return Seed;
+#ifdef PI
+	#undef PI
+#endif
+#define PI 3.141592741F
+
+
+int Extension::get_seed() {
+	return seed;
 }
 
-int Extension::StringToSeed(const TCHAR* String) {
+int Extension::string_to_seed(const TCHAR* String) {
 	std::string Text = TStringToANSI(std::tstring(String));
 
 	unsigned int Seed = 0;
@@ -25,163 +31,160 @@ int Extension::StringToSeed(const TCHAR* String) {
 }
 
 
-float Extension::GetNoise3D(float x, float y, float z) {
-	return Noise.GetNoise(x, y, z);
+float Extension::get_noise3D(float x, float y, float z) {
+	return noise.GetNoise(x, y, z);
 }
 
-float Extension::GetNoise2D(float x, float y) {
-	return Noise.GetNoise(x, y);
+float Extension::get_noise2D(float x, float y) {
+	return noise.GetNoise(x, y);
 }
 
-float Extension::GetNoise1D(float x) {
-	return Noise.GetNoise(x, 0.f);
+float Extension::get_noise1D(float x) {
+	return noise.GetNoise(x, 0.f);
 }
 
-float Extension::GetLoopingNoise1D(float x, float xoffset, float xsize) {
+float Extension::get_looping_noise1D(float x, float xoffset, float xsize) {
 	float XPos = x - xoffset;
-	float Radius = xsize / ((float)PI * 2.0f);
+	float Radius = xsize / (PI * 2.0f);
 	float AngleStep = 360.f / xsize;
 	float Angle = XPos * AngleStep;
-	Angle = Angle * (float)PI / 180.f;
+	Angle = Angle * PI / 180.f;
 
-	return Noise.GetNoise((Radius * cos(Angle)), (Radius * sin(Angle)));
+	return noise.GetNoise((Radius * cos(Angle)), (Radius * sin(Angle)));
 }
 
 
-float Extension::GetRequestNoise3D(const TCHAR* name, float x, float y, float z) {
-	NoiseRequest* r = Requests[name];
+float Extension::get_request_noise3D(const TCHAR* name, float x, float y, float z) {
+	noise_request* r = requests[name];
 	int xt = (int)(((r->xsize + 0.f) / r->x) * x);
 	int yt = (int)(((r->ysize + 0.f) / r->y) * y);
 	int zt = (int)(((r->zsize + 0.f) / r->z) * z);
-	return r->GeneratedNoise[xt][yt][zt];
+	return r->generated_noise[xt][yt][zt];
 }
 
-float Extension::GetRequestNoise2D(const TCHAR* name, float x, float y) {
-	NoiseRequest* r = Requests[name];
-	int xt = (int)(((r->xsize + 0.f) / r->x) * x);
-	int yt = (int)(((r->ysize + 0.f) / r->y) * y);
-	return r->GeneratedNoise[xt][yt][0];
+float Extension::get_request_noise2D(const TCHAR* name, float x, float y) {
+	return get_request_noise3D(name, x, y, 0.f);
 }
 
-float Extension::GetRequestNoise1D(const TCHAR* name, float x) {
-	NoiseRequest* r = Requests[name];
-	int xt = (int)(((r->xsize + 0.f) / r->x) * x);
-	return r->GeneratedNoise[xt][0][0];
+float Extension::get_request_noise1D(const TCHAR* name, float x) {
+	return get_request_noise3D(name, x, 0.f, 0.f);
 }
 
-float Extension::GetRequestLoopingNoise1D(const TCHAR* name, float x) {
-	NoiseRequest* r = Requests[name];
-	int xt = (int)(((r->xsize + 0.f) / r->x) * x);
-	return r->GeneratedNoise[xt][0][0];
+float Extension::get_request_looping_noise1D(const TCHAR* name, float x) {
+	return get_request_noise3D(name, x, 0.f, 0.f);
+}
+
+int Extension::get_requests() {
+	return requests.size();
 }
 
 
 
 // Noise Types
-int Extension::OpenSimplex2() {
+int Extension::open_simplex2() {
 	return FastNoiseLite::NoiseType_OpenSimplex2;
 }
 
-int Extension::OpenSimplex2S() {
+int Extension::open_simplex2s() {
 	return FastNoiseLite::NoiseType_OpenSimplex2S;
 }
 
-int Extension::Cellular() {
+int Extension::cellular() {
 	return FastNoiseLite::NoiseType_Cellular;
 }
 
-int Extension::Perlin() {
+int Extension::perlin() {
 	return FastNoiseLite::NoiseType_Perlin;
 }
 
-int Extension::ValueCubic() {
+int Extension::value_cubic() {
 	return FastNoiseLite::NoiseType_ValueCubic;
 }
 
-int Extension::Value() {
+int Extension::value() {
 	return FastNoiseLite::NoiseType_Value;
 }
 
 
 // Fractal Types
-int Extension::None() {
+int Extension::none() {
 	return FastNoiseLite::FractalType_None;
 }
 
-int Extension::FBm() {
+int Extension::fbm() {
 	return FastNoiseLite::FractalType_FBm;
 }
 
-int Extension::Rigid() {
+int Extension::rigid() {
 	return FastNoiseLite::FractalType_Ridged;
 }
 
-int Extension::PingPong() {
+int Extension::pingpong() {
 	return FastNoiseLite::FractalType_PingPong;
 }
 
 
 // Cellular Functions
-int Extension::Euclidean() {
+int Extension::euclidean() {
 	return FastNoiseLite::CellularDistanceFunction_Euclidean;
 }
 
-int Extension::EuclideanSq() {
+int Extension::euclidean_sq() {
 	return FastNoiseLite::CellularDistanceFunction_EuclideanSq;
 }
 
-int Extension::Manhattan() {
+int Extension::manhattan() {
 	return FastNoiseLite::CellularDistanceFunction_Manhattan;
 }
 
-int Extension::Hybrid() {
+int Extension::hybrid() {
 	return FastNoiseLite::CellularDistanceFunction_Hybrid;
 }
 
 
 // Cellular Return Types
-int Extension::CellValue() {
+int Extension::cell_value() {
 	return FastNoiseLite::CellularReturnType_CellValue;
 }
 
-int Extension::Distance() {
+int Extension::distance() {
 	return FastNoiseLite::CellularReturnType_Distance;
 }
 
-int Extension::Distance2() {
+int Extension::distance2() {
 	return FastNoiseLite::CellularReturnType_Distance2;
 }
 
-int Extension::Distance2Add() {
+int Extension::distance2_add() {
 	return FastNoiseLite::CellularReturnType_Distance2Add;
 }
 
-int Extension::Distance2Sub() {
+int Extension::distance2_sub() {
 	return FastNoiseLite::CellularReturnType_Distance2Sub;
 }
 
-int Extension::Distance2Mul() {
+int Extension::distance2_mul() {
 	return FastNoiseLite::CellularReturnType_Distance2Mul;
 }
 
-int Extension::Distance2Div() {
+int Extension::distance2_div() {
 	return FastNoiseLite::CellularReturnType_Distance2Div;
 }
 
 
 // Current selections
-int Extension::CurrentNoiseType() {
-	return NoiseType;
+int Extension::current_noise_type() {
+	return noise_type;
 }
 
-int Extension::CurrentFractalType() {
-	return FractalType;
+int Extension::current_fractal_type() {
+	return fractal_type;
 }
 
-int Extension::CurrentCellularFunction() {
-	return CellularFunction;
+int Extension::current_cellular_function() {
+	return cellular_function;
 }
 
-int Extension::CUrrentCellularReturnType() {
-	return CellularReturnType;
+int Extension::current_cellular_return_type() {
+	return cellular_return_type;
 }

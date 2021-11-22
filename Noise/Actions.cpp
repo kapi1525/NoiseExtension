@@ -1,12 +1,13 @@
 #include "Common.h"
 
-void Extension::SetSeed(int Seed) {
-	this->Seed = Seed;
-	Noise.SetSeed(Seed);
+
+void Extension::set_seed(int seed) {
+	this->seed = seed;
+	noise.SetSeed(seed);
 }
 
 
-void Extension::NoiseRequest3D(const TCHAR* name, int x, int y, int z, int xsize, int ysize, int zsize) {
+void Extension::noise_request3D(const TCHAR* name, int x, int y, int z, int xsize, int ysize, int zsize) {
 	if (x > xsize && x < 0) {
 		DarkEdif::MsgBox::Error(_T("Error"), _T("Failed to create noise request: Max X must be smaller or equal than X Size (%i), but received: %i."), xsize, x);
 		return;
@@ -23,30 +24,28 @@ void Extension::NoiseRequest3D(const TCHAR* name, int x, int y, int z, int xsize
 		DarkEdif::MsgBox::Error(_T("Error"), _T("Failed to create noise request: Somehow you passed NULL as a name."));
 		return;
 	}
-	NoiseRequest* request = new NoiseRequest;
-	request->Noise = Noise;
+	noise_request* request = new noise_request;
+	request->noise = noise;
 	request->x = x;
 	request->y = y;
 	request->z = z;
 	request->xsize = xsize;
 	request->ysize = ysize;
 	request->zsize = zsize;
-	
-	std::thread generator(&NoiseRequest::Thread, request);
-	generator.detach();
+	request->generators.push_back(std::thread(&generator_thread, request));
 
-	Requests.insert_or_assign(name, request);
+	requests.insert_or_assign(name, request);
 }
 
-void Extension::NoiseRequest2D(const TCHAR* name, int x, int y, int xsize, int ysize) {
-	NoiseRequest3D(name, x, y, 0, xsize, ysize, 1);
+void Extension::noise_request2D(const TCHAR* name, int x, int y, int xsize, int ysize) {
+	noise_request3D(name, x, y, 0, xsize, ysize, 1);
 }
 
-void Extension::NoiseRequest1D(const TCHAR* name, int x, int xsize) {
-	NoiseRequest3D(name, x, 0, 0, xsize, 1, 1);
+void Extension::noise_request1D(const TCHAR* name, int x, int xsize) {
+	noise_request3D(name, x, 0, 0, xsize, 1, 1);
 }
 
-void Extension::NoiseRequestLooping1D(const TCHAR* name, int x, int xsize) {
+void Extension::noise_request_looping1D(const TCHAR* name, int x, int xsize) {
 	if (x > xsize && x < 0) {
 		DarkEdif::MsgBox::Error(_T("Error"), _T("Failed to create noise request: Max X must be smaller or equal than X Size (%i), but received: %i."), xsize, x);
 		return;
@@ -63,80 +62,77 @@ void Extension::NoiseRequestLooping1D(const TCHAR* name, int x, int xsize) {
 		DarkEdif::MsgBox::Error(_T("Error"), _T("Failed to create noise request: Somehow you passed NULL as a name."));
 		return;
 	}
-	NoiseRequest* request = new NoiseRequest;
-	request->Noise = Noise;
-	request->Looping = true;
+	noise_request* request = new noise_request;
+	request->noise = noise;
 	request->x = x;
 	request->xsize = xsize;
+	request->generators.push_back(std::thread(&looping_generator_thread, request));
 
-	std::thread generator(&NoiseRequest::Thread, request);
-	generator.detach();
-
-	Requests.insert_or_assign(name, request);
+	requests.insert_or_assign(name, request);
 }
 
 
-void Extension::CleanupRequest(const TCHAR* name) {
-	for (auto const& [key, val] : Requests) {
-		if (key == name && val->Ready == true) {
+void Extension::cleanup_request(const TCHAR* name) {
+	for (auto const& [key, val] : requests) {
+		if (key == name && val->ready == true) {
 			delete val;
-			Requests.erase(key);
+			requests.erase(key);
 		}
 	}
 }
 
-void Extension::CleanupRequests() {
-	for (auto const& [key, val] : Requests) {
-		if (val->Ready == true) {
+void Extension::cleanup_requests() {
+	for (auto const& [key, val] : requests) {
+		if (val->ready == true) {
 			delete val;
-			Requests.erase(key);
+			requests.erase(key);
 		}
 	}
 }
 
 
-void Extension::SetNoiseType(int Type) {
-	Noise.SetNoiseType((FastNoiseLite::NoiseType)Type);
-	NoiseType = Type;
+void Extension::set_noise_type(int type) {
+	noise.SetNoiseType((FastNoiseLite::NoiseType)type);
+	noise_type = type;
 }
 
-void Extension::SetNoiseFrequency(float Frequency) {
-	Noise.SetFrequency(Frequency);
-}
-
-
-void Extension::SetFractalType(int Type) {
-	Noise.SetFractalType((FastNoiseLite::FractalType)Type);
-	FractalType = Type;
-}
-
-void Extension::SetFractalOctaves(int Octaves) {
-	Noise.SetFractalOctaves(Octaves);
-}
-
-void Extension::SetFractalLacunarity(float Lacunarity) {
-	Noise.SetFractalLacunarity(Lacunarity);
-}
-
-void Extension::SetFractalWeighted(float Weighted) {
-	Noise.SetFractalWeightedStrength(Weighted);
-}
-
-void Extension::SetFractalPingPong(float PingPong) {
-	Noise.SetFractalPingPongStrength(PingPong);
+void Extension::set_noise_frequency(float frequency) {
+	noise.SetFrequency(frequency);
 }
 
 
-void Extension::SetCellularDistanceFunction(int Function) {
-	Noise.SetCellularDistanceFunction((FastNoiseLite::CellularDistanceFunction)Function);
-	CellularFunction = Function;
+void Extension::set_fractal_type(int type) {
+	noise.SetFractalType((FastNoiseLite::FractalType)type);
+	fractal_type = type;
 }
 
-void Extension::SetCellularReturnType(int Return) {
-	Noise.SetCellularReturnType((FastNoiseLite::CellularReturnType)Return);
-	CellularReturnType = Return;
+void Extension::set_fractal_octaves(int octaves) {
+	noise.SetFractalOctaves(octaves);
 }
 
-void Extension::SetCellularJitter(float Jitter) {
-	Noise.SetCellularJitter(Jitter);
+void Extension::set_fractal_lacunarity(float lacunarity) {
+	noise.SetFractalLacunarity(lacunarity);
+}
+
+void Extension::set_fractal_weighted(float weighted) {
+	noise.SetFractalWeightedStrength(weighted);
+}
+
+void Extension::set_fractal_pingpong(float pingpong) {
+	noise.SetFractalPingPongStrength(pingpong);
+}
+
+
+void Extension::set_cellular_distance_function(int function) {
+	noise.SetCellularDistanceFunction((FastNoiseLite::CellularDistanceFunction)function);
+	cellular_function = function;
+}
+
+void Extension::set_cellular_return_type(int return_type) {
+	noise.SetCellularReturnType((FastNoiseLite::CellularReturnType)return_type);
+	cellular_return_type = return_type;
+}
+
+void Extension::set_cellular_jitter(float jitter) {
+	noise.SetCellularJitter(jitter);
 }
