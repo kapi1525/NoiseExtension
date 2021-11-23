@@ -37,7 +37,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)..\Inc\Shared\FastNoiseLite.h">
       <Filter>Misc</Filter>
     </ClInclude>
-    <ClInclude Include="$(MSBuildThisFileDirectory)request.h">
+    <ClInclude Include="$(MSBuildThisFileDirectory)noise-requests.h">
       <Filter>Misc</Filter>
     </ClInclude>
   </ItemGroup>
@@ -70,7 +70,7 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)Expressions.cpp">
       <Filter>ACE</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)request.cpp">
+    <ClCompile Include="$(MSBuildThisFileDirectory)noise-requests.cpp">
       <Filter>Misc</Filter>
     </ClCompile>
   </ItemGroup>

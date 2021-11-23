@@ -17,7 +17,7 @@
 #include "DarkEdif.h"
 
 #include "FastNoiseLite.h"
-#include "request.h"
+#include "noise-requests.h"
 
 
 // edPtr : Used at edittime and saved in the MFA/CCN/EXE files
