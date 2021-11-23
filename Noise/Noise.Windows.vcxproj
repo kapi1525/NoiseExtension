@@ -106,8 +106,7 @@
     <ClInclude Include="DarkExt.json">
       <FileType>Document</FileType>
     </ClInclude>
-    <ClInclude Include="resource.h" />
-    <None Include="DarkExt.PostMinify.json" />
+    <ClInclude Include="Resource.h" />
     <None Include="Icon.png" />
   </ItemGroup>
   <ItemGroup>

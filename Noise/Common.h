@@ -13,7 +13,7 @@
 
 #include "Edif.h"
 #include "json.h"
-#include "resource.h"
+#include "Resource.h"
 #include "DarkEdif.h"
 
 #include "FastNoiseLite.h"

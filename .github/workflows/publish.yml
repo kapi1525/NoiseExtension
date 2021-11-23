@@ -21,6 +21,14 @@ jobs:
     #  working-directory: ${{env.GITHUB_WORKSPACE}}
     #  run: nuget restore .
 
+    - name: Build Runtime Unicode
+      working-directory: ${{env.GITHUB_WORKSPACE}}
+      run: msbuild -t:"Noise_Windows" -p:Configuration="Runtime Unicode" -p:Platform="x86" ./Noise.sln
+
+    - name: Build Edittime Unicode
+      working-directory: ${{env.GITHUB_WORKSPACE}}
+      run: msbuild -t:"Noise_Windows" -p:Configuration="Edittime Unicode" -p:Platform="x86" ./Noise.sln
+
     - name: Build Android ARM
       working-directory: ${{env.GITHUB_WORKSPACE}}
       run: msbuild -t:"Noise_Android" -p:Configuration="Runtime" -p:Platform="ARM" ./Noise.sln
@@ -36,14 +44,6 @@ jobs:
     - name: Build Android x64
       working-directory: ${{env.GITHUB_WORKSPACE}}
       run: msbuild -t:"Noise_Android" -p:Configuration="Runtime" -p:Platform="x64" ./Noise.sln
-
-    - name: Build Runtime Unicode
-      working-directory: ${{env.GITHUB_WORKSPACE}}
-      run: msbuild -t:"Noise_Windows" -p:Configuration="Runtime Unicode" -p:Platform="x86" ./Noise.sln
-
-    - name: Build Edittime Unicode
-      working-directory: ${{env.GITHUB_WORKSPACE}}
-      run: msbuild -t:"Noise_Windows" -p:Configuration="Edittime Unicode" -p:Platform="x86" ./Noise.sln
 
 
     - uses: papeloto/action-zip@v1

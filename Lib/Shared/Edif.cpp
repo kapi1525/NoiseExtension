@@ -1,7 +1,7 @@
 #include "Common.h"
 #include "Edif.h"
 #include "DarkEdif.h"
-#include "resource.h"
+#include "Resource.h"
 #include "Extension.h"
 
 // ============================================================================

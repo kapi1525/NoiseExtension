@@ -16,7 +16,7 @@
       <Filter>Global to all extensions</Filter>
     </ClInclude>
     <ClInclude Include="DarkExt.json" />
-    <ClInclude Include="resource.h">
+    <ClInclude Include="Resource.h">
       <Filter>Misc</Filter>
     </ClInclude>
   </ItemGroup>
@@ -33,7 +33,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Icon.png" />
-    <None Include="DarkExt.PostMinify.json" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Ext.rc">
