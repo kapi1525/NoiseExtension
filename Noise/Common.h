@@ -9,15 +9,12 @@
 	#define CurLang CurrentLanguage()
 #endif
 
-#include <map>
-
 #include "Edif.h"
 #include "json.h"
 #include "Resource.h"
 #include "DarkEdif.h"
 
 #include "FastNoiseLite.h"
-#include "noise-requests.h"
 
 
 // edPtr : Used at edittime and saved in the MFA/CCN/EXE files

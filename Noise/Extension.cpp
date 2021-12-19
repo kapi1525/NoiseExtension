@@ -20,32 +20,22 @@ Extension::Extension(RuntimeFunctions & runFuncs, EDITDATA * edPtr, void * objCE
 	{
 		LinkAction(0, set_seed);
 
-		LinkAction(1, noise_request3D);
-		LinkAction(2, noise_request2D);
-		LinkAction(3, noise_request1D);
-		LinkAction(4, noise_request_looping1D);
-		
-		LinkAction(5, cleanup_request);
-		LinkAction(6, cleanup_requests);
+		LinkAction(1, set_noise_type);
+		LinkAction(2, set_noise_frequency);
 
-		LinkAction(7, set_noise_type);
-		LinkAction(8, set_noise_frequency);
+		LinkAction(3, set_fractal_type);
+		LinkAction(4, set_fractal_octaves);
+		LinkAction(5, set_fractal_lacunarity);
+		LinkAction(6, set_fractal_weighted);
+		LinkAction(7, set_fractal_pingpong);
 
-		LinkAction(9, set_fractal_type);
-		LinkAction(10, set_fractal_octaves);
-		LinkAction(11, set_fractal_lacunarity);
-		LinkAction(12, set_fractal_weighted);
-		LinkAction(13, set_fractal_pingpong);
-
-		LinkAction(14, set_cellular_distance_function);
-		LinkAction(15, set_cellular_return_type);
-		LinkAction(16, set_cellular_jitter);
+		LinkAction(8, set_cellular_distance_function);
+		LinkAction(9, set_cellular_return_type);
+		LinkAction(10, set_cellular_jitter);
 	}
 
 	// Conditions
 	{
-		LinkCondition(0, request_ready);
-		LinkCondition(1, request_ready);
 	}
 
 	// Expressions
@@ -57,12 +47,6 @@ Extension::Extension(RuntimeFunctions & runFuncs, EDITDATA * edPtr, void * objCE
 		LinkExpression(3, get_noise2D);
 		LinkExpression(4, get_noise1D);
 		LinkExpression(5, get_looping_noise1D);
-		
-		LinkExpression(31, get_request_noise3D);
-		LinkExpression(32, get_request_noise2D);
-		LinkExpression(33, get_request_noise1D);
-		LinkExpression(34, get_request_looping_noise1D);
-		LinkExpression(35, get_requests);
 
 		LinkExpression(6, open_simplex2);
 		LinkExpression(7, open_simplex2s);
@@ -97,15 +81,6 @@ Extension::Extension(RuntimeFunctions & runFuncs, EDITDATA * edPtr, void * objCE
 }
 
 Extension::~Extension() {
-	for (auto const& [key, val] : requests) {
-		for (size_t i = 0; i < val->generators.size(); i++) {
-			val->generators[i].~thread();
-		}
-		
-		delete val;
-		requests.erase(key);
-	}
-	requests.clear();
 }
 
 
@@ -128,7 +103,6 @@ short Extension::FusionRuntimeContinued() {
 
 
 // These are called if there's no function linked to an ID
-
 void Extension::UnlinkedAction(int ID) {
 	DarkEdif::MsgBox::Error(_T("Extension::UnlinkedAction() called"), _T("Running a fallback for action ID %d. Make sure you ran LinkAction()."), ID);
 }

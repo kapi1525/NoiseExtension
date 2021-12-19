@@ -54,32 +54,6 @@ float Extension::get_looping_noise1D(float x, float xoffset, float xsize) {
 }
 
 
-float Extension::get_request_noise3D(const TCHAR* name, float x, float y, float z) {
-	noise_request* r = requests[name];
-	int xt = (int)(((r->xsize + 0.f) / r->x) * x);
-	int yt = (int)(((r->ysize + 0.f) / r->y) * y);
-	int zt = (int)(((r->zsize + 0.f) / r->z) * z);
-	return r->generated_noise[xt][yt][zt];
-}
-
-float Extension::get_request_noise2D(const TCHAR* name, float x, float y) {
-	return get_request_noise3D(name, x, y, 0.f);
-}
-
-float Extension::get_request_noise1D(const TCHAR* name, float x) {
-	return get_request_noise3D(name, x, 0.f, 0.f);
-}
-
-float Extension::get_request_looping_noise1D(const TCHAR* name, float x) {
-	return get_request_noise3D(name, x, 0.f, 0.f);
-}
-
-int Extension::get_requests() {
-	return requests.size();
-}
-
-
-
 // Noise Types
 int Extension::open_simplex2() {
 	return FastNoiseLite::NoiseType_OpenSimplex2;
