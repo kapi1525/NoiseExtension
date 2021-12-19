@@ -15,7 +15,7 @@
 HINSTANCE hInstLib = NULL;
 
 // Entry point for DLL, when DLL is attached to by Fusion, or detached; or threads attach/detach
-BOOL WINAPI DllMain(HINSTANCE hDLL, std::uint32_t dwReason, LPVOID lpReserved)
+__declspec(dllexport) BOOL WINAPI DllMain(HINSTANCE hDLL, std::uint32_t dwReason, LPVOID lpReserved)
 {
 	// DLL is attaching to the address space of the current process.
 	if (dwReason == DLL_PROCESS_ATTACH && hInstLib == NULL)
@@ -44,6 +44,13 @@ int FusionAPI Free(mv *mV)
 {
 #pragma DllExportHint
 	// Edif is singleton, so no clean-up needed
+
+	// But if the update checker thread is running, we don't want it to try to write to memory it can't access.
+#if USE_DARKEDIF_UPDATE_CHECKER
+	extern HANDLE updateThread;
+	if (updateThread != NULL && WaitForSingleObject(updateThread, 3000) == WAIT_TIMEOUT)
+		TerminateThread(updateThread, 2);
+#endif
 	return 0; // No error
 }
 
@@ -807,6 +814,11 @@ static void prepareSignals()
 #ifndef EXTRAFUNCS
 #define EXTRAFUNCS /* none*/
 #endif
+
+ProjectFunc jlong conditionJump(JNIEnv*, jobject, jlong extPtr, jint cndID, CCndExtension cnd);
+ProjectFunc void actionJump(JNIEnv*, jobject, jlong extPtr, jint actID, CActExtension act);
+ProjectFunc void expressionJump(JNIEnv*, jobject, jlong extPtr, jint expID, CNativeExpInstance exp);
+
 ProjectFunc jint JNICALL JNI_OnLoad(JavaVM * vm, void * reserved) {
 	// https://developer.android.com/training/articles/perf-jni.html#native_libraries
 

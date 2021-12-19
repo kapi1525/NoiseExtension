@@ -1,8 +1,9 @@
 #include "Common.h"
-#include "Edif.h"
-#include "DarkEdif.h"
-#include "Resource.h"
 #include "Extension.h"
+#include "DarkEdif.h"
+
+// Used for Win32 resource ID numbers
+#include "Resource.h"
 
 // ============================================================================
 // GLOBAL DEFINES
@@ -15,16 +16,13 @@ Edif::SDK * SDK = nullptr;
 // 2-char language code; EN, FR or JP, since that's all the Fusion versions.
 TCHAR Edif::LanguageCode[3];
 
-// If true, running in Fusion editor or Fusion loading screen.
-// If false, running in Run Application or built EXEs.
+// If true, running in Fusion editor, Fusion loading screen, Run Application.
+// If false, running in built EXEs.
+[[deprecated("Use DarkEdif::RunMode")]]
 bool Edif::IsEdittime;
 
 // If true, JSON file is external. If false, it is an embedded resource (default).
 bool Edif::ExternalJSON;
-
-// If true, the Edif::Init() and subfunctions are being called from Fusion splash screen.
-// If false, they are being called from a MFA load or Create New Object.
-bool Edif::IsFusionStartupRun;
 
 #ifdef __ANDROID__
 // Do not use everywhere! JNIEnv * are thread-specific. Use Edif::Runtime JNI functions to get a thread-local one.
@@ -32,8 +30,52 @@ JNIEnv * mainThreadJNIEnv;
 JavaVM * global_vm;
 #endif
 
+// Checks Fusion runtime is compatible with your extension.
+// In Runtime, this expression should not be called and always returns false.
+static int isCompatibleResult = -1;
+bool IS_COMPATIBLE(mv * v)
+{
+#if RuntimeBuild
+	// mV is not valid at runtime; so someone's trying to use a Runtime MFX as Editor,
+	// which won't work anyway because Runtime MFX lacks A/C/E menus and such.
+	return false;
+#else
+	// No GetVersion function provided, abort
+	if (!v->GetVersion)
+		return false;
+
+	if (isCompatibleResult == -1)
+	{
+		isCompatibleResult = -2;
+		isCompatibleResult = IS_COMPATIBLE(v);
+	}
+	if (isCompatibleResult > -1)
+		return isCompatibleResult != 0;
+
+	// Build too low, abort
+	const unsigned int fusionVer = v->GetVersion();
+	if ((fusionVer & MMFBUILD_MASK) < Extension::MinimumBuild)
+		return false;
+
+	// Fusion 1.5 or lower, abort
+	if ((fusionVer & MMFVERSION_MASK) < MMFVERSION_20)
+		return false;
+
+	// Confirm Fusion branch - TGF (HOME), Standard, Developer (PRO) - called HOME
+	#if defined(MMFEXT)
+		return ((fusionVer & MMFVERFLAG_MASK) & MMFVERFLAG_HOME) == 0; // Not == HOME, i.e. TGF
+	#elif defined(PROEXT)
+		return ((fusionVer & MMFVERFLAG_MASK) & MMFVERFLAG_PRO) != 0;
+	#else // TGFEXT
+		return true;
+	#endif
+#endif
+}
+
 std::string Edif::CurrentFolder()
 {
+	// Deprecated because ambiguous:
+	// extension path? application path? slash at end? data folder?
 	char result[PATH_MAX];
 #ifdef _WIN32
 	size_t count = GetModuleFileNameA(hInstLib, result, sizeof(result));
@@ -46,23 +88,16 @@ std::string Edif::CurrentFolder()
 #endif
 	return std::string(result, count > 0 ? count : 0);
 }
-// Classname_FuncName().
-// No addition parameters, and no Java_ prefix needed.
 void Edif::GetExtensionName(char * const writeTo)
 {
-#ifdef _WIN32
-	std::string curFolder = CurrentFolder();
-	strcpy(writeTo, strrchr(curFolder.c_str(), '\\') + 1);
-	writeTo[strlen(writeTo) - 4] = 0; // Remove ".mfx"
-	// ::SDK and json not available.
-#else
+	// Deprecated because ambiguous:
+	// extension name with underscores - e.g. MFX filename?
+	// extension name as user-named object property?
+	// extension name as in project name?
 	strcpy(writeTo, PROJECT_NAME);
-#endif
 }
 
-HMENU Edif::ActionMenu, Edif::ConditionMenu, Edif::ExpressionMenu;
-
-Params ReadParameterType(const char * Text, bool &IsFloat)
+Params ReadActionOrConditionParameterType(const char * Text, bool &IsFloat)
 {
 	if (!_stricmp(Text, "Text") || !_stricmp(Text, "String"))
 		return Params::String_Expression;
@@ -204,15 +239,15 @@ ExpReturnType ReadExpressionReturnType(const char * Text)
 void Edif::Init(mv * mV, EDITDATA * edPtr)
 {
 #ifdef _WIN32
-	// It's edittime if the main window is available
-	IsEdittime = mV->HMainWin != 0;
+	::SDK->mV = mV;
 
-	// An edPtr means there's an EDITDATA, so it's not the splash screen
-	IsFusionStartupRun = false;
+	// HMainWin may be edited since we last used it
+	DarkEdif::Internal_WindowHandle = mV->HMainWin;
 
 	// Redraw the object in frame editor
 	#if EditorBuild
-		mvInvalidateObject(mV, edPtr);
+		if (DarkEdif::RunMode == DarkEdif::MFXRunMode::Editor)
+			mvInvalidateObject(mV, edPtr);
 	#endif
 #endif
 }
@@ -233,37 +268,85 @@ int Edif::Init(mv * mV, bool fusionStartupScreen)
 {
 	_tcscpy (LanguageCode, _T ("EN"));
 
+	// We want DarkEdif::MsgBox::XX as soon as possible.
+	// Main thread ID is used to prevent crashes from message boxes not being task-modal.
+	// Since we're initializing this, might as well set all the DarkEdif mV variables.
+	DarkEdif::MainThreadID = std::this_thread::get_id();
 #ifdef _WIN32
-	IsEdittime = mV->HMainWin != 0;
-	IsFusionStartupRun = fusionStartupScreen;
+	DarkEdif::IsFusion25 = ((mV->GetVersion() & MMFVERSION_MASK) == CFVERSION_25);
+	DarkEdif::Internal_WindowHandle = mV->HMainWin;
+#endif
 
-	// Get pathname of MMF2
-	TCHAR * mmfname = (TCHAR *)calloc(MAX_PATH, sizeof(TCHAR));
-	if ( mmfname != NULL )
+#if EditorBuild
+	// Calculate run mode
+	if (fusionStartupScreen)
+		DarkEdif::RunMode = DarkEdif::MFXRunMode::SplashScreen;
+	else if (mV->HMainWin != 0)
+		DarkEdif::RunMode = DarkEdif::MFXRunMode::Editor;
+	else
 	{
-		// Load resources
-		GetModuleFileName (NULL, mmfname, MAX_PATH);
-		HINSTANCE hRes = LoadLibraryEx(mmfname, NULL, DONT_RESOLVE_DLL_REFERENCES | LOAD_LIBRARY_AS_DATAFILE);
-		if ( hRes != NULL )
+		// This could be either Run Application or Built EXE. We'll assume built EXE for simpler code, but check.
+		DarkEdif::RunMode = DarkEdif::MFXRunMode::BuiltEXE;
+
+		std::tstring_view mfxFolder = DarkEdif::GetMFXRelativeFolder(DarkEdif::GetFusionFolderType::MFXLocation);
+
+		DarkEdif::RemoveSuffixIfExists(mfxFolder, _T("Unicode\\"sv));
+
+		if (DarkEdif::EndsWith(mfxFolder, _T("Extensions\\"sv)))
 		{
-			// Load string 720, contains the language code
-			TCHAR langCode[20];
-			LoadString(hRes, 720, langCode, 20);
+			// Note: In Run Application, the Extensions MFXs are used, but the edrt app is in Data\Runtime, not Extensions.
+			std::tstring_view appPath = DarkEdif::GetRunningApplicationPath(DarkEdif::GetRunningApplicationPathType::FullPath);
 
-			int nCode = _ttoi(langCode);
-			switch (nCode) {
-				case 0x40C:
-					_tcscpy (LanguageCode, _T ("FR"));
-					break;
-				case 0x411:
-					_tcscpy (LanguageCode, _T ("JP"));
-					break;
+			if (DarkEdif::RemoveSuffixIfExists(appPath, _T("\\edrt.exe"sv)) || DarkEdif::RemoveSuffixIfExists(appPath, _T("\\edrtex.exe"sv)))
+			{
+				DarkEdif::RemoveSuffixIfExists(appPath, _T("\\Unicode"sv));
+				DarkEdif::RemoveSuffixIfExists(appPath, _T("\\Hwa"sv));
+
+				// else program is named edrt[ex].exe, but isn't running in Data\Runtime, so it's just an app called edrt.exe
+				if (DarkEdif::RemoveSuffixIfExists(appPath, _T("Data\\Runtime"sv)))
+				{
+					std::tstring fusionPath(appPath);
+					if (mvIsUnicodeVersion(mV))
+						fusionPath += _T("mmf2u.exe"sv);
+					else
+						fusionPath += _T("mmf2.exe"sv);
+
+					// We found Fusion!
+					if (DarkEdif::FileExists(fusionPath))
+						DarkEdif::RunMode = DarkEdif::MFXRunMode::RunApplication;
+				}
 			}
-
-			// Free resources
-			FreeLibrary(hRes);
 		}
-		free(mmfname);
+	}
+#else // Not editor build, missing things that will let Fusion use it in editor.
+	DarkEdif::RunMode = DarkEdif::MFXRunMode::BuiltEXE;
+#endif
+
+#ifdef _WIN32
+	// You shouldn't use .data() on a std::string_view and expect null terminator,
+	// but since we know it points to the std::string appPath, we'll make an exception.
+	const std::tstring_view appPath = DarkEdif::GetRunningApplicationPath(DarkEdif::GetRunningApplicationPathType::FullPath);
+
+	// Look up the running app and get the language code from its resources.
+	const HINSTANCE hRes = LoadLibraryEx(appPath.data(), NULL, DONT_RESOLVE_DLL_REFERENCES | LOAD_LIBRARY_AS_DATAFILE);
+	if (hRes != NULL)
+	{
+		// Load string resource ID 720, contains the language code
+		TCHAR langCode[20];
+		LoadString(hRes, 720, langCode, std::size(langCode));
+
+		int nCode = _ttoi(langCode);
+		switch (nCode) {
+			case 0x40C: // MAKELANGID(LANG_FRENCH, SUBLANG_FRENCH);
+				_tcscpy (LanguageCode, _T ("FR"));
+				break;
+			case 0x411: // MAKELANGID(LANG_JAPANESE, SUBLANG_JAPANESE_JAPAN);
+				_tcscpy (LanguageCode, _T ("JP"));
+				break;
+		}
+
+		// Free resources
+		FreeLibrary(hRes);
 	}
 #endif
 
@@ -297,11 +380,18 @@ int Edif::Init(mv * mV, bool fusionStartupScreen)
 	// Workaround for subapp bug (cheers LB), where Init/Free is called more than once,
 	// even if object is not in subapp and thus doesn't apply
 	// http://community.clickteam.com/threads/97219-MFX-not-found-when-in-subapp?p=693431#post693431
-	static Edif::SDK gSDK (mV, *json);
+#if !defined(_WIN32) || WINVER >= 0x0600 || !defined(__cpp_threadsafe_static_init)
+	static Edif::SDK gSDK(mV, *json);
 	::SDK = &gSDK;
+#else
+	// Static local initialization bug. For more detail, see the MultiTarget MD file on XP targeting.
+	// On XP, the code above zero-fills gSDK, and doesn't run the constructor, resulting in a
+	// crash later, when GetRunObjectInfos() tries to use the null ::SDK->json via "CurLang".
+	::SDK = new Edif::SDK(mV, *json);
+#endif
 
 #ifdef INTENSE_FUNCTIONS_EXTENSION
-	Extension::AutoGenerateExpressions(&gSDK);
+	Extension::AutoGenerateExpressions(*::SDK);
 #endif
 
 	return 0;	// no error
@@ -309,7 +399,6 @@ int Edif::Init(mv * mV, bool fusionStartupScreen)
 
 #if EditorBuild
 // Used for reading the icon image file
-// Filter ID can be null, 
 FusionAPIImport BOOL FusionAPI ImportImageFromInputFile(CImageFilterMgr* pImgMgr, CInputFile* pf, cSurface* psf, LPDWORD pDWFilterID, DWORD dwFlags);
 
 #endif
@@ -317,59 +406,74 @@ FusionAPIImport BOOL FusionAPI ImportImageFromInputFile(CImageFilterMgr* pImgMgr
 Edif::SDK::SDK(mv * mV, json_value &_json) : json (_json)
 {
 	this->mV = mV;
-	DarkEdif::MainThreadID = std::this_thread::get_id();
-#ifdef _WIN32
-	DarkEdif::IsFusion25 = ((mV->GetVersion() & MMFVERSION_MASK) == CFVERSION_25);
-	DarkEdif::Internal_WindowHandle = mV->HMainWin;
-#endif
-
-	#if EditorBuild
-		cSurface * proto = nullptr;
-		if (GetSurfacePrototype(&proto, 32, (int)SurfaceType::Memory, (int)SurfaceDriver::Bitmap) == FALSE)
-			DarkEdif::MsgBox::Error(_T("DarkEdif error"), _T("Getting surface prototype failed."));
-
-		Icon = new cSurface();
-		if (mV->ImgFilterMgr)
-		{
-			char * IconData;
-			size_t IconSize;
-
-			int result = Edif::GetDependency (IconData, IconSize, _T("png"), IDR_EDIF_ICON);
-			if (result != Edif::DependencyNotFound)
-			{
-				CInputMemFile * File = CInputMemFile::NewInstance();
-				File->Create((LPBYTE)IconData, IconSize);
-
-				std::unique_ptr<cSurface> tempIcon = std::make_unique<cSurface>();
-				ImportImageFromInputFile(mV->ImgFilterMgr, File, tempIcon.get(), NULL, 0);
-
-				File->Delete();
-
-				if (!tempIcon->HasAlpha())
-					tempIcon->SetTransparentColor(RGB(255, 0, 255));
-
-				if (result != Edif::DependencyWasResource)
-					free(IconData);
-
-				Icon->Create(tempIcon->GetWidth(), tempIcon->GetHeight(), proto);
-
-				if (tempIcon->Blit(*Icon) == FALSE)
-					DarkEdif::MsgBox::Error(_T("DarkEdif error"), _T("Blitting to ext icon surface failed. Last error: %i."), tempIcon->GetLastError());
-			}
-		}
-
-		#if USE_DARKEDIF_UPDATE_CHECKER
-		// Is in editor, not EXE using Run Application, and not in startup screen
-		// Startup screen seems like a clever place to check, but if the update server is down,
-		// you get plenty of delaying exts when loading Fusion
-		if (Edif::IsEdittime && !Edif::IsFusionStartupRun)
-			DarkEdif::SDKUpdater::StartUpdateCheck();
-		#endif
-	#endif
-
 
 	if (!::SDK)
 		::SDK = this;
+
+#if EditorBuild
+	cSurface * proto = nullptr;
+	if (GetSurfacePrototype(&proto, 32, (int)SurfaceType::Memory_DeviceContext, (int)SurfaceDriver::Bitmap) == FALSE)
+		DarkEdif::MsgBox::Error(_T("DarkEdif error"), _T("Getting surface prototype failed."));
+
+	Icon = new cSurface();
+	if (mV->ImgFilterMgr)
+	{
+		char * IconData;
+		size_t IconSize;
+
+		int result = Edif::GetDependency (IconData, IconSize, _T("png"), IDR_EDIF_ICON);
+		if (result != Edif::DependencyNotFound)
+		{
+			CInputMemFile * File = CInputMemFile::NewInstance();
+			File->Create((LPBYTE)IconData, IconSize);
+
+			std::unique_ptr<cSurface> tempIcon = std::make_unique<cSurface>();
+			ImportImageFromInputFile(mV->ImgFilterMgr, File, tempIcon.get(), NULL, 0);
+
+			File->Delete();
+
+			if (!tempIcon->HasAlpha())
+				tempIcon->SetTransparentColor(RGB(255, 0, 255));
+
+			if (result != Edif::DependencyWasResource)
+				free(IconData);
+
+			Icon->Create(tempIcon->GetWidth(), tempIcon->GetHeight(), proto);
+
+			if (!tempIcon->HasAlpha())
+				Icon->SetTransparentColor(RGB(255, 0, 255));
+			else
+				Icon->CreateAlpha();
+
+			if (tempIcon->Blit(*Icon) == FALSE)
+				DarkEdif::MsgBox::Error(_T("DarkEdif error"), _T("Blitting to ext icon surface failed. Last error: %i."), tempIcon->GetLastError());
+		}
+	}
+
+#if USE_DARKEDIF_UPDATE_CHECKER
+	// Is in editor, not EXE using Run Application, and not in startup screen
+	// Startup screen seems like a clever place to check, but if the update server is down,
+	// you get plenty of delaying exts when loading Fusion
+	if (DarkEdif::RunMode == DarkEdif::MFXRunMode::Editor)
+		DarkEdif::SDKUpdater::StartUpdateCheck();
+#endif
+
+	// Is not in editor, but using an Edittime-based MFX. This is UC tag avoiding behaviour
+	// Since PDB files and no optimization is only possible in Debug builds, the ext dev might have copied
+	// it legitimately to debug a Run App error. So we will allow Debug builds to skip the UC tag.
+#if USE_DARKEDIF_UC_TAGGING && !defined(_DEBUG)
+	if (DarkEdif::RunMode == DarkEdif::MFXRunMode::BuiltEXE)
+	{
+	#ifdef _UNICODE
+		const TCHAR * isUni = _T("\\Unicode");
+	#else
+		const TCHAR * isUni = _T("");
+	#endif
+		DarkEdif::MsgBox::Error(_T("DarkEdif error"), _T("Couldn't find UC tag; did you copy an Extensions%s MFX into Data\\Runtime%s?"), isUni, isUni);
+		std::abort();
+	}
+#endif // Using UC Tagging and not Debug build
+#endif // EditorBuild
 
 	if (CurLang.type != json_object)
 	{
@@ -382,8 +486,6 @@ Edif::SDK::SDK(mv * mV, json_value &_json) : json (_json)
 	const json_value &Expressions = CurLang["Expressions"];
 
 #ifdef _WIN32
-	const json_value & Properties = CurLang["Properties"];
-
 	ActionJumps = new void * [Actions.u.object.length + 1];
 	ConditionJumps = new void * [Conditions.u.object.length + 1];
 	ExpressionJumps = new void * [Expressions.u.object.length + 1];
@@ -395,9 +497,9 @@ Edif::SDK::SDK(mv * mV, json_value &_json) : json (_json)
 
 	for (size_t i = 0; i < Actions.u.object.length; ++ i)
 	{
-#ifdef _WIN32
+	#ifdef _WIN32
 		ActionJumps [i] = (void *) Edif::ActionJump;
-#endif
+	#endif
 
 		ActionFunctions.push_back(0);
 
@@ -407,9 +509,9 @@ Edif::SDK::SDK(mv * mV, json_value &_json) : json (_json)
 
 	for (size_t i = 0; i < Conditions.u.object.length; ++ i)
 	{
-#ifdef _WIN32
+	#ifdef _WIN32
 		ConditionJumps [i] = (void *) Edif::ConditionJump;
-#endif
+	#endif
 
 		ConditionFunctions.push_back(0);
 
@@ -419,9 +521,9 @@ Edif::SDK::SDK(mv * mV, json_value &_json) : json (_json)
 
 	for (size_t i = 0; i < Expressions.u.object.length; ++ i)
 	{
-#ifdef _WIN32
+	#ifdef _WIN32
 		ExpressionJumps [i] = (void *) Edif::ExpressionJump;
-#endif
+	#endif
 
 		ExpressionFunctions.push_back(0);
 
@@ -429,8 +531,9 @@ Edif::SDK::SDK(mv * mV, json_value &_json) : json (_json)
 		CreateNewExpressionInfo();
 	}
 
-	// Phi woz 'ere
+	// Object properties, as they appear in Properties tab, so only under editor.
 #if EditorBuild
+	const json_value& Properties = CurLang["Properties"];
 	{
 		std::vector <PropData> VariableProps;
 		PropData * CurrentProperty;
@@ -490,12 +593,12 @@ Edif::SDK::SDK(mv * mV, json_value &_json) : json (_json)
 
 			// If checkbox is enabled, pass that as flags as well.
 			unsigned int Options = (bool(Property["Checkbox"]) ? PROPOPT_CHECKBOX : 0)		// Checkbox enabled by property option in JSON
-									| (bool(Property["Bold"]) ? PROPOPT_BOLD: 0)				// Bold enabled by property option in JSON
-									| (bool(Property["Removable"]) ? PROPOPT_REMOVABLE: 0)		// Removable enabled by property option in JSON
-									| (bool(Property["Renameable"]) ? PROPOPT_RENAMEABLE: 0)	// Renamable enabled by property option in JSON
-									| (bool(Property["Moveable"]) ? PROPOPT_MOVABLE: 0)		// Movable enabled by property option in JSON
-									| (bool(Property["List"]) ? PROPOPT_LIST: 0)				// List enabled by property option in JSON
-									| (bool(Property["SingleSelect"]) ? PROPOPT_SINGLESEL: 0);	// Single-select enabled by property option in JSON
+								 | (bool(Property["Bold"]) ? PROPOPT_BOLD: 0)				// Bold enabled by property option in JSON
+								 | (bool(Property["Removable"]) ? PROPOPT_REMOVABLE: 0)		// Removable enabled by property option in JSON
+								 | (bool(Property["Renameable"]) ? PROPOPT_RENAMEABLE: 0)	// Renamable enabled by property option in JSON
+								 | (bool(Property["Moveable"]) ? PROPOPT_MOVABLE: 0)		// Movable enabled by property option in JSON
+								 | (bool(Property["List"]) ? PROPOPT_LIST: 0)				// List enabled by property option in JSON
+								 | (bool(Property["SingleSelect"]) ? PROPOPT_SINGLESEL: 0);	// Single-select enabled by property option in JSON
 			// Todo: passing of LParams requires ParamsREQUIRED option.
 			// Find out what opt is.
 			// Two settings may be specified by |=ing the options unsigned int.
@@ -515,7 +618,7 @@ Edif::SDK::SDK(mv * mV, json_value &_json) : json (_json)
 
 				// Edit button, Params1 = button text, or nullptr if Edit
 				case PROPTYPE_EDITBUTTON:
-					SetAllProps(PROPOPT_PARAMREQUIRED, (((const char *)Property["Text"])[0] == '\0') ? 0 : (const char *)Property["Text"]);
+					SetAllProps(PROPOPT_PARAMREQUIRED, (((const char *)Property["DefaultState"])[0] == '\0') ? 0 : Edif::ConvertString((const char *)Property["DefaultState"]));
 
 				// Edit box for strings, Parameter = max length
 				case PROPTYPE_EDIT_STRING:
@@ -653,9 +756,11 @@ Edif::SDK::SDK(mv * mV, json_value &_json) : json (_json)
 		memset(&EdittimeProperties[VariableProps.size()], 0, sizeof(PropData));
 	}
 
+#if EditorBuild
 	ActionMenu = LoadMenuJSON(Edif::ActionID(0), CurLang["ActionMenu"]);
 	ConditionMenu = LoadMenuJSON(Edif::ConditionID(0), CurLang["ConditionMenu"]);
 	ExpressionMenu = LoadMenuJSON(Edif::ExpressionID(0), CurLang["ExpressionMenu"]);
+#endif
 
 	// Check for ext dev forgetting to overwrite some of the Template properties
 	#if defined(_DEBUG) && !defined(IS_DARKEDIF_TEMPLATE)
@@ -692,6 +797,7 @@ Edif::SDK::SDK(mv * mV, json_value &_json) : json (_json)
 
 Edif::SDK::~SDK()
 {
+	OutputDebugStringA("Edif::SDK::~SDK() call.\r\n");
 	json_value_free (&json);
 
 #if EditorBuild
@@ -867,6 +973,7 @@ long ActionOrCondition(void * Function, int ID, Extension * ext, const ACEInfo *
 		[CNT] "m" (argStackCount)
 		: "r0", "r1", "r2", "r3", "r4", "r5", "r6");
 	// blx
+
 #else
 #ifndef __INTELLISENSE__
 	if (isCond)
@@ -906,54 +1013,6 @@ endFunc:
 	// Bool returns aren't 0x0 or 0x1, they botch the other 24 bits.
 	return (long)*(bool *)&Result;
 }
-
-#ifdef _WIN32
-HMENU Edif::LoadMenuJSON(int BaseID, const json_value &Source, HMENU Parent)
-{
-	if (!Parent)
-		Parent = CreateMenu();
-
-	for (unsigned int i = 0; i < Source.u.object.length; ++ i)
-	{
-		const json_value &MenuItem = Source[i];
-
-		if (MenuItem.type == json_string)
-		{
-			if (!_stricmp(MenuItem, "Separator") || !strcmp(MenuItem, "---"))
-			{
-				AppendMenu(Parent, MF_BYPOSITION | MF_SEPARATOR, 0, 0);
-				continue;
-			}
-
-			continue;
-		}
-
-		if (MenuItem[0].type == json_string && MenuItem[1].type == json_array)
-		{
-			HMENU SubMenu = CreatePopupMenu();
-			LoadMenuJSON(BaseID, MenuItem, SubMenu);
-
-			TCHAR* str = ConvertString(MenuItem[0]);
-			AppendMenu(Parent, MF_BYPOSITION | MF_STRING | MF_POPUP, (UINT) SubMenu, str);
-			FreeString(str);
-
-			continue;
-		}
-
-		unsigned int ItemOffset = 0;
-
-		int ID = BaseID + (int) MenuItem[ItemOffset].u.integer;
-		TCHAR * Text = ConvertString(MenuItem[ItemOffset + 1]);
-		bool Disabled = MenuItem.u.object.length > (ItemOffset + 2) ? ((bool) MenuItem[ItemOffset + 2]) != 0 : false;
-
-		AppendMenu(Parent, (Disabled ? MF_GRAYED | MF_UNCHECKED : 0) | MF_BYPOSITION | MF_STRING, ID, Text);
-
-		FreeString(Text);
-	}
-
-	return Parent;
-}
-#endif
 
 #ifdef _WIN32
 struct ConditionOrActionManager_Windows : ACEParamReader
@@ -1153,40 +1212,44 @@ ProjectFunc long PROJ_FUNC_GEN(PROJECT_NAME_RAW, _conditionJump(void * cppExtPtr
 	return Result;
 }
 
+// For some reason, actions are expected to return a short.
+// On Android/iOS, we make the Fusion wrapper, so we can return void instead.
+// To handle that, the "actreturn"  hack is used.
+
 #ifdef _WIN32
-short __stdcall Edif::ActionJump(RUNDATA * rdPtr, long param1, long param2)
+short FusionAPI Edif::ActionJump(RUNDATA * rdPtr, long param1, long param2)
 {
 	Extension * ext = rdPtr->pExtension;
 	/* int ID = rdPtr->rHo.hoAdRunHeader->rh4.rh4ActionStart->evtNum; */
 	int ID = rdPtr->rHo.EventNumber;
 	ConditionOrActionManager_Windows params(false, rdPtr, param1, param2);
-#define nowt 0
+#define actreturn 0
 #elif defined (__ANDROID__)
 ProjectFunc void actionJump(JNIEnv *, jobject, jlong extPtr, jint ID, CActExtension act)
 {
 	Extension * ext = (Extension *)extPtr;
 	ConditionOrActionManager_Android params(false, ext, act);
 	LOGV("Action ID %i start.", ID);
-#define nowt
+#define actreturn /* void */
 #else
 ProjectFunc void PROJ_FUNC_GEN(PROJECT_NAME_RAW, _actionJump(void * cppExtPtr, int ID, CActExtension act))
 {
 	Extension* ext = (Extension*)cppExtPtr;
 	ConditionOrActionManager_iOS params(false, ext, act);
-#define nowt
+#define actreturn /* void */
 #endif
 
 	if (::SDK->ActionFunctions.size() < (unsigned int)ID)
 	{
 		ext->UnlinkedAction(ID);
-		return nowt;
+		return actreturn;
 	}
 	void * Function = ::SDK->ActionFunctions[ID];
 
 	if (!Function)
 	{
 		ext->UnlinkedAction(ID);
-		return nowt;
+		return actreturn;
 	}
 
 	ActionOrCondition(Function, ID, ext, ::SDK->ActionInfos[ID], params, false);
@@ -1194,8 +1257,8 @@ ProjectFunc void PROJ_FUNC_GEN(PROJECT_NAME_RAW, _actionJump(void * cppExtPtr, i
 #ifdef __ANDROID__
 	LOGV("Action ID %i end.", ID);
 #endif
-	return nowt;
-#undef nowt
+	return actreturn;
+#undef actreturn
 }
 
 #ifdef __ANDROID__
@@ -1422,8 +1485,9 @@ ProjectFunc void PROJ_FUNC_GEN(PROJECT_NAME_RAW, _expressionJump(void * cppExtPt
 	memset(Parameters, 0, sizeof(long) * (ParameterCount + paramInc));
 	long Result = 0;
 
+	int ExpressionRet2 = (int)ExpressionRet;
 #ifdef _WIN32
-	int ExpressionRet2 = (int)ExpressionRet; // easier for ASM
+	//int ExpressionRet2 = (int)ExpressionRet; // easier for ASM
 #else
 	Parameters[0] = (long)ext;
 	int argStackCount = ParameterCount + paramInc;
@@ -1566,6 +1630,11 @@ endFunc:
 		[ACT] "m"(Function),
 		[CNT] "m" (argStackCount)
 		: "r0", "r1", "r2", "r3", "r4", "r5", "r6");
+	
+#elif defined(__i386__)// && defined(__APPLE__)
+	{
+		// FIXME: this shit was causing x86 android build to fail so i removed it, this probably broke those even more but who cares, almost no one uses x86 android :P.
+	};
 
 #else
 	switch (ID)
@@ -1580,6 +1649,7 @@ endFunc:
 			goto endFunc;
 	}
 #endif
+	(void)0;
 	endFunc:
 
 		// Must set return type after the expression func is evaluated, as sub-expressions inside the
@@ -1712,7 +1782,7 @@ static void GetSiblingPath (TCHAR * Buffer, const TCHAR * FileExtension)
 	// Is the file in the directory of the MFX? (if so, use this pathname)
 	TCHAR FullFilename [MAX_PATH];
 	_tcscpy(FullFilename, temp);
-	if (GetFileAttributes(FullFilename) == 0xFFFFFFFF)
+	if (!DarkEdif::FileExists(FullFilename))
 	{
 		// No => editor
 		TCHAR ExecutablePath [MAX_PATH];
@@ -1728,11 +1798,11 @@ static void GetSiblingPath (TCHAR * Buffer, const TCHAR * FileExtension)
 
 		// Same path as the executable?
 		_stprintf_s(FullFilename, sizeof(ExecutablePath)/sizeof(TCHAR), _T("%s/%s"), ExecutablePath, Filename);
-		if (GetFileAttributes(FullFilename) == 0xFFFFFFFF)
+		if (!DarkEdif::FileExists(FullFilename))
 		{
 			// No => try Data/Runtime
 			_stprintf_s(FullFilename, sizeof(ExecutablePath)/sizeof(TCHAR), _T("%s/Data/Runtime/%s"), ExecutablePath, Filename);
-			if (GetFileAttributes(FullFilename) == 0xFFFFFFFF)
+			if (!DarkEdif::FileExists(FullFilename))
 			{
 				*Buffer = 0;
 				return;

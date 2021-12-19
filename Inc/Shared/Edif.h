@@ -1,12 +1,9 @@
 #pragma once
 
 
-#include "json.h"
+#include "json.hpp"
 
 #include <vector>
-#include <list>
-#include <string>
-#include <sstream>
 #include <thread>
 #include <mutex>
 #include <algorithm>
@@ -15,63 +12,36 @@
 #include <atomic>
 
 #ifdef _WIN32
-#include "..\Windows\MMFMasterHeader.h"
+	#include "..\Windows\MMFMasterHeader.h"
+	extern HINSTANCE hInstLib;
 #elif defined (__ANDROID__)
-#include "..\Android\MMFAndroidMasterHeader.h"
+	#include "..\Android\MMFAndroidMasterHeader.h"
 #elif defined (__APPLE__)
-#include "../iOS/MMFiOSMasterHeader.h"
+	#include "../iOS/MMFiOSMasterHeader.h"
 #endif
-#include "json.h"
-
-/*
-#include "ccxhdr.h"
-#include "CfcFile.h"
-#include "ImageFlt.h"
-#include "ImgFlt.h"
-
-#include "Patch.h"
-*/
 
 class Extension;
 
 #include "ObjectSelection.h"
 
-#ifndef RUN_ONLY
-#if defined(MMFEXT)
-#define	IS_COMPATIBLE(v) (v->GetVersion != nullptr && (v->GetVersion() & MMFBUILD_MASK) >= Extension::MinimumBuild && (v->GetVersion() & MMFVERSION_MASK) >= MMFVERSION_20 && ((v->GetVersion() & MMFVERFLAG_MASK) & MMFVERFLAG_HOME) == 0)
-#elif defined(PROEXT)
-#define IS_COMPATIBLE(v) (v->GetVersion != nullptr && (v->GetVersion() & MMFBUILD_MASK) >= Extension::MinimumBuild && (v->GetVersion() & MMFVERSION_MASK) >= MMFVERSION_20 && ((v->GetVersion() & MMFVERFLAG_MASK) & MMFVERFLAG_PRO) != 0)
-#else
-#define	IS_COMPATIBLE(v) (v->GetVersion != nullptr && (v->GetVersion() & MMFBUILD_MASK) >= Extension::MinimumBuild && (v->GetVersion() & MMFVERSION_MASK) >= MMFVERSION_20)
-#endif
-#else
-#define IS_COMPATIBLE(v) (false)
-#endif
+extern bool IS_COMPATIBLE(struct mv * mV);
 
 // DarkEdif provides C++11 type checking between JSON and C++ definition.
 #if defined(_DEBUG) && defined(_WIN32) && !defined(FAST_ACE_LINK)
-
-#define LinkAction(ID, Function) \
-	LinkActionDebug(ID, &Extension::Function);
-
-#define LinkCondition(ID, Function) \
-	LinkConditionDebug(ID, &Extension::Function);
-
-#define LinkExpression(ID, Function) \
-	LinkExpressionDebug(ID, &Extension::Function);
-
+	#define LinkAction(ID, Function) \
+		LinkActionDebug(ID, &Extension::Function);
+	#define LinkCondition(ID, Function) \
+		LinkConditionDebug(ID, &Extension::Function);
+	#define LinkExpression(ID, Function) \
+		LinkExpressionDebug(ID, &Extension::Function);
 #else
-#define LinkAction(ID, Function) \
-	SDK->ActionFunctions[ID] = Edif::MemberFunctionPointer(&Extension::Function);
-
-#define LinkCondition(ID, Function) \
-	SDK->ConditionFunctions[ID] = Edif::MemberFunctionPointer(&Extension::Function);
-
-#define LinkExpression(ID, Function) \
-	SDK->ExpressionFunctions[ID] = Edif::MemberFunctionPointer(&Extension::Function);
+	#define LinkAction(ID, Function) \
+		SDK->ActionFunctions[ID] = Edif::MemberFunctionPointer(&Extension::Function);
+	#define LinkCondition(ID, Function) \
+		SDK->ConditionFunctions[ID] = Edif::MemberFunctionPointer(&Extension::Function);
+	#define LinkExpression(ID, Function) \
+		SDK->ExpressionFunctions[ID] = Edif::MemberFunctionPointer(&Extension::Function);
 #endif
-
-extern HINSTANCE hInstLib;
 
 struct RUNDATA;
 struct EDITDATA;
@@ -282,11 +252,6 @@ namespace Edif
 
 	extern TCHAR LanguageCode[3];
 	extern bool IsEdittime;
-	extern bool IsFusionStartupRun;
-
-	extern HMENU ActionMenu, ConditionMenu, ExpressionMenu;
-
-	HMENU LoadMenuJSON (int BaseID, const json_value &Source, HMENU Parent = 0);
 
 	int Init(mv * mV, bool fusionStartupScreen);
 	void Init(mv * mV, EDITDATA * edPtr);
@@ -295,6 +260,12 @@ namespace Edif
 	void Free(EDITDATA * edPtr);
 
 #ifdef _WIN32
+#if EditorBuild
+	extern HMENU ActionMenu, ConditionMenu, ExpressionMenu;
+
+	HMENU LoadMenuJSON(int BaseID, const json_value& Source, HMENU Parent = 0);
+#endif
+
 	// These jump the Fusion runtime call into the right Extension call
 	long FusionAPI ConditionJump(RUNDATA * rdPtr, long param1, long param2);
 	short FusionAPI ActionJump(RUNDATA * rdPtr, long param1, long param2);
@@ -323,7 +294,9 @@ namespace Edif
 		return *(void **) &_Function;
 	}
 
+	[[deprecated("Use DarkEdif::GetMFXRelativeFolder()")]]
 	std::string CurrentFolder();
+	[[deprecated("Use PROJECT_NAME define")]]
 	void GetExtensionName(char * const writeTo);
 
 	class recursive_mutex {
@@ -352,9 +325,4 @@ namespace Edif
 
 };
 
-#ifdef __ANDROID__
-ProjectFunc jlong conditionJump(JNIEnv *, jobject, jlong extPtr, jint cndID, CCndExtension cnd);
-ProjectFunc void actionJump(JNIEnv *, jobject, jlong extPtr, jint actID, CActExtension act);
-ProjectFunc void expressionJump(JNIEnv *, jobject, jlong extPtr, jint expID, CNativeExpInstance exp);
-#endif
 extern Edif::SDK * SDK;

@@ -16,9 +16,6 @@
       <Filter>Global to all extensions</Filter>
     </ClInclude>
     <ClInclude Include="DarkExt.json" />
-    <ClInclude Include="Resource.h">
-      <Filter>Misc</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Global to all extensions">

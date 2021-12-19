@@ -1,6 +1,7 @@
 #include "Common.h"
 
-#ifndef RUN_ONLY
+#if EditorBuild
+
 void FusionAPI GetObjInfos(mv * mV, EDITDATA * edPtr, TCHAR * ObjName, TCHAR * ObjAuthor,
 	TCHAR * ObjCopyright, TCHAR * ObjComment, TCHAR * ObjHttp)
 {
@@ -119,6 +120,55 @@ std::int16_t FusionAPI GetExpressionCodeFromMenu(mv* mV, short menuId)
 	return menuId - Edif::ExpressionID(0);
 }
 
+// Define them
+HMENU Edif::ActionMenu, Edif::ConditionMenu, Edif::ExpressionMenu;
+
+HMENU Edif::LoadMenuJSON(int BaseID, const json_value &Source, HMENU Parent)
+{
+	if (!Parent)
+		Parent = CreateMenu();
+
+	for (unsigned int i = 0; i < Source.u.object.length; ++ i)
+	{
+		const json_value &MenuItem = Source[i];
+
+		if (MenuItem.type == json_string)
+		{
+			if (!_stricmp(MenuItem, "Separator") || !strcmp(MenuItem, "---"))
+			{
+				AppendMenu(Parent, MF_BYPOSITION | MF_SEPARATOR, 0, 0);
+				continue;
+			}
+
+			continue;
+		}
+
+		if (MenuItem[0].type == json_string && MenuItem[1].type == json_array)
+		{
+			HMENU SubMenu = CreatePopupMenu();
+			LoadMenuJSON(BaseID, MenuItem, SubMenu);
+
+			TCHAR* str = ConvertString(MenuItem[0]);
+			AppendMenu(Parent, MF_BYPOSITION | MF_STRING | MF_POPUP, (UINT) SubMenu, str);
+			FreeString(str);
+
+			continue;
+		}
+
+		unsigned int ItemOffset = 0;
+
+		int ID = BaseID + (int) MenuItem[ItemOffset].u.integer;
+		TCHAR * Text = ConvertString(MenuItem[ItemOffset + 1]);
+		bool Disabled = MenuItem.u.object.length > (ItemOffset + 2) ? ((bool) MenuItem[ItemOffset + 2]) != 0 : false;
+
+		AppendMenu(Parent, (Disabled ? MF_GRAYED | MF_UNCHECKED : 0) | MF_BYPOSITION | MF_STRING, ID, Text);
+
+		FreeString(Text);
+	}
+
+	return Parent;
+}
+
 void menucpy(HMENU hTargetMenu, HMENU hSourceMenu)
 {
 	int		NumMenuItems;
@@ -186,12 +236,11 @@ HMENU FusionAPI GetExpressionMenu(mv* mV, ObjectInfo* oiPtr, EDITDATA* edPtr)
 	return NULL;
 }
 
-
 void * FusionAPI GetConditionInfos(mv *mV, short code)
 {
 #pragma DllExportHint
 	if (IS_COMPATIBLE(mV))
-		return ::SDK->ConditionInfos[code]->MMFPtr();
+		return ::SDK->ConditionInfos[code]->FusionPtr();
 	return NULL;
 }
 
@@ -199,7 +248,7 @@ void * FusionAPI GetActionInfos(mv * mV, short code)
 {
 #pragma DllExportHint
 	if (IS_COMPATIBLE(mV))
-		return ::SDK->ActionInfos[code]->MMFPtr();
+		return ::SDK->ActionInfos[code]->FusionPtr();
 	return NULL;
 }
 
@@ -207,7 +256,7 @@ void * FusionAPI GetExpressionInfos(mv * mV, short code)
 {
 #pragma DllExportHint
 	if (IS_COMPATIBLE(mV))
-		return ::SDK->ExpressionInfos[code]->MMFPtr();
+		return ::SDK->ExpressionInfos[code]->FusionPtr();
 	return NULL;
 }
 
@@ -275,6 +324,6 @@ void FusionAPI PrepareFlexBuild(mv * pMV, EDITDATA * edPtr, const wchar_t * wTem
 
 	AddDirectory(std::tstring(FlashFolderPath) + _T("\\"), std::tstring(TempFolder));
 }
-#endif
+#endif // DARKEXT_JSON_FILE_EXTERNAL
 
-#endif // !defined(RUN_ONLY)
+#endif // EditorBuild

@@ -18,9 +18,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\Inc\Shared\json.h">
-      <Filter>Global to all extensions\Edif\JSON</Filter>
-    </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)..\Inc\Shared\DarkEdif.h">
       <Filter>Global to all extensions\Edif</Filter>
     </ClInclude>
@@ -30,6 +27,18 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)..\Inc\Shared\ObjectSelection.h">
       <Filter>Global to all extensions</Filter>
     </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Inc\Shared\json.hpp">
+      <Filter>Global to all extensions\Edif\JSON</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Inc\Shared\AllPlatformDefines.hpp">
+      <Filter>Global to all extensions\Edif</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Inc\Shared\NonWindowsDefines.hpp">
+      <Filter>Global to all extensions\Edif</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Inc\Shared\Strings.hpp">
+      <Filter>Global to all extensions\Edif</Filter>
+    </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)Extension.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)Common.h">
       <Filter>Misc</Filter>
@@ -37,9 +46,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)..\Inc\Shared\FastNoiseLite.h">
       <Filter>Misc</Filter>
     </ClInclude>
-    <ClInclude Include="$(MSBuildThisFileDirectory)noise-requests.h">
-      <Filter>Misc</Filter>
-    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)Resource.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Lib\Shared\DarkEdif.cpp">
@@ -69,9 +76,6 @@
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)Expressions.cpp">
       <Filter>ACE</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)noise-requests.cpp">
-      <Filter>Misc</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
