@@ -29,9 +29,6 @@
 			"---"
 		],
 		"ConditionMenu": [
-			[ 0, "Is Noise request ready?" ],
-			[ 1, "On Noise request ready?" ],
-			"---"
 		],
 		"ExpressionMenu": [
 			[ 0, "Get current seed" ],
