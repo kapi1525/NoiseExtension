@@ -23,7 +23,7 @@ jobs:
 
     - name: Build
       working-directory: ${{env.GITHUB_WORKSPACE}}
-      run: build.bat --release --full --noinstall --noclean --bundle
+      run: ./build.bat --release --full --noinstall --noclean --bundle
     
     - name: Upload assets to GitHub
       uses: AButler/upload-release-assets@v2.0

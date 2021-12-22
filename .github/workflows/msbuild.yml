@@ -20,7 +20,7 @@ jobs:
 
     - name: Build
       working-directory: ${{env.GITHUB_WORKSPACE}}
-      run: build.bat --release --full --noinstall --noclean
+      run: ./build.bat --release --full --noinstall --noclean
 
     - uses: actions/upload-artifact@v2
       with:
