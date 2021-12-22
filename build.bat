@@ -31,7 +31,6 @@ set install=1
 set bundle=0
 
 
-set arg_count=0
 for %%x in (%*) do (
     if %%~x==--fast (
         set full=0
