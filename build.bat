@@ -1,7 +1,7 @@
 @echo off
 
 :: ------------------------------
-::         build.bat v1.1        
+::         build.bat v1.2        
 :: ------------------------------
 :: Run arguments:
 :: --fast       -f      build only windows
@@ -14,6 +14,8 @@
 :: --noinstall  -i
 ::
 :: --bundle     -b      create zip file with extension
+::
+:: --sdkconfig  -s      create FusionSDKConfig.ini with usefull settings
 :: ------------------------------
 
 setlocal enabledelayedexpansion
@@ -29,6 +31,7 @@ set release=1
 set clean=1
 set install=1
 set bundle=0
+set createsdkconf=0
 
 
 for %%x in (%*) do (
@@ -60,6 +63,10 @@ for %%x in (%*) do (
         set bundle=1
     ) else if %%~x==-b (
         set bundle=1
+    ) else if %%~x==--sdkconfig (
+        set createsdkconf=1
+    ) else if %%~x==-s (
+        set createsdkconf=1
     ) else (
         echo Argument %%~x is not defined!
         goto :exit
@@ -69,6 +76,16 @@ for %%x in (%*) do (
 
 if %clean%==1 (
     call :clean
+)
+
+if %createsdkconf%==1 (
+    echo UseMultiProcessorCompilationInDebug = true > ..\FusionSDKConfig.ini
+    echo FavorSizeOrSpeed = speed >> ..\FusionSDKConfig.ini
+    echo UseLinkTimeCodeGeneration = true >> ..\FusionSDKConfig.ini
+    echo DarkEdifUpdateCheckerTagging  = true >> ..\FusionSDKConfig.ini
+    if %release%==0 (
+        echo EchoAllDefinesFromPropsFileDuringBuild = true >> ..\FusionSDKConfig.ini
+    )
 )
 
 if %release%==1 (
