@@ -1,7 +1,7 @@
 @echo off
 
 :: ------------------------------
-::         build.bat v1.2        
+::         build.bat v1.3        
 :: ------------------------------
 :: Run arguments:
 :: --fast       -f      build only windows
@@ -10,8 +10,8 @@
 :: --debug      -d
 :: --release    -r
 ::
-:: --noclean    -c
-:: --noinstall  -i
+:: --clean      -c      delete old build before building
+:: --install    -i      copy extension to your fusion install
 ::
 :: --bundle     -b      create zip file with extension
 ::
@@ -28,10 +28,10 @@ set project=Noise
 :: Thiese are deafult
 set full=1
 set release=1
-set clean=1
-set install=1
+set clean=0
+set install=0
 set bundle=0
-set createsdkconf=0
+set sdkconfig=0
 
 
 for %%x in (%*) do (
@@ -51,22 +51,22 @@ for %%x in (%*) do (
         set release=1
     ) else if %%~x==-r (
         set release=1
-    ) else if %%~x==--noclean (
-        set clean=0
+    ) else if %%~x==--clean (
+        set clean=1
     ) else if %%~x==-c (
-        set clean=0
-    ) else if %%~x==--noinstall (
-        set install=0
+        set clean=1
+    ) else if %%~x==--install (
+        set install=1
     ) else if %%~x==-i (
-        set install=0
+        set install=1
     ) else if %%~x==--bundle (
         set bundle=1
     ) else if %%~x==-b (
         set bundle=1
     ) else if %%~x==--sdkconfig (
-        set createsdkconf=1
+        set sdkconfig=1
     ) else if %%~x==-s (
-        set createsdkconf=1
+        set sdkconfig=1
     ) else (
         echo Argument %%~x is not defined!
         goto :exit
@@ -78,14 +78,8 @@ if %clean%==1 (
     call :clean
 )
 
-if %createsdkconf%==1 (
-    echo UseMultiProcessorCompilationInDebug = true > ..\FusionSDKConfig.ini
-    echo FavorSizeOrSpeed = speed >> ..\FusionSDKConfig.ini
-    echo UseLinkTimeCodeGeneration = true >> ..\FusionSDKConfig.ini
-    echo DarkEdifUpdateCheckerTagging  = true >> ..\FusionSDKConfig.ini
-    if %release%==0 (
-        echo EchoAllDefinesFromPropsFileDuringBuild = true >> ..\FusionSDKConfig.ini
-    )
+if %sdkconfig%==1 (
+    call :setupsdkconfig
 )
 
 if %release%==1 (
@@ -118,6 +112,18 @@ if %bundle%==1 (
 )
 
 goto :exit
+
+
+
+
+
+:setupsdkconfig
+    echo UseMultiProcessorCompilationInDebug = true > ..\FusionSDKConfig.ini
+    echo FavorSizeOrSpeed = speed >> ..\FusionSDKConfig.ini
+    echo UseLinkTimeCodeGeneration = true >> ..\FusionSDKConfig.ini
+    echo DarkEdifUpdateCheckerTagging  = true >> ..\FusionSDKConfig.ini
+    echo EchoAllDefinesFromPropsFileDuringBuild = true >> ..\FusionSDKConfig.ini
+    exit /B 0
 
 
 :clean

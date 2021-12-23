@@ -20,7 +20,7 @@ jobs:
 
     - name: Build
       working-directory: ${{env.GITHUB_WORKSPACE}}
-      run: ./build.bat --release --full --noclean --noinstall --sdkconfig
+      run: ./build.bat --sdkconfig
 
     - uses: actions/upload-artifact@v2
       with:
