@@ -79,12 +79,12 @@ if %clean%==1 (
 )
 
 if %createsdkconf%==1 (
-    call :run echo UseMultiProcessorCompilationInDebug = true > ..\FusionSDKConfig.ini
-    call :run echo FavorSizeOrSpeed = speed >> ..\FusionSDKConfig.ini
-    call :run echo UseLinkTimeCodeGeneration = true >> ..\FusionSDKConfig.ini
-    call :run echo DarkEdifUpdateCheckerTagging  = true >> ..\FusionSDKConfig.ini
+    echo UseMultiProcessorCompilationInDebug = true > ..\FusionSDKConfig.ini
+    echo FavorSizeOrSpeed = speed >> ..\FusionSDKConfig.ini
+    echo UseLinkTimeCodeGeneration = true >> ..\FusionSDKConfig.ini
+    echo DarkEdifUpdateCheckerTagging  = true >> ..\FusionSDKConfig.ini
     if %release%==0 (
-        call :run echo EchoAllDefinesFromPropsFileDuringBuild = true >> ..\FusionSDKConfig.ini
+        echo EchoAllDefinesFromPropsFileDuringBuild = true >> ..\FusionSDKConfig.ini
     )
 )
 
