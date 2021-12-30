@@ -3,24 +3,113 @@ name: Build
 on: [push, pull_request]
 
 jobs:
-  Build:
+  Build_Edittime_Unicode:
     runs-on: windows-2022
 
     steps:
     - uses: actions/checkout@v2
 
-    - name: Add msbuild to PATH
+    - name: Setup msbuild
       uses: microsoft/setup-msbuild@v1.1
-      with:
-        vs-prerelease: true
-
-    #- name: Restore NuGet packages
-    #  working-directory: ${{env.GITHUB_WORKSPACE}}
-    #  run: nuget restore .
-
+    
     - name: Build
       working-directory: ${{env.GITHUB_WORKSPACE}}
-      run: ./build.bat --sdkconfig
+      run: msbuild /nologo /m ./Noise.sln /t:"Noise_Windows" /p:Configuration="Edittime Unicode" /p:Platform="x86"
+
+    - uses: actions/upload-artifact@v2
+      with:
+        name: Noise
+        path: ./MFX/
+  
+
+  Build_Runtime_Unicode:
+    runs-on: windows-2022
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Setup msbuild
+      uses: microsoft/setup-msbuild@v1.1
+    
+    - name: Build
+      working-directory: ${{env.GITHUB_WORKSPACE}}
+      run: msbuild /nologo /m ./Noise.sln /t:"Noise_Windows" /p:Configuration="Runtime Unicode" /p:Platform="x86"
+
+    - uses: actions/upload-artifact@v2
+      with:
+        name: Noise
+        path: ./MFX/
+
+
+  Build_Android_ARM:
+    runs-on: windows-2022
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Setup msbuild
+      uses: microsoft/setup-msbuild@v1.1
+    
+    - name: Build
+      working-directory: ${{env.GITHUB_WORKSPACE}}
+      run: msbuild /nologo /m ./Noise.sln /t:"Noise_Android" /p:Configuration="Runtime" /p:Platform="ARM"
+
+    - uses: actions/upload-artifact@v2
+      with:
+        name: Noise
+        path: ./MFX/
+
+
+  Build_Android_ARM64:
+    runs-on: windows-2022
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Setup msbuild
+      uses: microsoft/setup-msbuild@v1.1
+    
+    - name: Build
+      working-directory: ${{env.GITHUB_WORKSPACE}}
+      run: msbuild /nologo /m ./Noise.sln /t:"Noise_Android" /p:Configuration="Runtime" /p:Platform="ARM64"
+
+    - uses: actions/upload-artifact@v2
+      with:
+        name: Noise
+        path: ./MFX/
+
+
+  Build_Android_x86:
+    runs-on: windows-2022
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Setup msbuild
+      uses: microsoft/setup-msbuild@v1.1
+    
+    - name: Build
+      working-directory: ${{env.GITHUB_WORKSPACE}}
+      run: msbuild /nologo /m ./Noise.sln /t:"Noise_Android" /p:Configuration="Runtime" /p:Platform="x86"
+
+    - uses: actions/upload-artifact@v2
+      with:
+        name: Noise
+        path: ./MFX/
+
+
+  Build_Android_x64:
+    runs-on: windows-2022
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Setup msbuild
+      uses: microsoft/setup-msbuild@v1.1
+    
+    - name: Build
+      working-directory: ${{env.GITHUB_WORKSPACE}}
+      run: msbuild /nologo /m ./Noise.sln /t:"Noise_Android" /p:Configuration="Runtime" /p:Platform="x64"
 
     - uses: actions/upload-artifact@v2
       with:
