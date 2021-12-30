@@ -14,7 +14,7 @@ jobs:
     
     - name: Build
       working-directory: ${{env.GITHUB_WORKSPACE}}
-      run: msbuild ./Noise.sln /t"Noise.Windows.vcxproj" /p:Configuration="Edittime Unicode" /p:Platform="x86" /nologo /m
+      run: msbuild ./Noise.sln /t="Noise.Windows.vcxproj" /p:Configuration="Edittime Unicode" /p:Platform="x86" /nologo /m
 
     - uses: actions/upload-artifact@v2
       with:
@@ -33,7 +33,7 @@ jobs:
     
     - name: Build
       working-directory: ${{env.GITHUB_WORKSPACE}}
-      run: msbuild ./Noise.sln /t"Noise.Windows.vcxproj" /p:Configuration="Runtime Unicode" /p:Platform="x86" /nologo /m
+      run: msbuild ./Noise.sln /t="Noise.Windows.vcxproj" /p:Configuration="Runtime Unicode" /p:Platform="x86" /nologo /m
 
     - uses: actions/upload-artifact@v2
       with:
@@ -52,7 +52,7 @@ jobs:
     
     - name: Build
       working-directory: ${{env.GITHUB_WORKSPACE}}
-      run: msbuild ./Noise.sln /t"Noise.Android.vcxproj" /p:Configuration="Runtime" /p:Platform="ARM" /nologo /m
+      run: msbuild ./Noise.sln /t="Noise.Android.vcxproj" /p:Configuration="Runtime" /p:Platform="ARM" /nologo /m
 
     - uses: actions/upload-artifact@v2
       with:
@@ -71,7 +71,7 @@ jobs:
     
     - name: Build
       working-directory: ${{env.GITHUB_WORKSPACE}}
-      run: msbuild ./Noise.sln /t"Noise.Android.vcxproj" /p:Configuration="Runtime" /p:Platform="ARM64" /nologo /m
+      run: msbuild ./Noise.sln /t="Noise.Android.vcxproj" /p:Configuration="Runtime" /p:Platform="ARM64" /nologo /m
 
     - uses: actions/upload-artifact@v2
       with:
@@ -90,7 +90,7 @@ jobs:
     
     - name: Build
       working-directory: ${{env.GITHUB_WORKSPACE}}
-      run: msbuild ./Noise.sln /t"Noise.Android.vcxproj" /p:Configuration="Runtime" /p:Platform="x86" /nologo /m
+      run: msbuild ./Noise.sln /t="Noise.Android.vcxproj" /p:Configuration="Runtime" /p:Platform="x86" /nologo /m
 
     - uses: actions/upload-artifact@v2
       with:
@@ -109,7 +109,7 @@ jobs:
     
     - name: Build
       working-directory: ${{env.GITHUB_WORKSPACE}}
-      run: msbuild ./Noise.sln /t"Noise.Android.vcxproj" /p:Configuration="Runtime" /p:Platform="x64" /nologo /m
+      run: msbuild ./Noise.sln /t="Noise.Android.vcxproj" /p:Configuration="Runtime" /p:Platform="x64" /nologo /m
 
     - uses: actions/upload-artifact@v2
       with:
