@@ -9,3 +9,4 @@ Temp
 *.PostMinify.json
 *.log
 CHANGELOG.md
+nextbuild.bat

@@ -3,24 +3,179 @@ name: Build
 on: [push, pull_request]
 
 jobs:
-  Build:
+  Build_Edittime_Unicode:
     runs-on: windows-2022
 
     steps:
     - uses: actions/checkout@v2
 
-    - name: Add msbuild to PATH
+    - name: Setup msbuild
       uses: microsoft/setup-msbuild@v1.1
-      with:
-        vs-prerelease: true
-
-    #- name: Restore NuGet packages
-    #  working-directory: ${{env.GITHUB_WORKSPACE}}
-    #  run: nuget restore .
-
+    
     - name: Build
       working-directory: ${{env.GITHUB_WORKSPACE}}
-      run: ./build.bat --sdkconfig
+      run: msbuild ./Noise/Noise.Windows.vcxproj /p:Configuration="Edittime Unicode" /p:Platform="x86" /nologo /m /clp:Summary;ForceNoAlign;verbosity=minimal
+
+    - uses: actions/upload-artifact@v2
+      with:
+        name: Temp-Edittime-Unicode
+        path: ./MFX/
+  
+
+  Build_Runtime_Unicode:
+    runs-on: windows-2022
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Setup msbuild
+      uses: microsoft/setup-msbuild@v1.1
+    
+    - name: Build
+      working-directory: ${{env.GITHUB_WORKSPACE}}
+      run: msbuild ./Noise/Noise.Windows.vcxproj /p:Configuration="Runtime Unicode" /p:Platform="x86" /nologo /m /clp:Summary;ForceNoAlign;verbosity=minimal
+
+    - uses: actions/upload-artifact@v2
+      with:
+        name: Temp-Runtime-Unicode
+        path: ./MFX/
+
+
+  Build_Android_ARM:
+    runs-on: windows-2022
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Setup msbuild
+      uses: microsoft/setup-msbuild@v1.1
+    
+    - name: Build
+      working-directory: ${{env.GITHUB_WORKSPACE}}
+      run: msbuild ./Noise/Noise.Android.vcxproj /p:Configuration="Runtime" /p:Platform="ARM" /nologo /m /clp:Summary;ForceNoAlign;verbosity=minimal
+
+    - uses: actions/upload-artifact@v2
+      with:
+        name: Temp-Android-ARM
+        path: ./MFX/
+
+
+  Build_Android_ARM64:
+    runs-on: windows-2022
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Setup msbuild
+      uses: microsoft/setup-msbuild@v1.1
+    
+    - name: Build
+      working-directory: ${{env.GITHUB_WORKSPACE}}
+      run: msbuild ./Noise/Noise.Android.vcxproj /p:Configuration="Runtime" /p:Platform="ARM64" /nologo /m /clp:Summary;ForceNoAlign;verbosity=minimal
+
+    - uses: actions/upload-artifact@v2
+      with:
+        name: Temp-Android-ARM64
+        path: ./MFX/
+
+
+  Build_Android_x86:
+    runs-on: windows-2022
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Setup msbuild
+      uses: microsoft/setup-msbuild@v1.1
+    
+    - name: Build
+      working-directory: ${{env.GITHUB_WORKSPACE}}
+      run: msbuild ./Noise/Noise.Android.vcxproj /p:Configuration="Runtime" /p:Platform="x86" /nologo /m /clp:Summary;ForceNoAlign;verbosity=minimal
+
+    - uses: actions/upload-artifact@v2
+      with:
+        name: Temp-Android-x86
+        path: ./MFX/
+
+
+  Build_Android_x64:
+    runs-on: windows-2022
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Setup msbuild
+      uses: microsoft/setup-msbuild@v1.1
+    
+    - name: Build
+      working-directory: ${{env.GITHUB_WORKSPACE}}
+      run: msbuild ./Noise/Noise.Android.vcxproj /p:Configuration="Runtime" /p:Platform="x64" /nologo /m /clp:Summary;ForceNoAlign;verbosity=minimal
+
+    - uses: actions/upload-artifact@v2
+      with:
+        name: Temp-Android-x64
+        path: ./MFX/
+
+
+  Upload_Build:
+    needs: [Build_Edittime_Unicode, Build_Runtime_Unicode, Build_Android_ARM, Build_Android_ARM64, Build_Android_x86, Build_Android_x64]
+    runs-on: windows-2022
+    continue-on-error: true
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - uses: actions/download-artifact@v2
+      with:
+        path: ./mfx
+        
+    - name: Display structure of downloaded files
+      run: ls -R
+      working-directory: ./mfx
+
+    - name: Delete Artifact by Name
+          uses: jimschubert/delete-artifacts-action@v1
+          with:
+            log_level: 'debug'
+            artifact_name: 'Temp-Edittime-Unicode'
+            min_bytes: '0'
+
+    - name: Delete Artifact by Name
+          uses: jimschubert/delete-artifacts-action@v1
+          with:
+            log_level: 'debug'
+            artifact_name: 'Temp-Runtime-Unicode'
+            min_bytes: '0'
+
+    - name: Delete Artifact by Name
+          uses: jimschubert/delete-artifacts-action@v1
+          with:
+            log_level: 'debug'
+            artifact_name: 'Temp-Android-ARM'
+            min_bytes: '0'
+
+    - name: Delete Artifact by Name
+          uses: jimschubert/delete-artifacts-action@v1
+          with:
+            log_level: 'debug'
+            artifact_name: 'Temp-Android-ARM64'
+            min_bytes: '0'
+
+
+    - name: Delete Artifact by Name
+          uses: jimschubert/delete-artifacts-action@v1
+          with:
+            log_level: 'debug'
+            artifact_name: 'Temp-Android-x86'
+            min_bytes: '0'
+
+
+    - name: Delete Artifact by Name
+          uses: jimschubert/delete-artifacts-action@v1
+          with:
+            log_level: 'debug'
+            artifact_name: 'Temp-Android-x64'
+            min_bytes: '0'
 
     - uses: actions/upload-artifact@v2
       with:
