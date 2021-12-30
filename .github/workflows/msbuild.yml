@@ -18,7 +18,7 @@ jobs:
 
     - uses: actions/upload-artifact@v2
       with:
-        name: Temp-Edittime-Unicode
+        name: Noise
         path: ./MFX/
   
 
@@ -37,7 +37,7 @@ jobs:
 
     - uses: actions/upload-artifact@v2
       with:
-        name: Temp-Runtime-Unicode
+        name: Noise
         path: ./MFX/
 
 
@@ -56,7 +56,7 @@ jobs:
 
     - uses: actions/upload-artifact@v2
       with:
-        name: Temp-Android-ARM
+        name: Noise
         path: ./MFX/
 
 
@@ -75,7 +75,7 @@ jobs:
 
     - uses: actions/upload-artifact@v2
       with:
-        name: Temp-Android-ARM64
+        name: Noise
         path: ./MFX/
 
 
@@ -94,7 +94,7 @@ jobs:
 
     - uses: actions/upload-artifact@v2
       with:
-        name: Temp-Android-x86
+        name: Noise
         path: ./MFX/
 
 
@@ -110,72 +110,6 @@ jobs:
     - name: Build
       working-directory: ${{env.GITHUB_WORKSPACE}}
       run: msbuild ./Noise.sln /t:"Noise_Android" /p:Configuration="Runtime" /p:Platform="x64" /nologo /m
-
-    - uses: actions/upload-artifact@v2
-      with:
-        name: Temp-Android-x64
-        path: ./MFX/
-
-
-  Upload_Build:
-    needs: [Build_Edittime_Unicode, Build_Runtime_Unicode, Build_Android_ARM, Build_Android_ARM64, Build_Android_x86, Build_Android_x64]
-    runs-on: windows-2022
-    continue-on-error: true
-
-    steps:
-    - uses: actions/checkout@v2
-
-    - uses: actions/download-artifact@v2
-      with:
-        path: ./mfx
-        
-    - name: Display structure of downloaded files
-      run: ls -R
-      working-directory: ./mfx
-
-    - name: Delete Temp-Edittime-Unicode
-      uses: jimschubert/delete-artifacts-action@v1
-      with:
-        log_level: 'debug'
-        artifact_name: 'Temp-Edittime-Unicode'
-        min_bytes: '0'
-
-    - name: Delete Temp-Runtime-Unicode
-      uses: jimschubert/delete-artifacts-action@v1
-      with:
-        log_level: 'debug'
-        artifact_name: 'Temp-Runtime-Unicode'
-        min_bytes: '0'
-
-    - name: Delete Temp-Android-ARM
-      uses: jimschubert/delete-artifacts-action@v1
-      with:
-        log_level: 'debug'
-        artifact_name: 'Temp-Android-ARM'
-        min_bytes: '0'
-
-    - name: Delete Temp-Android-ARM64
-      uses: jimschubert/delete-artifacts-action@v1
-      with:
-        log_level: 'debug'
-        artifact_name: 'Temp-Android-ARM64'
-        min_bytes: '0'
-
-
-    - name: Delete Temp-Android-x86
-      uses: jimschubert/delete-artifacts-action@v1
-      with:
-        log_level: 'debug'
-        artifact_name: 'Temp-Android-x86'
-        min_bytes: '0'
-
-
-    - name: Delete Temp-Android-x64
-      uses: jimschubert/delete-artifacts-action@v1
-      with:
-        log_level: 'debug'
-        artifact_name: 'Temp-Android-x64'
-        min_bytes: '0'
 
     - uses: actions/upload-artifact@v2
       with:
