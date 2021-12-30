@@ -133,49 +133,49 @@ jobs:
       run: ls -R
       working-directory: ./mfx
 
-    - name: Delete Artifact by Name
-          uses: jimschubert/delete-artifacts-action@v1
-          with:
-            log_level: 'debug'
-            artifact_name: 'Temp-Edittime-Unicode'
-            min_bytes: '0'
+    - name: Delete Temp-Edittime-Unicode
+      uses: jimschubert/delete-artifacts-action@v1
+      with:
+        log_level: 'debug'
+        artifact_name: 'Temp-Edittime-Unicode'
+        min_bytes: '0'
 
-    - name: Delete Artifact by Name
-          uses: jimschubert/delete-artifacts-action@v1
-          with:
-            log_level: 'debug'
-            artifact_name: 'Temp-Runtime-Unicode'
-            min_bytes: '0'
+    - name: Delete Temp-Runtime-Unicode
+      uses: jimschubert/delete-artifacts-action@v1
+      with:
+        log_level: 'debug'
+        artifact_name: 'Temp-Runtime-Unicode'
+        min_bytes: '0'
 
-    - name: Delete Artifact by Name
-          uses: jimschubert/delete-artifacts-action@v1
-          with:
-            log_level: 'debug'
-            artifact_name: 'Temp-Android-ARM'
-            min_bytes: '0'
+    - name: Delete Temp-Android-ARM
+      uses: jimschubert/delete-artifacts-action@v1
+      with:
+        log_level: 'debug'
+        artifact_name: 'Temp-Android-ARM'
+        min_bytes: '0'
 
-    - name: Delete Artifact by Name
-          uses: jimschubert/delete-artifacts-action@v1
-          with:
-            log_level: 'debug'
-            artifact_name: 'Temp-Android-ARM64'
-            min_bytes: '0'
-
-
-    - name: Delete Artifact by Name
-          uses: jimschubert/delete-artifacts-action@v1
-          with:
-            log_level: 'debug'
-            artifact_name: 'Temp-Android-x86'
-            min_bytes: '0'
+    - name: Delete Temp-Android-ARM64
+      uses: jimschubert/delete-artifacts-action@v1
+      with:
+        log_level: 'debug'
+        artifact_name: 'Temp-Android-ARM64'
+        min_bytes: '0'
 
 
-    - name: Delete Artifact by Name
-          uses: jimschubert/delete-artifacts-action@v1
-          with:
-            log_level: 'debug'
-            artifact_name: 'Temp-Android-x64'
-            min_bytes: '0'
+    - name: Delete Temp-Android-x86
+      uses: jimschubert/delete-artifacts-action@v1
+      with:
+        log_level: 'debug'
+        artifact_name: 'Temp-Android-x86'
+        min_bytes: '0'
+
+
+    - name: Delete Temp-Android-x64
+      uses: jimschubert/delete-artifacts-action@v1
+      with:
+        log_level: 'debug'
+        artifact_name: 'Temp-Android-x64'
+        min_bytes: '0'
 
     - uses: actions/upload-artifact@v2
       with:
