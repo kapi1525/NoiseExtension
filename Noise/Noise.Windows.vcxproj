@@ -73,6 +73,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Inc\Windows\MMFMasterHeader.h" />
+    <ClInclude Include="..\Inc\Windows\WindowsDefines.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Ext.rc" />

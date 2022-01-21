@@ -15,6 +15,9 @@
     <ClInclude Include="..\Inc\Windows\Props.h">
       <Filter>Global to all extensions</Filter>
     </ClInclude>
+    <ClInclude Include="..\Inc\Windows\WindowsDefines.hpp">
+      <Filter>Global to all extensions\Edif</Filter>
+    </ClInclude>
     <ClInclude Include="DarkExt.json" />
   </ItemGroup>
   <ItemGroup>
