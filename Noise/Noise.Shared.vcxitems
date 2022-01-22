@@ -18,7 +18,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)..\Inc\Shared\AllPlatformDefines.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\Inc\Shared\DarkEdif.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\Inc\Shared\Edif.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\Inc\Shared\FastNoiseLite.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Inc\FastNoiseLite.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\Inc\Shared\Strings.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\Inc\Shared\json.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\Inc\Shared\NonWindowsDefines.hpp" />
