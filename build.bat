@@ -153,8 +153,8 @@ goto :exit
 
 
 :bundle
-    call :run mkdir %~dp0MFX/Examples/
-    call :run xcopy /s /v /c /y %~dp0Examples/*.* %~dp0MFX/Examples/
+    call :run mkdir %~dp0MFX\Examples\
+    call :run xcopy /s /v /c /y %~dp0Examples\*.* %~dp0MFX\Examples\
     call :run tar -a -cf %project%.zip -C MFX *.*
     exit /B 0
 
