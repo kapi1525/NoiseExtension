@@ -1,7 +1,7 @@
 @echo off
 
 :: ------------------------------
-::         build.bat v1.3        
+::         build.bat v1.4        
 :: ------------------------------
 :: Run arguments:
 :: --fast       -f      build only windows
@@ -153,6 +153,7 @@ goto :exit
 
 
 :bundle
+    call :run xcopy /s /v /c /y %~dp0Examples\*.* %~dp0MFX
     call :run tar -a -cf %project%.zip -C MFX *.*
     exit /B 0
 
