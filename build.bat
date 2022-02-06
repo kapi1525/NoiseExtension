@@ -121,7 +121,6 @@ goto :exit
     echo UseMultiProcessorCompilationInDebug = true > ..\FusionSDKConfig.ini
     echo FavorSizeOrSpeed = speed >> ..\FusionSDKConfig.ini
     echo UseLinkTimeCodeGeneration = true >> ..\FusionSDKConfig.ini
-    echo DarkEdifUpdateCheckerTagging  = true >> ..\FusionSDKConfig.ini
     echo EchoAllDefinesFromPropsFileDuringBuild = true >> ..\FusionSDKConfig.ini
     exit /B 0
 
