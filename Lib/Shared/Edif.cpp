@@ -1621,7 +1621,7 @@ endFunc:
 		: "r0", "r1", "r2", "r3", "r4", "r5", "r6");
 	
 #elif defined(__i386__)// && defined(__APPLE__)
-	{
+	/*{
 		// We have all the parameters and values we need, run the function
 		__asm
 		{
@@ -1653,7 +1653,7 @@ endFunc:
 			End:
 				popad					; End new register set (restore registers that existed before popad)
 		};
-	};
+	};*/
 
 #else
 	switch (ID)
