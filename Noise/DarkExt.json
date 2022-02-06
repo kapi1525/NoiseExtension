@@ -311,7 +311,7 @@
 				"Title": "Version",
 				"Info": "Version",
 				"Type": "Text",
-				"DefaultState": "Noise v0.8.0 (Extension: v8, SDK: DarkEdif v13 from commit 2cf65577494e6f07b118c8708f3f946eb10ec150)"
+				"DefaultState": "Noise v0.8.0 (Extension: v8, SDK: DarkEdif v13 from commit d5f54a0c9a5866461d5aca8339060dc8cf9efbef)"
 			}
 		]
 	}

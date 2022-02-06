@@ -1622,7 +1622,37 @@ endFunc:
 	
 #elif defined(__i386__)// && defined(__APPLE__)
 	{
-		// FIXME: this shit was causing x86 android build to fail so i removed it, this probably broke those even more but who cares, almost no one uses x86 android :P.
+		// We have all the parameters and values we need, run the function
+		__asm
+		{
+			pushad					; Start new register set (do not interfere with already existing registers)
+			mov ecx, ParameterCount	; Store numParameters in ecx
+			cmp ecx, 0				; If no parameters, call function immediately
+				je CallNow
+			mov edx, Parameters		; Otherwise store pointer to int * in Parameters
+			mov ebx, ecx			; Copy ecx, or ParameterCount, to ebx
+			shl ebx, 2				; Multiply parameter count by 2^2 (size of 32-bit variable)
+			add edx, ebx			; add (ParameterCount * 4) to Parameters, making edx point to Parameters[param count]
+			sub edx, 4				; subtract 4 from edx, making it 0-based (ending array index)
+			PushLoop:
+				push [edx]			; Push value pointed to by Parameters[edx]
+				sub edx, 4			; Decrement next loop`s Parameter index:	for (><; ><; edx -= 4)
+				dec ecx				; Decrement loop index:						for (><; ><; ecx--)
+				cmp ecx, 0			; If ecx == 0, end loop:					for (><; ecx == 0; ><)
+					jne PushLoop	; Optimisation: "cmp ecx, 0 / jne" can be replaced with "jcxz"
+			CallNow:
+				mov ecx, ext			; Move Module to ecx
+				call Function			; Call the function inside Module
+				mov ecx, ExpressionRet2
+				cmp ecx, 2				; Return type is not float
+					jne NotFloat
+				fstp Result
+				jmp End
+			NotFloat:
+				mov Result, eax			; Function`s return is stored in eax; copy it to returnValue
+			End:
+				popad					; End new register set (restore registers that existed before popad)
+		};
 	};
 
 #else

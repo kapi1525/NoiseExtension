@@ -2,6 +2,7 @@
 #include <atomic>
 #include "DarkEdif.h"
 #include <math.h>
+#include "Extension.h"
 
 #ifdef _WIN32
 extern HINSTANCE hInstLib;
@@ -575,19 +576,37 @@ std::uint16_t DarkEdif::GetEventNumber(eventGroup * evg) {
 /// <summary> If error, -1 is returned. </summary>
 int DarkEdif::GetCurrentFusionEventNum(const Extension * const ext)
 {
+	// Reading Fusion's internals requires the main runtime to not be editing them
+	if (MainThreadID != std::this_thread::get_id()) {
+		LOGE("Read GetCurrentFusionEventNum from non-main thread. Returning -1.\n");
+		return -1;
+	}
+
 #ifdef _WIN32
 	// Can we read current event?
 	if (!ext->rhPtr->EventGroup)
 		return -1;
 
 	int eventNum = GetEventNumber(ext->rhPtr->EventGroup);
-	if (eventNum == 0)
-		return -1;
-	return eventNum;
-#else // Can't read event yet
-
-
+	if (eventNum != 0)
+		return eventNum;
 	return -1;
+#elif defined(__ANDROID__)
+	// Call `int darkedif_jni_getCurrentFusionEventNum()` Java function
+	static jmethodID getEventIDMethod;
+	if (getEventIDMethod == nullptr)
+	{
+		jclass javaExtClass = threadEnv->GetObjectClass(ext->javaExtPtr);
+		getEventIDMethod = threadEnv->GetMethodID(javaExtClass, "darkedif_jni_getCurrentFusionEventNum", "()I");
+
+		// This is a Java wrapper implementation failure and so its absence should be considered fatal
+		if (getEventIDMethod == nullptr)
+			LOGF("Failed to find CRun" PROJECT_NAME_UNDERSCORES "'s darkedif_jni_getCurrentFusionEventNum method in Java wrapper file.\n");
+	}
+
+	return threadEnv->CallIntMethod(ext->javaExtPtr, getEventIDMethod);
+#else // iOS
+	return DarkEdif_getCurrentFusionEventNum(ext->objCExtPtr);
 #endif
 }
 
@@ -1200,8 +1219,12 @@ static std::tstring GetModulePath(HMODULE hModule)
 		std::abort();
 
 	// Successfully looked up the path!
-	if (numCharsWrittenExcludingNull != MAX_PATH)
+	if (numCharsWrittenExcludingNull != MAX_PATH &&
+		// Convert the path to long path, check it's not too long or error'd
+		(numCharsWrittenExcludingNull = GetLongPathName(path.data(), path.data(), path.size())) < MAX_PATH && numCharsWrittenExcludingNull > 0)
+	{
 		return path.substr(0, numCharsWrittenExcludingNull);
+	}
 
 	// else path is too long.
 
@@ -1741,14 +1764,16 @@ DWORD WINAPI DarkEdifUpdateThread(void *)
 		{
 			drMFXPath += _T("" PROJECT_NAME ".mfx"sv);
 
-			// Couldn't find either; roll back to Uni
-			if (DarkEdif::FileExists(drMFXPath))
+			// Couldn't find either; roll back to Uni for error messages
+			if (!DarkEdif::FileExists(drMFXPath))
 				drMFXPath = uniPath;
+
 			// else roll with ANSI
 		}
-		// else roll with Uni
+		else // else roll with Uni
+			drMFXPath = uniPath;
 	}
-	else // ANSI runtime will only use ANSI
+	else // ANSI runtime will only use ANSI MFX
 		drMFXPath += _T("" PROJECT_NAME ".mfx"sv);
 
 	// Stores UC tags in resources or registry.
@@ -1772,9 +1797,11 @@ DWORD WINAPI DarkEdifUpdateThread(void *)
 			resKey = L"Couldn't load MFX; not found"sv;
 			resFileExists = false;
 		}
+		else if (GetLastError() == ERROR_ACCESS_DENIED)
+			DarkEdif::MsgBox::Error(_T("Resource loading"), _T("Failed to set up ") PROJECT_NAME _T(" - access denied writing to Data\\Runtime MFX. Try running Fusion as admin, or re-installing the extension."));
 		else // Some other error loading; we'll consider it fatal.
 		{
-			DarkEdif::MsgBox::Error(_T("Resource loading"), _T("UC tagging resource load failed. Error %u while reading Data\\Runtime MFX."), GetLastError());
+			DarkEdif::MsgBox::Error(_T("Resource loading"), _T("UC tagging resource load failed. Error %u while reading Data\\Runtime MFX.\n%s"), GetLastError(), drMFXPath.c_str());
 			std::abort();
 		}
 	}
@@ -2349,7 +2376,7 @@ int DarkEdif::MsgBox::Custom(const int flags, const TCHAR * titlePrefix, PrintFH
 	va_end(v);
 	return ret;
 }
-void DarkEdif::Log(int logLevel, const TCHAR * msgFormat, ...)
+void DarkEdif::Log(int logLevel, PrintFHintInside const TCHAR * msgFormat, ...)
 {
 	va_list v;
 	va_start(v, msgFormat);
