@@ -297,6 +297,7 @@ void InitializePropertiesFromJSON(mv * mV, EDITDATA * edPtr)
 
 
 			case PROPTYPE_EDIT_STRING:
+			case PROPTYPE_EDIT_MULTILINE:
 			{
 				if (JProp["DefaultState"].type != json_string)
 				{
@@ -405,7 +406,7 @@ Prop * GetProperty(EDITDATA * edPtr, size_t ID)
 	unsigned int size;
 	char * Current = PropIndex(edPtr, ID, &size);
 
-	if (!_stricmp(curStr, "Editbox String"))
+	if (!_strnicmp(curStr, "Editbox String", sizeof("Editbox String") - 1))
 	{
 		ret = new Prop_Str(UTF8ToTString(Current, &allConvToTString).c_str());
 		if (!allConvToTString)
@@ -446,7 +447,7 @@ void PropChange(mv * mV, EDITDATA * &edPtr, unsigned int PropID, const void * ne
 	char * oldPropValue = PropIndex(edPtr, PropID, &oldPropValueSize);
 	bool rearrangementRequired = false;
 
-	if (!_stricmp(curTypeStr, "Editbox String"))
+	if (!_strnicmp(curTypeStr, "Editbox String", sizeof("Editbox String") - 1))
 		rearrangementRequired = newPropValueSize != oldPropValueSize; // May need resizing
 	else if (!_stricmp(curTypeStr, "Editbox Number"))
 		rearrangementRequired = false; // Number of editbox, always same data size
@@ -472,7 +473,7 @@ void PropChange(mv * mV, EDITDATA * &edPtr, unsigned int PropID, const void * ne
 	size_t afterOldSize = edPtr->DarkEdif_Prop_Size - oldPropValueSize - beforeOldSize;			// Pointer to O|P>|O
 	size_t odps = edPtr->DarkEdif_Prop_Size;
 
-	// Duplicate memory to another buffer (if new arragement is smaller - we can't just copy from old buffer after realloc)
+	// Duplicate memory to another buffer (if new arrangement is smaller - we can't just copy from old buffer after realloc)
 	char * newEdPtr = (char *)malloc(edPtr->DarkEdif_Prop_Size + (newPropValueSize - oldPropValueSize));
 
 	if (!newEdPtr)
@@ -480,7 +481,6 @@ void PropChange(mv * mV, EDITDATA * &edPtr, unsigned int PropID, const void * ne
 		DarkEdif::MsgBox::Error(_T("Property error"), _T("Out of memory attempting to rewrite properties!"));
 		return;
 	}
-	((EDITDATA *)newEdPtr)->DarkEdif_Prop_Size = _msize(newEdPtr);
 
 	// Copy the part before new data into new address
 	memcpy(newEdPtr, edPtr, beforeOldSize);
@@ -508,6 +508,9 @@ void PropChange(mv * mV, EDITDATA * &edPtr, unsigned int PropID, const void * ne
 	memcpy(((char *)fusionNewEdPtr) + sizeof(EDITDATA::eHeader),
 		newEdPtr + sizeof(EDITDATA::eHeader),
 		_msize(newEdPtr) - sizeof(EDITDATA::eHeader));
+
+	// This size set cannot be moved before the memcpy calls above; gets overwritten with old value
+	fusionNewEdPtr->DarkEdif_Prop_Size = _msize(newEdPtr);
 	free(newEdPtr);
 
 	edPtr = fusionNewEdPtr; // Inform caller of new address
@@ -537,7 +540,7 @@ char * PropIndex(EDITDATA * edPtr, unsigned int ID, unsigned int * size)
 	{
 		curStr = (const char *)j[(std::int32_t)i]["Type"];
 
-		if (!_stricmp(curStr, "Editbox String"))
+		if (!_strnicmp(curStr, "Editbox String", sizeof("Editbox String") - 1))
 			Current += strlen(Current) + 1;
 		else if (!_stricmp(curStr, "Editbox Number") || !_stricmp(curStr, "Combo Box"))
 			Current += sizeof(unsigned int);
@@ -833,7 +836,7 @@ std::tstring EDITDATA::GetPropertyStr(int propID)
 	const json_value &prop = CurLang["Properties"][propID];
 	if (!_stricmp(prop["Type"], "Combo Box"))
 		return UTF8ToTString((const char  *)prop["Items"][*(int *)PropIndex(this, propID, nullptr)]);
-	else if (!_stricmp(prop["Type"], "Editbox String"))
+	else if (!_strnicmp(prop["Type"], "Editbox String", sizeof("Editbox String") - 1))
 	{
 		unsigned int propDataSize = 0;
 		char * propDataStart = PropIndex(this, propID, &propDataSize);
@@ -1798,7 +1801,10 @@ DWORD WINAPI DarkEdifUpdateThread(void *)
 			resFileExists = false;
 		}
 		else if (GetLastError() == ERROR_ACCESS_DENIED)
-			DarkEdif::MsgBox::Error(_T("Resource loading"), _T("Failed to set up ") PROJECT_NAME _T(" - access denied writing to Data\\Runtime MFX. Try running Fusion as admin, or re-installing the extension."));
+		{
+			DarkEdif::MsgBox::Error(_T("Resource loading"), _T("Failed to set up ") PROJECT_NAME _T(" - access denied writing to Data\\Runtime MFX. Try running the UCT Fix Tool, or run Fusion as admin."));
+			std::abort();
+		}
 		else // Some other error loading; we'll consider it fatal.
 		{
 			DarkEdif::MsgBox::Error(_T("Resource loading"), _T("UC tagging resource load failed. Error %u while reading Data\\Runtime MFX.\n%s"), GetLastError(), drMFXPath.c_str());
@@ -1887,7 +1893,7 @@ DWORD WINAPI DarkEdifUpdateThread(void *)
 		FreeLibrary(readHandle);
 		std::abort();
 	}
-	else
+	else // reg key is missing
 		regKey = UC_TAG_NEW_SETUP;
 
 #else // !USE_DARKEDIF_UC_TAGGING
@@ -2178,7 +2184,7 @@ DWORD WINAPI DarkEdifUpdateThread(void *)
 				if (resHandle == NULL)
 				{
 					if (GetLastError() == ERROR_ACCESS_DENIED)
-						DarkEdif::MsgBox::Error(_T("Tag failure"), _T("UC tagging failure %u. Try running Fusion as admin, or enabling write permissions for Users role on Fusion folder."), GetLastError());
+						DarkEdif::MsgBox::Error(_T("Tag failure"), _T("UC tagging failure %u. Try running the UCT Fix Tool, or run Fusion as admin."), GetLastError());
 				}
 				else
 				{
@@ -2196,7 +2202,7 @@ DWORD WINAPI DarkEdifUpdateThread(void *)
 					if (!EndUpdateResource(resHandle, FALSE))
 					{
 						if (GetLastError() == ERROR_ACCESS_DENIED)
-							DarkEdif::MsgBox::Error(_T("Tag failure"), _T("UC tagging failure. Try running Fusion as admin and dropping a " PROJECT_NAME " extension into frame editor again."));
+							DarkEdif::MsgBox::Error(_T("Tag failure"), _T("UC tagging failure. Try running the UCT Fix Tool, or run Fusion as admin."));
 						else
 							DarkEdif::MsgBox::Error(_T("Tag failure"), _T("UC tagging failure; saving new tag returned %u."), GetLastError());
 					}
@@ -2218,7 +2224,7 @@ DWORD WINAPI DarkEdifUpdateThread(void *)
 				if (err != 0)
 				{
 					DarkEdif::MsgBox::Error(_T("Tag failure"), _T("UC tagging failure; saving new tag returned %u.%s"), err,
-						err == ERROR_ACCESS_DENIED ? "Try running Fusion as admin." : "");
+						err == ERROR_ACCESS_DENIED ? _T("Try running the UCT Fix Tool, or running Fusion as admin.") : _T(""));
 				}
 			}
 
@@ -2387,6 +2393,10 @@ void DarkEdif::Log(int logLevel, PrintFHintInside const TCHAR * msgFormat, ...)
 #elif defined(__ANDROID__)
 	__android_log_vprint(logLevel, PROJECT_NAME_UNDERSCORES, msgFormat, v);
 #else // iOS
+	static const char* logLevels[] = {
+		"", "", "verbose", "debug", "info", "warn", "error", "fatal"
+	};
+	printf("%-9s", logLevels[logLevel]);
 	vprintf(msgFormat, v);
 #endif
 	va_end(v);
