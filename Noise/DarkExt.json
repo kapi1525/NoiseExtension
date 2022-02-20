@@ -4,8 +4,8 @@
 	"UK English": {
 		"About": {
 			"Name": "Noise",
-			"Author": "Kacper Bugla \u0022Kapi\u0022",
-			"Copyright": "Copyright \u00A9 2022 Kacper Bugla \u0022Kapi\u0022",
+			"Author": "Kacper Bugla 'Kapi'",
+			"Copyright": "Copyright \u00A9 2022 Kacper Bugla 'Kapi'",
 			"Comment": "Generates Noise using many difrent alogrithms",
 			//"Help": "Help/Todo.chm",
 			"URL": "https://github.com/kapigames/NoiseExtension"
