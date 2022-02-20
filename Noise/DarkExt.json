@@ -4,28 +4,28 @@
 	"UK English": {
 		"About": {
 			"Name": "Noise",
-			"Author": "Kapi",
-			"Copyright": "Copyright \u00A9 2022 by Kapi",
+			"Author": "Kacper Bugla \"Kapi\"",
+			"Copyright": "Copyright \u00A9 2022 Kacper Bugla \"Kapi\"",
 			"Comment": "Generates Noise using many difrent alogrithms",
 			//"Help": "Help/Todo.chm",
 			"URL": "https://github.com/kapigames/NoiseExtension"
 		},
 
 		"ActionMenu": [
-			[ 0, "Set Seed" ],
+			[ 0, "Set seed" ],
 			"---",
-			[ 1, "Set Noise Type" ],
-			[ 2, "Set Noise Frequency" ],
+			[ 1, "Set Noise type" ],
+			[ 2, "Set Noise frequency" ],
 			"---",
-			[ 3, "Set Fractal Type" ],
-			[ 4, "Set Fractal Octaves" ],
-			[ 5, "Set Fractal Lacunarity" ],
-			[ 6, "Set Fractal Weighted Strength" ],
-			[ 7, "Set Fractal PingPong Strength" ],
+			[ 3, "Set fractal type" ],
+			[ 4, "Set fractal octaves" ],
+			[ 5, "Set fractal lacunarity" ],
+			[ 6, "Set fractal weighted strength" ],
+			[ 7, "Set fractal PingPong strength" ],
 			"---",
-			[ 8, "Set Cellular Distance Function" ],
-			[ 9, "Set Cellular Return Type" ],
-			[ 10, "Set Cellular Jitter" ],
+			[ 8, "Set cellular distance function" ],
+			[ 9, "Set cellular return type" ],
+			[ 10, "Set cellular jitter" ],
 			"---"
 		],
 		"ConditionMenu": [
@@ -40,7 +40,7 @@
 			[ 5, "Get looping Noise 1D" ],
 			"---",
 			[
-				"Noise Types",
+				"Noise types",
 				[ 6, "OpenSimplex2" ],
 				[ 7, "OpenSimplex2S" ],
 				[ 8, "Cellular" ],
@@ -49,21 +49,21 @@
 				[ 11, "Value" ]
 			],
 			[
-				"Fractal Types",
+				"Fractal types",
 				[ 12, "None" ],
 				[ 13, "FBm" ],
 				[ 14, "Rigid" ],
 				[ 15, "PingPong" ]
 			],
 			[
-				"Cellular Distance Functions",
+				"Cellular distance functions",
 				[ 16, "Euclidean" ],
 				[ 17, "EuclideanSq" ],
 				[ 18, "Manhattan" ],
 				[ 19, "Hybrid" ]
 			],
 			[
-				"Cellular Return Types",
+				"Cellular return types",
 				[ 20, "CellValue" ],
 				[ 21, "Distance" ],
 				[ 22, "Distance2" ],
@@ -73,79 +73,79 @@
 				[ 26, "Distance2Div" ]
 			],
 			"---",
-			[ 27, "Current Noise Type" ],
-			[ 28, "Current Fractal Type" ],
-			[ 29, "Current Cellular Distance Function" ],
-			[ 30, "Current Cellular Return Type" ],
+			[ 27, "Current Noise type" ],
+			[ 28, "Current fractal type" ],
+			[ 29, "Current cellular distance function" ],
+			[ 30, "Current cellular return type" ],
 			"---"
 		],
 
 		"Actions": [
 			{
-				"Title": "Set Seed to %0",
+				"Title": "Set seed to %0",
 				"Parameters": [
 					[ "Integer", "Seed" ]
 				]
 			},
 
 			{
-				"Title": "Set Noise Type to %0",
+				"Title": "Set Noise type to %0",
 				"Parameters": [
 					[ "Integer", "Type" ]
 				]
 			},
 			{
-				"Title": "Set Noise Frequency to %0",
+				"Title": "Set Noise frequency to %0",
 				"Parameters": [
 					[ "Float", "Frequency" ]
 				]
 			},
 
 			{
-				"Title": "Set Fractal Type to %0",
+				"Title": "Set fractal type to %0",
 				"Parameters": [
 					[ "Integer", "Type" ]
 				]
 			},
 			{
-				"Title": "Set Fractal Octaves to %0",
+				"Title": "Set fractal octaves to %0",
 				"Parameters": [
 					[ "Integer", "Octaves" ]
 				]
 			},
 			{
-				"Title": "Set Fractal Lacunarity to %0",
+				"Title": "Set fractal lacunarity to %0",
 				"Parameters": [
 					[ "float", "Lacunarity" ]
 				]
 			},
 			{
-				"Title": "Set Fractal Weighted Strength to %0",
+				"Title": "Set fractal weighted strength to %0",
 				"Parameters": [
-					[ "float", "Weighted Strength" ]
+					[ "float", "Weighted strength" ]
 				]
 			},
 			{
-				"Title": "Set Fractal PingPong Strength to %0",
+				"Title": "Set fractal PingPong strength to %0",
 				"Parameters": [
-					[ "float", "PingPong Strength" ]
+					[ "float", "PingPong strength" ]
 				]
 			},
 
 			{
-				"Title": "Set Cellular Distance Function to %0",
+				"Title": "Set cellular distance function to %0",
 				"Parameters": [
-					[ "Integer", "Distance Function" ]
+					[ "Integer", "Distance function" ]
 				]
 			},
 			{
-				"Title": "Set Cellular Return Type to %0",
+				"Title": "Set cellular return type to %0",
 				"Parameters": [
-					[ "Integer", "Return Type" ]
+					[ "Integer", "Return type" ]
 				]
 			},
 			{
-				"Title": "Set Cellular Jitter to %0",
+				"Title": "Set cellular jitter to %0",
 				"Parameters": [
 					[ "float", "Jitter" ]
 				]
@@ -162,7 +162,7 @@
 				"Title": "ToSeed(",
 				"Returns": "Integer",
 				"Parameters": [
-					[ "Text", "String" ]
+					[ "Text", "Text" ]
 				]
 			},
 
