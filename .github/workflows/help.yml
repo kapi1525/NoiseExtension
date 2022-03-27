@@ -19,7 +19,7 @@ jobs:
         path: 'NoiseExtension.wiki'
 
     - name: Install chmcmd
-      run: sudo apt update -y && sudo apt install fpc -y
+      run: sudo apt-get update && sudo apt-get install fpc -y
 
     - name: Download markdown-help
       uses: robinraju/release-downloader@v1.3
@@ -39,10 +39,14 @@ jobs:
         mv NoiseExtension.wiki/out/Noise.chm NoiseExtension/Help/
         cd NoiseExtension
     
-    - name: Create Pull Request
-      uses: peter-evans/create-pull-request@v4
+    - name: Commit files
+      run: |
+        git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
+        git config --local user.name "github-actions[bot]"
+        git commit -m "Add changes" -a
+    
+    - name: Push changes
+      uses: ad-m/github-push-action@master
       with:
-        title: 'Update help file'
-        commit-message: 'Update chm'
-        delete-branch: true
-        base: ${{ github.base_ref }}
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        branch: ${{ github.ref }}
