@@ -42,15 +42,15 @@ jobs:
         mv NoiseExtension.wiki/out/Noise.chm NoiseExtension/Help/
     
     - name: Commit files
+      working-directory: NoiseExtension
       run: |
-        cd NoiseExtension
-        ls -la
         git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
         git config --local user.name "github-actions[bot]"
         git add Help/Noise.chm
         git commit -m "Add changes" -a
     
     - name: Push changes
+      working-directory: NoiseExtension
       uses: ad-m/github-push-action@master
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
