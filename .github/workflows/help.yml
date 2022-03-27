@@ -19,7 +19,10 @@ jobs:
         path: 'NoiseExtension.wiki'
 
     - name: Install chmcmd
-      run: sudo apt-get update && sudo apt-get install fpc -y
+      uses: awalsh128/cache-apt-pkgs-action@v1
+      with:
+        packages: fpc
+        version: 1.0
 
     - name: Download markdown-help
       uses: robinraju/release-downloader@v1.3
@@ -41,6 +44,7 @@ jobs:
     
     - name: Commit files
       run: |
+        ls -l
         git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
         git config --local user.name "github-actions[bot]"
         git commit -m "Add changes" -a
