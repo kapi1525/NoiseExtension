@@ -50,8 +50,8 @@ jobs:
         git commit -m "Add changes" -a
     
     - name: Push changes
-      working-directory: NoiseExtension
       uses: ad-m/github-push-action@master
       with:
+        directory: NoiseExtension
         github_token: ${{ secrets.GITHUB_TOKEN }}
         branch: ${{ github.ref }}
