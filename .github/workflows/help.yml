@@ -1,0 +1,48 @@
+name: Update help file
+
+on: gollum
+
+jobs:
+  Build:
+    runs-on: windows-2022
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+      with:
+        path: 'NoiseExtension'
+
+    - name: Checkout wiki
+      uses: actions/checkout@v3
+      with:
+        repository: 'kapigames/NoiseExtension.wiki'
+        path: 'NoiseExtension.wiki'
+
+    - name: Install chmcmd
+      run: sudo apt update -y && sudo apt install fpc -y
+
+    - name: Download markdown-help
+      uses: robinraju/release-downloader@v1.3
+      with: 
+        repository: 'kapigames/markdown-help'
+        tag: 'v0.3.0'
+        fileName: 'markdown-help-linux-x86_64.tar.gz'
+    
+    - name: Extract and run markdown-help
+      run: |
+        tar -xf markdown-help-linux-x86_64.tar.gz
+        mv bin/markdown-help NoiseExtension.wiki
+        cd NoiseExtension.wiki
+        ./markdown-help
+        cd ..
+        mkdir NoiseExtension/Help/
+        mv NoiseExtension.wiki/out/Noise.chm NoiseExtension/Help/
+        cd NoiseExtension
+    
+    - name: Create Pull Request
+      uses: peter-evans/create-pull-request@v4
+      with:
+        title: 'Update help file'
+        commit-message: 'Update chm'
+        delete-branch: true
+        base: ${{ github.base_ref }}
