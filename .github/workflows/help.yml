@@ -40,11 +40,11 @@ jobs:
         cd ..
         mkdir NoiseExtension/Help/
         mv NoiseExtension.wiki/out/Noise.chm NoiseExtension/Help/
-        cd NoiseExtension
     
     - name: Commit files
       run: |
-        ls -l
+        cd NoiseExtension
+        ls -la
         git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
         git config --local user.name "github-actions[bot]"
         git commit -m "Add changes" -a
