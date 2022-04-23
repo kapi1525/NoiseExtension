@@ -4,6 +4,11 @@
 #include <math.h>
 #include "Extension.h"
 
+
+// To fix some warnings
+#define _WINSOCK_DEPRECATED_NO_WARNINGS
+
+
 #ifdef _WIN32
 extern HINSTANCE hInstLib;
 #endif
