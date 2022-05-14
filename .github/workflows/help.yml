@@ -21,9 +21,15 @@ jobs:
     - name: Install Html Help Workshop
       run: choco install html-help-workshop
 
+    - run: cd NoiseExtension.wiki
+    
+    - uses: ZacJW/markdown-html-action@1.1.0
+        with:
+          input_files: '[["*.md"]]'
+          output_files: '["Home.html"]'
+
     - name: Run compiler
       run: |
-        cd NoiseExtension.wiki
         hhc Noise.hhp
         move Noise.hhp ..\NoiseExtension\Help
         cd ..\NoiseExtension
