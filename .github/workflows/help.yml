@@ -4,8 +4,8 @@ on: gollum
 
 
 jobs:
-  Build:
-    runs-on: windows-latest
+  help:
+    runs-on: ubuntu-latest
 
     steps:
     - name: Checkout master
@@ -19,28 +19,32 @@ jobs:
         repository: 'kapigames/NoiseExtension.wiki'
         path: 'NoiseExtension.wiki'
 
-    - name: Install Html Help Workshop
-      run: choco install html-help-workshop
+    - name: Install chmcmd
+      uses: awalsh128/cache-apt-pkgs-action@v1
+      with:
+        packages: fpc
+        version: 1.0
 
-    - run: cd NoiseExtension.wiki
-    
-    - uses: ZacJW/markdown-html-action@1.1.0
+    - name: Convert md to html
+      uses: ZacJW/markdown-html-action@1.1.0
       with:
         input_files: '[["*.md"]]'
         output_files: '["Home.html"]'
 
     - name: Run compiler
       run: |
-        hhc Noise.hhp
-        move Noise.hhp ..\NoiseExtension\Help
-        cd ..\NoiseExtension
-
+        cd NoiseExtension.wiki
+        ./chmcmd Noise.hhp
+        cd ..
+        mkdir NoiseExtension/Help/
+        mv NoiseExtension.wiki/Noise.chm NoiseExtension/Help/
+    
     - name: Commit files
       working-directory: NoiseExtension
       run: |
         git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
         git config --local user.name "github-actions[bot]"
-        git add Help\Noise.chm
+        git add Help/Noise.chm
         git commit -m "Update help file." -a
     
     - name: Push changes
