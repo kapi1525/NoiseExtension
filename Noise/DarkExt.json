@@ -7,7 +7,7 @@
 			"Author": "Kacper Bugla 'Kapi'",
 			"Copyright": "Copyright \u00A9 2022 Kacper Bugla 'Kapi'",
 			"Comment": "Generates Noise using many difrent alogrithms",
-			//"Help": "Help/Todo.chm",
+			"Help": "Help/Noise.chm",
 			"URL": "https://github.com/kapigames/NoiseExtension"
 		},
 
