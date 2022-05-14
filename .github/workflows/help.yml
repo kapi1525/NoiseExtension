@@ -25,15 +25,23 @@ jobs:
         packages: fpc
         version: 1.0
 
-    - name: Convert md to html
-      uses: ZacJW/markdown-html-action@1.1.0
+    - run: cd NoiseExtension.wiki
+
+    - name: create file list
+      id: files_list
+      run: |
+        echo "Lorem ipsum" > lorem_1.md  # create two example files
+        echo "dolor sit amet" > lorem_2.md
+        mkdir output  # create output dir
+        # this will also include README.md
+        echo "::set-output name=files::$(printf '"%s" ' *.md)"
+
+    - uses: docker://pandoc/latex:2.9
       with:
-        input_files: '[["*.md"]]'
-        output_files: '["Home.html"]'
+        args: -s -o Home.html ${{ steps.files_list.outputs.files }}
 
     - name: Run compiler
       run: |
-        cd NoiseExtension.wiki
         ./chmcmd Noise.hhp
         cd ..
         mkdir NoiseExtension/Help/
