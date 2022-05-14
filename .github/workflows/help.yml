@@ -1,10 +1,10 @@
 name: Update help file
 
-# on: gollum
+on: gollum
 
 jobs:
   Build:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
 
     steps:
     - name: Checkout master
@@ -18,36 +18,23 @@ jobs:
         repository: 'kapigames/NoiseExtension.wiki'
         path: 'NoiseExtension.wiki'
 
-    - name: Install chmcmd
-      uses: awalsh128/cache-apt-pkgs-action@v1
-      with:
-        packages: fpc
-        version: 1.0
+    - name: Install Html Help Workshop
+      run: choco install html-help-workshop
 
-    - name: Download markdown-help
-      uses: robinraju/release-downloader@v1.3
-      with: 
-        repository: 'kapigames/markdown-help'
-        tag: 'v0.3.0'
-        fileName: 'markdown-help-linux-x86_64.tar.gz'
-    
-    - name: Extract and run markdown-help
+    - name: Run compiler
       run: |
-        tar -xf markdown-help-linux-x86_64.tar.gz
-        mv bin/markdown-help NoiseExtension.wiki
         cd NoiseExtension.wiki
-        ./markdown-help
-        cd ..
-        mkdir NoiseExtension/Help/
-        mv NoiseExtension.wiki/out/Noise.chm NoiseExtension/Help/
-    
+        hhc Noise.hhp
+        move Noise.hhp ..\NoiseExtension\Help
+        cd ..\NoiseExtension
+
     - name: Commit files
       working-directory: NoiseExtension
       run: |
         git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
         git config --local user.name "github-actions[bot]"
-        git add Help/Noise.chm
-        git commit -m "Add changes" -a
+        git add Help\Noise.chm
+        git commit -m "Update help file." -a
     
     - name: Push changes
       uses: ad-m/github-push-action@master
