@@ -1,6 +1,6 @@
 name: Update help file
 
-on: gollum
+# on: gollum
 
 jobs:
   Build:
