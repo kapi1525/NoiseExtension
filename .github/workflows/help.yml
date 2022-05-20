@@ -25,14 +25,13 @@ jobs:
         packages: fpc pandoc
         version: 1.0
 
-    - run: cd NoiseExtension.wiki
-
-    - name: Run compiler
-      run: |
+    - run: |
+        cd NoiseExtension.wiki
+        ls -la
+        chmod +x ./compile.sh
         ./compile.sh
-        cd ../..
+        cd ..
         mv NoiseExtension.wiki/temp/Noise.chm NoiseExtension/Help/Noise.chm
-        cd NoiseExtension
     
     - name: Commit files
       working-directory: NoiseExtension
