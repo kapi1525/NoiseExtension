@@ -26,11 +26,12 @@ jobs:
         version: 1.0
 
     - name: Run compile script
-      working-directory: NoiseExtension.wiki
       run: |
+        cd NoiseExtension.wiki
         chmod +x ./compile.sh
         ./compile.sh
-        mv temp/Noise.chm ../NoiseExtension/Help/Noise.chm
+        cd ..
+        mv NoiseExtension.wiki/temp/Noise.chm NoiseExtension/Help/Noise.chm
     
     - name: Commit files
       working-directory: NoiseExtension
