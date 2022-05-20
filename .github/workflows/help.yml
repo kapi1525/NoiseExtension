@@ -22,26 +22,17 @@ jobs:
     - name: Install chmcmd
       uses: awalsh128/cache-apt-pkgs-action@v1
       with:
-        packages: fpc
+        packages: fpc pandoc
         version: 1.0
 
     - run: cd NoiseExtension.wiki
 
-    - name: create file list
-      id: files_list
-      run: |
-        echo "::set-output name=files::$(printf '"%s" ' *.md)"
-
-    - uses: docker://pandoc/latex:2.9
-      with:
-        args: -s -o Home.html ${{ steps.files_list.outputs.files }}
-
     - name: Run compiler
       run: |
-        ./chmcmd Noise.hhp
-        cd ..
-        mkdir NoiseExtension/Help/
-        mv NoiseExtension.wiki/Noise.chm NoiseExtension/Help/
+        ./compile.sh
+        cd ../..
+        mv NoiseExtension.wiki/temp/Noise.chm NoiseExtension/Help/Noise.chm
+        cd NoiseExtension
     
     - name: Commit files
       working-directory: NoiseExtension
