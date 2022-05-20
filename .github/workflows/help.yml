@@ -19,19 +19,18 @@ jobs:
         repository: 'kapigames/NoiseExtension.wiki'
         path: 'NoiseExtension.wiki'
 
-    - name: Install chmcmd
+    - name: Install packages
       uses: awalsh128/cache-apt-pkgs-action@v1
       with:
         packages: fpc pandoc
         version: 1.0
 
-    - run: |
-        cd NoiseExtension.wiki
-        ls -la
+    - name: Run compile script
+      working-directory: NoiseExtension.wiki
+      run: |
         chmod +x ./compile.sh
         ./compile.sh
-        cd ..
-        mv NoiseExtension.wiki/temp/Noise.chm NoiseExtension/Help/Noise.chm
+        mv temp/Noise.chm ../NoiseExtension/Help/Noise.chm
     
     - name: Commit files
       working-directory: NoiseExtension
