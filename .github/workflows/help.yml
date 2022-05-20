@@ -21,6 +21,7 @@ jobs:
 
     - name: Install packages
       run: |
+        sudo apt update -y
         sudo apt install fpc pandoc -y
 
     - name: Run compile script
