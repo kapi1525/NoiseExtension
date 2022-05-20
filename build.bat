@@ -155,7 +155,7 @@ goto :exit
 :bundle
     call :run mkdir %~dp0MFX\Examples\
     call :run xcopy /s /v /c /y %~dp0Examples\*.* %~dp0MFX\Examples\
-::  call :run xcopy /s /v /c /y %~dp0Help\*.* %~dp0MFX\Help\         :: Bundle auto generated help file with extension
+    call :run xcopy /s /v /c /y %~dp0Help\*.* %~dp0MFX\Help\
     call :run tar -a -cf %project%.zip -C MFX *.*
     exit /B 0
 
