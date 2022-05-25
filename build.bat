@@ -136,7 +136,7 @@ goto :exit
     :: - project name
     :: - configuration
     :: - platform
-    call :run msbuild ./%project%.sln -t:"%~1" -p:Configuration="%~2";Platform="%~3";WarningLevel=4 -nologo -m -clp:Summary;ForceNoAlign;verbosity=minimal
+    call :run msbuild ./%project%.sln -t:"%~1" -p:Configuration="%~2";Platform="%~3";WarningLevel=all -nologo -m -clp:Summary;ForceNoAlign;verbosity=minimal
     exit /B 0
 
 
