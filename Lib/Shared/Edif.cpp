@@ -1474,9 +1474,10 @@ ProjectFunc void PROJ_FUNC_GEN(PROJECT_NAME_RAW, _expressionJump(void * cppExtPt
 	memset(Parameters, 0, sizeof(long) * (ParameterCount + paramInc));
 	long Result = 0;
 
-	int ExpressionRet2 = (int)ExpressionRet;
+	// TODO: WHY? Try to actualy fully fix and test android builds.
+	//int ExpressionRet2 = (int)ExpressionRet;
 #ifdef _WIN32
-	//int ExpressionRet2 = (int)ExpressionRet; // easier for ASM
+	int ExpressionRet2 = (int)ExpressionRet; // easier for ASM
 #else
 	Parameters[0] = (long)ext;
 	int argStackCount = ParameterCount + paramInc;
