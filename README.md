@@ -15,6 +15,11 @@ I recently finaly created noise object wiki on github, its also automaticaly con
 Note: currently this wiki/help file is very much work in progress, not everythings is documented yet.
 
 
+### Installing
+
+To install Noise Object, just download [latest release](https://github.com/kapigames/NoiseExtension/releases/latest), unzip it and copy all files to correct directories in your Fusion install (Often: "C:\Program Files (x86)\Steam\steamapps\common\Clickteam Fusion 2.5\"), also this extension uses dark edif update checker this means you will receive notifications about updates in Fusion, updating extension is the same as installing it, just override old files.
+
+
 ### Building
 
 To build noise yourself you need Visual Studio 2022 with C/C++ toolkit and Android toolkit it you want to compile for Android.
