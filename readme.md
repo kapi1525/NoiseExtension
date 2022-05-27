@@ -18,7 +18,7 @@ There are some [included examples](Examples/Noise/), you can also find them in y
 
 ## Wiki / Help file
 
-I recently finaly created Noise Object wiki on github. Wiki is also automaticaly converted to help file that you can read offline, you can handy link to it in about page inside object properties.
+I recently finaly created Noise Object wiki on github. Wiki is also automaticaly converted to help file that you can read offline, you can find handy link to it in about page inside object properties.
 Note: currently this wiki/help file is very much work in progress, not everythings is documented yet.
 
 
