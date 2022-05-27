@@ -1895,7 +1895,7 @@ DWORD WINAPI DarkEdifUpdateThread(void *)
 	// Users have access to registry of local machine, albeit read-only, so this should not fail.
 	regKey.resize(256);
 	DWORD keySize = regKey.size() * sizeof(wchar_t), type;
-	DWORD ret = RegQueryValueExW(mainKey, L"UCTag", NULL, &type, (LPBYTE)regKey.data(), &keySize);
+	ret = RegQueryValueExW(mainKey, L"UCTag", NULL, &type, (LPBYTE)regKey.data(), &keySize);
 	if (ret == ERROR_SUCCESS)
 	{
 		regKey.resize(keySize / sizeof(wchar_t), L'?');
