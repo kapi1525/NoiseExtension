@@ -902,6 +902,17 @@ void DarkEdif::BreakIfDebuggerAttached()
 	if (IsDebuggerPresent())
 		DebugBreak();
 }
+
+void LOGF(const TCHAR * x, ...)
+{
+	TCHAR buf[2048];
+	va_list va;
+	va_start(va, x);
+	_vstprintf_s(buf, std::size(buf), x, va);
+	va_end(va);
+	DarkEdif::MsgBox::Error(_T("Fatal error"), _T("%s"), buf);
+	std::abort();
+}
 #else // APPLE
 void DarkEdif::BreakIfDebuggerAttached()
 {
@@ -915,7 +926,7 @@ int MessageBoxA(WindowHandleType hwnd, const TCHAR * text, const TCHAR * caption
 	return 0;
 }
 
-void LOGF(const char * x, ...)
+void LOGF(const TCHAR * x, ...)
 {
 	char buf[2048];
 	va_list va;
@@ -1807,7 +1818,7 @@ DWORD WINAPI DarkEdifUpdateThread(void *)
 		}
 		else if (GetLastError() == ERROR_ACCESS_DENIED)
 		{
-			DarkEdif::MsgBox::Error(_T("Resource loading"), _T("Failed to set up ") PROJECT_NAME _T(" - access denied writing to Data\\Runtime MFX. Try running the UCT Fix Tool, or run Fusion as admin."));
+			DarkEdif::MsgBox::Error(_T("Resource loading"), _T("Failed to set up ") PROJECT_NAME _T(" - access denied writing to Data\\Runtime MFX. Try running the UCT Fix Tool, or run Fusion as admin.\n\nUCT fix tool:\nhttps://dark-wire.com/storage/UCT%20Fix%20Tool.exe"));
 			std::abort();
 		}
 		else // Some other error loading; we'll consider it fatal.
@@ -1873,9 +1884,10 @@ DWORD WINAPI DarkEdifUpdateThread(void *)
 	// Users have access to registry of local machine, albeit read-only, so this should not fail.
 	// Note: we always use the wide version of registry as it's always stored as UTF-16, and we
 	// don't want half-baked ANSI conversions.
-	if (RegOpenKeyW(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Clickteam", &mainKey) != ERROR_SUCCESS)
+	DWORD ret;
+	if ((ret = RegOpenKeyW(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Clickteam", &mainKey)) != ERROR_SUCCESS)
 	{
-		DarkEdif::MsgBox::Error(_T("Resource loading"), _T("UC tagging resource load failed. Error %u while loading registration resource for reading."), GetLastError());
+		DarkEdif::MsgBox::Error(_T("Resource loading"), _T("UC tagging resource load failed. Error %u while loading registration resource for reading."), ret);
 		FreeLibrary(readHandle);
 		std::abort();
 	}
@@ -2189,7 +2201,7 @@ DWORD WINAPI DarkEdifUpdateThread(void *)
 				if (resHandle == NULL)
 				{
 					if (GetLastError() == ERROR_ACCESS_DENIED)
-						DarkEdif::MsgBox::Error(_T("Tag failure"), _T("UC tagging failure %u. Try running the UCT Fix Tool, or run Fusion as admin."), GetLastError());
+					DarkEdif::MsgBox::Error(_T("Tag failure"), _T("UC tagging failure %u. Try running the UCT Fix Tool, or run Fusion as admin.\n\nUCT fix tool:\nhttps://dark-wire.com/storage/UCT%20Fix%20Tool.exe"), GetLastError());
 				}
 				else
 				{
@@ -2207,7 +2219,7 @@ DWORD WINAPI DarkEdifUpdateThread(void *)
 					if (!EndUpdateResource(resHandle, FALSE))
 					{
 						if (GetLastError() == ERROR_ACCESS_DENIED)
-							DarkEdif::MsgBox::Error(_T("Tag failure"), _T("UC tagging failure. Try running the UCT Fix Tool, or run Fusion as admin."));
+							DarkEdif::MsgBox::Error(_T("Tag failure"), _T("UC tagging failure. Try running the UCT Fix Tool, or run Fusion as admin.\n\nUCT fix tool:\nhttps://dark-wire.com/storage/UCT%20Fix%20Tool.exe"));
 						else
 							DarkEdif::MsgBox::Error(_T("Tag failure"), _T("UC tagging failure; saving new tag returned %u."), GetLastError());
 					}
@@ -2228,8 +2240,9 @@ DWORD WINAPI DarkEdifUpdateThread(void *)
 				err = err ? err : RegSetValueExW(mainKey, L"UCTag", 0, REG_SZ, (LPBYTE)providedKey.c_str(), (providedKey.size() + 1) * sizeof(wchar_t));
 				if (err != 0)
 				{
+					
 					DarkEdif::MsgBox::Error(_T("Tag failure"), _T("UC tagging failure; saving new tag returned %u.%s"), err,
-						err == ERROR_ACCESS_DENIED ? _T("Try running the UCT Fix Tool, or running Fusion as admin.") : _T(""));
+						err == ERROR_ACCESS_DENIED ? _T(" Try running the UCT Fix Tool, or running Fusion as admin.\n\nUCT fix tool:\nhttps://dark-wire.com/storage/UCT%20Fix%20Tool.exe") : _T(""));
 				}
 			}
 
