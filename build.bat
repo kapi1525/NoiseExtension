@@ -118,8 +118,7 @@ goto :exit
 
 
 :setupsdkconfig
-    echo RunStaticCodeAnalysis = true > ..\FusionSDKConfig.ini
-    echo UseMultiProcessorCompilationInDebug = true >> ..\FusionSDKConfig.ini
+    echo UseMultiProcessorCompilationInDebug = true > ..\FusionSDKConfig.ini
     echo FavorSizeOrSpeed = speed >> ..\FusionSDKConfig.ini
     echo UseLinkTimeCodeGeneration = true >> ..\FusionSDKConfig.ini
     echo DarkEdifUpdateCheckerTagging = Noise >> ..\FusionSDKConfig.ini
