@@ -1887,7 +1887,7 @@ DWORD WINAPI DarkEdifUpdateThread(void *)
 	DWORD ret;
 	if ((ret = RegOpenKeyW(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Clickteam", &mainKey)) != ERROR_SUCCESS)
 	{
-		DarkEdif::MsgBox::Error(_T("Resource loading"), _T("UC tagging resource load failed. Error %u while loading registration resource for reading."), ret);
+		DarkEdif::MsgBx::Error(_T("Resource loading"), _T("UC tagging resource load failed. Error %u while loading registration resource for reading."), ret);
 		FreeLibrary(readHandle);
 		std::abort();
 	}
