@@ -1,33 +1,33 @@
 
-## ![Logo](Noise/Icon.png) Noise Object
+# ![Logo](Noise/Icon.png) Noise Object
 
 Noise object is Clickteam Fusion extension that allows you to use most of [FastNoiseLite](https://github.com/Auburn/FastNoiseLite) library funtionality in Clickteam Fusion and add some fancy noise stuff.
 
 
-### Screenshot
+## Screenshot
 
 ![Screenshot](ss.png)
 
 (Noise Example.mfa running on linux through proton ge)
 
 
-### Examples
+## Examples
 
 There are some [included examples](Examples/Noise/), you can also find them in your Clickteam Fusion 2.5/Examples/Noise/ folder after you installed Noise.
 
 
-### Wiki / Help file
+## Wiki / Help file
 
 I recently finaly created Noise Object wiki on github. Wiki is also automaticaly converted to help file that you can read offline, you can handy link to it in about page inside object properties.
 Note: currently this wiki/help file is very much work in progress, not everythings is documented yet.
 
 
-### Installing
+## Installing
 
 To install Noise Object, just download [latest release](https://github.com/kapigames/NoiseExtension/releases/latest), unzip it and copy all files to correct directories in your Fusion install (Often: "C:\Program Files (x86)\Steam\steamapps\common\Clickteam Fusion 2.5\"). Also this extension uses dark edif update checker, this means you will receive notifications about updates in Fusion. Updating extension is the same as installing it, just override old files.
 
 
-### Building
+## Building
 
 To build Noise Object yourself you need Visual Studio 2022 with C/C++ toolkit and Android toolkit, if you want to compile for Android.
 
