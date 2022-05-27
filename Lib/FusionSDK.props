@@ -136,7 +136,7 @@
 			>$([System.Text.RegularExpressions.Regex]::Match($(_FusionSDKConfig), $(_RunAnalyzerRegex)).Result('$1'))</RunAnalyzerSetting>
 
 		<!-- RunCodeAnalysis is the property MSVC will read. -->
-		<RunCodeAnalysis Condition="$(RunAnalyzerSetting)=='true' OR ($(RunAnalyzerSetting)=='debugonly' AND $(DbgBuild)==1) AND $(_TargetPlat)=='Windows'">true</RunCodeAnalysis>
+		<RunCodeAnalysis Condition="$(_TargetPlat)=='Windows' AND ($(RunAnalyzerSetting)=='true' OR ($(RunAnalyzerSetting)=='debugonly' AND $(DbgBuild)==1))">true</RunCodeAnalysis>
 
 		<!-- Static analysis won't run on the XP-compatible toolset. -->
 		<WindowsXPCompatibility Condition="$(RunCodeAnalysis)=='true'">0</WindowsXPCompatibility>
