@@ -1,8 +1,8 @@
 @echo off
 
-:: ------------------------------
-::         build.bat v1.5        
-:: ------------------------------
+:: --------------------------------------------------
+::          Noise Object build script v1.6.0         
+:: --------------------------------------------------
 :: Run arguments:
 :: --fast       -f      build only windows
 :: --full       -F      build everything
@@ -16,7 +16,7 @@
 :: --bundle     -b      create zip file with extension
 ::
 :: --sdkconfig  -s      create FusionSDKConfig.ini with usefull settings
-:: ------------------------------
+:: --------------------------------------------------
 
 setlocal enabledelayedexpansion
 
@@ -118,7 +118,8 @@ goto :exit
 
 
 :setupsdkconfig
-    echo UseMultiProcessorCompilationInDebug = true > ..\FusionSDKConfig.ini
+    echo RunStaticCodeAnalysis = true > ..\FusionSDKConfig.ini
+    echo UseMultiProcessorCompilationInDebug = true >> ..\FusionSDKConfig.ini
     echo FavorSizeOrSpeed = speed >> ..\FusionSDKConfig.ini
     echo UseLinkTimeCodeGeneration = true >> ..\FusionSDKConfig.ini
     echo DarkEdifUpdateCheckerTagging = Noise >> ..\FusionSDKConfig.ini
