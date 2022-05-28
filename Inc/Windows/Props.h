@@ -9,7 +9,7 @@
 #endif
 
 #include <tchar.h>
-#include "Windows\WindowsDefines.hpp"
+#include "WindowsDefines.hpp"
 
 ///////////////////////////////////////////////////////
 // Property data - used in property definition table.

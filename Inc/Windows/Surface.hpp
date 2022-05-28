@@ -22,7 +22,7 @@ enum class SurfaceError : unsigned int
 //
 #ifdef _WIN32
 #include "Palet.h"
-#include <CommDlg.h>
+#include <commdlg.h>
 #pragma comment(lib, "gdi32.lib")
 #endif
 

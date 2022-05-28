@@ -24,6 +24,8 @@ struct EDITDATA {
 	// Header - required
 	extHeader		eHeader;
 
+	
+
 	// Keep DarkEdif variables as last. Undefined behaviour otherwise.
 	int				DarkEdif_Prop_Size;
 	char			DarkEdif_Props[];
