@@ -15,7 +15,7 @@ enum class NoisePropID {
 	CellularDistFunc,
 	CellularRetType,
 	Version
-}
+};
 
 
 
