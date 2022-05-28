@@ -7,6 +7,18 @@
 #include "FastNoiseLite.h"
 
 
+
+enum class NoisePropID {
+	Seed,
+	NoiseType,
+	FractalType,
+	CellularDistFunc,
+	CellularRetType,
+	Version
+}
+
+
+
 // edPtr : Used at edittime and saved in the MFA/CCN/EXE files
 struct EDITDATA {
 	// Header - required

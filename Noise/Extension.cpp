@@ -78,6 +78,15 @@ Extension::Extension(RuntimeFunctions & runFuncs, EDITDATA * edPtr, void * objCE
 		LinkExpression(29, current_cellular_function);
 		LinkExpression(30, current_cellular_return_type);
 	}
+
+	// Propeties
+	{
+		set_seed(string_to_seed(edPtr->GetPropertyStr(NoisePropID::Seed)));
+		set_noise_type(static_cast<Prop_UInt*>(GetProperty(edPtr, NoisePropID::NoiseType)).Value);
+		set_fractal_type(static_cast<Prop_UInt*>(GetProperty(edPtr, NoisePropID::FractalType)).Value);
+		set_cellular_distance_function(static_cast<Prop_UInt*>(GetProperty(edPtr, NoisePropID::CellularDistFunc)).Value);
+		set_cellular_return_type(static_cast<Prop_UInt*>(GetProperty(edPtr, NoisePropID::CellularRetType)).Value);
+	}
 }
 
 Extension::~Extension() {
