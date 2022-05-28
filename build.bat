@@ -143,7 +143,7 @@ goto :exit
 
 :install
     TASKLIST | FINDSTR /I "mmf2u.exe" > NUL
-    IF NOT ERRORLEVEL 1 (
+    IF not %ERRORLEVEL%==1 (
         echo Waiting for fusion to close...
         timeout /T 1 > NUL
         GOTO :install
