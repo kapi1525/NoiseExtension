@@ -308,22 +308,110 @@
 
 		"Properties": [
 			{
-				"Title": "Version",
-				"Info": "Version",
-				"Type": "Text",
-				"DefaultState": "Noise v0.9.0 (Extension: v12, SDK: Modified DarkEdif v13 from commit fee5f1a6c0dd9ec988926fb96b2184f1de42c6cb)"
+				"Title": "Seed",
+				"Info": "Noise seed, converted to a number using string to seed expression.",
+				"Type": "Editbox String",
+				"DefaultState": "1337"
+			},
+
+			{
+				"Title": "Noise type",
+				"Info": "Noise type",
+				"Type": "Combo Box",
+				"DefaultState": "OpenSimplex2",
+				"Items": [
+					"OpenSimplex2",
+					"OpenSimplex2S",
+					"Cellular",
+					"Perlin",
+					"ValueCubic",
+					"Value"
+				]
 			},
 			{
-				"Title": "test",
-				"Info": "test",
+				"Title": "Noise frequency",
+				"Info": "Noise frequency controls how much noise is\"zoomed in\".",
+				"Type": "Editbox Float",
+				"DefaultState": "0.01"
+			},
+
+			{
+				"Title": "Fractal type",
+				"Info": "Fractal type",
 				"Type": "Combo Box",
-				"DefaultState": "test2",
+				"DefaultState": "None",
 				"Items": [
-					"test",
-					"test2",
-					"test3",
-					"test4"
+					"None",
+					"FBm",
+					"Rigid",
+					"Perlin",
+					"PingPong"
 				]
+			},
+			{
+				"Title": "Fractal octaves",
+				"Info": "Fractal octaves",
+				"Type": "Editbox Number",
+				"DefaultState": "3"
+			},
+			{
+				"Title": "Fractal lacunarity",
+				"Info": "Fractal lacunarity",
+				"Type": "Editbox Float",
+				"DefaultState": "2.0"
+			},
+			{
+				"Title": "Fractal weighted strength",
+				"Info": "Fractal weighted strength",
+				"Type": "Editbox Float",
+				"DefaultState": "0.0"
+			},
+			{
+				"Title": "Fractal PingPong strength",
+				"Info": "Fractal PingPong strength",
+				"Type": "Editbox Float",
+				"DefaultState": "2.0"
+			},
+
+			{
+				"Title": "Cellular distance function",
+				"Info": "Cellular distance function",
+				"Type": "Combo Box",
+				"DefaultState": "EuclideanSq",
+				"Items": [
+					"Euclidean",
+					"EuclideanSq",
+					"Manhattan",
+					"Hybrid"
+				]
+			},
+			{
+				"Title": "Cellular return type",
+				"Info": "Cellular return type",
+				"Type": "Combo Box",
+				"DefaultState": "Distance",
+				"Items": [
+					"CellValue",
+					"Distance",
+					"Distance2",
+					"Distance2Add",
+					"Distance2Sub",
+					"Distance2Mul",
+					"Distance2Div"
+				]
+			},
+			{
+				"Title": "Cellular jitter",
+				"Info": "Cellular jitter",
+				"Type": "Editbox Float",
+				"DefaultState": "1.0"
+			},
+
+			{
+				"Title": "Version",
+				"Info": "Noise Object version.",
+				"Type": "Text",
+				"DefaultState": "Noise v0.9.0 (Extension: v12, SDK: Modified DarkEdif v13 from commit fee5f1a6c0dd9ec988926fb96b2184f1de42c6cb)"
 			}
 		]
 	}
