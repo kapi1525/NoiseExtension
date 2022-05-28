@@ -332,7 +332,7 @@
 				"Title": "Noise frequency",
 				"Info": "Noise frequency controls how much noise is\"zoomed in\".",
 				"Type": "Editbox Float",
-				"DefaultState": "0.01"
+				"DefaultState": 0.01
 			},
 
 			{
@@ -352,25 +352,25 @@
 				"Title": "Fractal octaves",
 				"Info": "Fractal octaves",
 				"Type": "Editbox Number",
-				"DefaultState": "3"
+				"DefaultState": 3
 			},
 			{
 				"Title": "Fractal lacunarity",
 				"Info": "Fractal lacunarity",
 				"Type": "Editbox Float",
-				"DefaultState": "2.0"
+				"DefaultState": 2.0
 			},
 			{
 				"Title": "Fractal weighted strength",
 				"Info": "Fractal weighted strength",
 				"Type": "Editbox Float",
-				"DefaultState": "0.0"
+				"DefaultState": 0.0
 			},
 			{
 				"Title": "Fractal PingPong strength",
 				"Info": "Fractal PingPong strength",
 				"Type": "Editbox Float",
-				"DefaultState": "2.0"
+				"DefaultState": 2.0
 			},
 
 			{
@@ -404,7 +404,7 @@
 				"Title": "Cellular jitter",
 				"Info": "Cellular jitter",
 				"Type": "Editbox Float",
-				"DefaultState": "1.0"
+				"DefaultState": 1.0
 			},
 
 			{
