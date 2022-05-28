@@ -19,7 +19,7 @@ jobs:
 
     - name: Build
       working-directory: ${{env.GITHUB_WORKSPACE}}
-      run: ./build.bat --bundle --sdkconfig
+      run: ./build.bat --bundle --sdkconfig --full --release
 
     - name: Upload artifact
       uses: actions/upload-artifact@v3

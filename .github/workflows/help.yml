@@ -32,6 +32,13 @@ jobs:
         cd ..
         mv NoiseExtension.wiki/temp/Noise.chm NoiseExtension/Help/Noise.chm
     
+    - name: Upload artifact
+      uses: actions/upload-artifact@v3
+      if: github.event_name != 'release'
+      with:
+        name: Noise help file
+        path: ./NoiseExtension/Help/Noise.chm
+    
     - name: Commit files
       working-directory: NoiseExtension
       run: |
