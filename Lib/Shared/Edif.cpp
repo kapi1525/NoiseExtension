@@ -708,13 +708,7 @@ Edif::SDK::SDK(mv * mV, json_value &_json) : json (_json)
 
 				// Edit box for floating point numbers, Parameters = min value, max value, options (signed, float, spin)
 				case PROPTYPE_EDIT_FLOAT:
-				{
-					int * temp = new int[2];
-					// JSON parser stores numbers as int64, but Fusion uses int32
-					temp[0] = ((std::int64_t)Property["Minimum"]) & 0xFFFFFFFF;
-					temp[1] = ((std::int64_t)Property["Maximum"]) & 0xFFFFFFFF;
-					SetAllProps(PROPOPT_PARAMREQUIRED, temp);
-				}
+					SetAllProps(0, NULL);
 
 				// Edit box for multiline texts, no Parameter
 				case PROPTYPE_EDIT_MULTILINE:
