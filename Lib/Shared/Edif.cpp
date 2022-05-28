@@ -904,7 +904,7 @@ long ActionOrCondition(void * Function, int ID, Extension * ext, const ACEInfo *
 		mov ecx, ParameterCount	; Store ParameterCount in ecx
 		cmp ecx, 0				; If no parameters, call function immediately
 			je CallNow
-		lea edx, Parameters		; Otherwise store address of (first element of) Parameters
+		mov edx, Parameters		; Otherwise store pointer to int * in Parameters
 		mov ebx, ecx			; Copy ecx, or ParameterCount, to ebx
 		shl ebx, 2				; Multiply parameter count by 2^2 (size of 32-bit variable)
 		add edx, ebx			; add (ParameterCount * 4) to Parameters, making edx point to Parameters[param count]
@@ -1550,7 +1550,7 @@ ProjectFunc void PROJ_FUNC_GEN(PROJECT_NAME_RAW, _expressionJump(void * cppExtPt
 		mov ecx, ParameterCount
 		cmp ecx, 0
 			je CallNow
-		lea edx, Parameters
+		mov edx, Parameters
 		mov ebx, ecx
 		shl ebx, 2
 		add edx, ebx
@@ -1920,7 +1920,7 @@ char* Edif::ConvertAndCopyString(char* str, const char* utf8String, int maxLengt
 #endif // _UNICODE
 
 
-#if defined(_DEBUG)
+#if defined(_DEBUG) && !defined(__APPLE__)
 
 
 Edif::recursive_mutex::recursive_mutex()
@@ -1932,31 +1932,23 @@ Edif::recursive_mutex::~recursive_mutex()
 	this->log << "Recursive mutex dying.\n";
 }
 
+#ifndef _DEBUG
+static const char * file = "(release mode)";
+static const char * func = "(release mode)";
+static int line = -1;
+#endif
 void Edif::recursive_mutex::lock(edif_lock_debugParams)
 {
 	try {
-		if (!this->intern.try_lock_for(std::chrono::milliseconds(500)))
-		{
-			std::string log2 = this->log.str();
-			//if (log2.size() > 600)
-			//	log2 = log2.substr(log2.size() - 500, 500);
-			log2 += "Couldn't append in "sv;
-			log2 += func;
-			log2 += ", line "sv;
-			log2 += std::to_string(line);
-			log2 += "\n";
-			OutputDebugStringA(log2.c_str());
-			DarkEdif::BreakIfDebuggerAttached();
-			throw std::runtime_error("timeout");
-		}
+		this->intern.lock();
 	}
-	catch (std::runtime_error err)
+	catch (std::system_error err)
 	{
-		char exc_addr[128];
-		sprintf_s(exc_addr, std::size(exc_addr), "crashlog%p.txt", this);
-		FILE * f = fopen(exc_addr, "wb");
+		FILE * f = fopen("/storage/emulated/0/crashlog.txt", "wb");
 		if (f == NULL) {
-			LOGF(_T("Failed to write log file, error %d."), errno);
+#ifndef _WIN32
+			LOGV("Failed to write log file, error %d.", errno);
+#endif
 		}
 		else
 		{
@@ -1964,7 +1956,9 @@ void Edif::recursive_mutex::lock(edif_lock_debugParams)
 			std::string str(this->log.str());
 			fwrite(str.c_str(), 1, str.size(), f);
 			fclose(f);
-			LOGE(_T("%s"), UTF8ToTString(str).c_str());
+#ifndef _WIN32
+			LOGE("%s", str.c_str());
+#endif
 			throw err;
 		}
 	}
@@ -1978,11 +1972,11 @@ bool Edif::recursive_mutex::try_lock(edif_lock_debugParams)
 	}
 	catch (std::system_error err)
 	{
-		char exc_addr[128];
-		sprintf_s(exc_addr, std::size(exc_addr), "crashlog%p.txt", this);
-		FILE* f = fopen(exc_addr, "wb");
+		FILE * f = fopen("/storage/emulated/0/crashlog.txt", "wb");
 		if (f == NULL) {
-			LOGF(_T("Failed to write log file, error %d."), errno);
+#ifndef _WIN32
+			LOGV("Failed to write log file, error %d.", errno);
+#endif
 		}
 		else
 		{
@@ -1990,28 +1984,27 @@ bool Edif::recursive_mutex::try_lock(edif_lock_debugParams)
 			std::string str(this->log.str());
 			fwrite(str.c_str(), 1, str.size(), f);
 			fclose(f);
-			LOGE(_T("%s"), UTF8ToTString(str).c_str());
+#ifndef _WIN32
+			LOGE("%s", str.c_str());
+#endif
 			throw err;
 		}
 	}
-	// this->log isn't safe to use if we don't have the lock
-	if (b)
-		this->log << "Try lock OK in function " << func << ", line " << line << ".\n";
+	this->log << "Try lock " << (b ? "OK" : "FAIL") << " in function " << func << ", line " << line << ".\n";
 	return b;
 }
 void Edif::recursive_mutex::unlock(edif_lock_debugParams)
 {
-	this->log << "Unlocked in function " << func << ", line " << line << ".\n";
 	try {
 		this->intern.unlock();
 	}
 	catch (std::system_error err)
 	{
-		char exc_addr[128];
-		sprintf_s(exc_addr, std::size(exc_addr), "crashlog%p.txt", this);
-		FILE* f = fopen(exc_addr, "wb");
+		FILE * f = fopen("/storage/emulated/0/crashlog.txt", "wb");
 		if (f == NULL) {
-			LOGF(_T("Failed to write log file, error %d."), errno);
+#ifndef _WIN32
+			LOGV("Failed to write log file, error %d.", errno);
+#endif
 		}
 		else
 		{
@@ -2019,10 +2012,13 @@ void Edif::recursive_mutex::unlock(edif_lock_debugParams)
 			std::string str(this->log.str());
 			fwrite(str.c_str(), 1, str.size(), f);
 			fclose(f);
-			LOGE(_T("%s"), UTF8ToTString(str).c_str());
+#ifndef _WIN32
+			LOGE("%s", str.c_str());
+#endif
 			throw err;
 		}
 	}
+	this->log << "Unlocked in function " << func << ", line " << line << ".\n";
 }
 
 #else // Not debug
