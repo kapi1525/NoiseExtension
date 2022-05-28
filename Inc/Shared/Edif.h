@@ -12,7 +12,7 @@
 #include <atomic>
 
 #ifdef _WIN32
-	#include "..\Windows\MMFMasterHeader.h"
+	#include "../Windows/MMFMasterHeader.h"
 	extern HINSTANCE hInstLib;
 #elif defined (__ANDROID__)
 	#include "..\Android\MMFAndroidMasterHeader.h"

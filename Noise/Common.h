@@ -7,10 +7,24 @@
 #include "FastNoiseLite.h"
 
 
+
+enum class NoisePropID {
+	Seed,
+	NoiseType,
+	FractalType,
+	CellularDistFunc,
+	CellularRetType,
+	Version
+};
+
+
+
 // edPtr : Used at edittime and saved in the MFA/CCN/EXE files
 struct EDITDATA {
 	// Header - required
 	extHeader		eHeader;
+
+	
 
 	// Keep DarkEdif variables as last. Undefined behaviour otherwise.
 	int				DarkEdif_Prop_Size;

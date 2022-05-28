@@ -84,6 +84,12 @@ Extension::~Extension() {
 }
 
 
+int Extension::test(EDITDATA* edPtr, int propID) {
+	const json_value &prop = CurLang["Properties"][propID];
+	return (int)prop["Items"][*(int *)PropIndex(edPtr, propID, nullptr)];
+}
+
+
 REFLAG Extension::Handle() {
 	return REFLAG::ONE_SHOT;
 }

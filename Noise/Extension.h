@@ -46,6 +46,8 @@ public:
 	int cellular_function = FastNoiseLite::CellularDistanceFunction::CellularDistanceFunction_EuclideanSq;
 	int cellular_return_type = FastNoiseLite::CellularReturnType::CellularReturnType_Distance;
 
+	int test(EDITDATA* edPtr, int porpID);
+
 	// Actions
 		void set_seed(int Seed);
 

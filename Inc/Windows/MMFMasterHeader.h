@@ -5,8 +5,8 @@
 #error Included the wrong header for this OS.
 #endif
 
-#include "..\Shared\AllPlatformDefines.hpp"
-#include "Windows\WindowsDefines.hpp"
+#include "../Shared/AllPlatformDefines.hpp"
+#include "WindowsDefines.hpp"
 
 #if EditorBuild
 #include "Surface.hpp"
