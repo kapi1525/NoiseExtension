@@ -313,6 +313,16 @@
 				"Type": "Text",
 				"DefaultState": "Noise v0.9.0 (Extension: v12, SDK: Modified DarkEdif v13 from commit fee5f1a6c0dd9ec988926fb96b2184f1de42c6cb)"
 			}
+			{
+				"Title": "test",
+				"Info": "test",
+				"Type": "Combo Box",
+				"Items": [
+					"test",
+					"test2",
+					"test3"
+				]
+			}
 		]
 	}
 }
