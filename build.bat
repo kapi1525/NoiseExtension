@@ -128,6 +128,7 @@ goto :exit
 
 :clean
     call :run rmdir MFX /s /q
+    call :run rmdir Temp /s /q
     exit /B 0
 
 
@@ -163,6 +164,7 @@ goto :exit
 :run
     :: arguments:
     :: - cmd
+    echo.
     echo [CMD] %*
     %*
     if not %ERRORLEVEL%==0 exit 1
