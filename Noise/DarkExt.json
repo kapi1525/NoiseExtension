@@ -317,7 +317,7 @@
 				"Title": "test",
 				"Info": "test",
 				"Type": "Combo Box",
-				"DefaultState": 2,
+				"DefaultState": "test2",
 				"Items": [
 					"test",
 					"test2",
