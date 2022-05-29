@@ -25,7 +25,10 @@ struct EDITDATA {
 	bool IsPropChecked(int propID);						// Returns property checked or unchecked.
 	std::tstring GetPropertyStr(const char * propName);	// Returns std::tstring property setting from property name.
 	std::tstring GetPropertyStr(int propID);			// Returns std::tstring property string from property ID.
-	int GetPropertyNum(int propID);						// Returns int property setting from property ID.
+
+	// Added by me: (why arent these in official DarkEdif???)
+	int GetPropertyInt(int propID);
+	float GetPropertyFloat(int propID);
 };
 
 class Extension;

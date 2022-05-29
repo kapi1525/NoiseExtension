@@ -294,6 +294,24 @@ void InitializePropertiesFromJSON(mv * mV, EDITDATA * edPtr)
 				break;
 			}
 
+			case PROPTYPE_EDIT_FLOAT:
+			{
+				// TODO: PROPTYPE_EDIT_FLOAT
+				if (JProp["DefaultState"].type != json_double)
+				{
+					DarkEdif::MsgBox::WarningOK(_T("Property warning"), _T("Invalid or no default integer value specified for property %s (ID %u)."),
+						::SDK->EdittimeProperties[i].Title, i);
+				}
+
+				unsigned int i = unsigned int(long long(JProp["DefaultState"]) & 0xFFFFFFFF);
+				propValues.write((char *)&i, sizeof(unsigned int)); // embedded nulls upset the << operator
+
+				if (JProp["ChkDefault"])
+					propChkboxes[i / CHAR_BIT] |= 1 << (i % CHAR_BIT);
+
+				break;
+			}
+
 			case PROPTYPE_STATIC:
 			case PROPTYPE_FOLDER:
 			case PROPTYPE_FOLDER_END:
@@ -422,7 +440,7 @@ Prop * GetProperty(EDITDATA * edPtr, size_t ID)
 				"Characters will be replaced with filler."), (const char *)jsonItem["Title"], ID, Current);
 		}
 	}
-	else if (!_stricmp(curStr, "Editbox Number") || !_stricmp(curStr, "Combo Box"))
+	else if (!_stricmp(curStr, "Editbox Number") || !_stricmp(curStr, "Editbox Float") || !_stricmp(curStr, "Combo Box"))
 		ret = new Prop_UInt(*(unsigned int *)Current);
 	else if (_stricmp(curStr, "Checkbox") && _strnicmp(curStr, "Folder", sizeof("Folder") - 1))
 	{
@@ -455,6 +473,8 @@ void PropChange(mv * mV, EDITDATA * &edPtr, unsigned int PropID, const void * ne
 	if (!_strnicmp(curTypeStr, "Editbox String", sizeof("Editbox String") - 1))
 		rearrangementRequired = newPropValueSize != oldPropValueSize; // May need resizing
 	else if (!_stricmp(curTypeStr, "Editbox Number"))
+		rearrangementRequired = false; // Number of editbox, always same data size
+	else if (!_stricmp(curTypeStr, "Editbox Float"))
 		rearrangementRequired = false; // Number of editbox, always same data size
 	else if (!_stricmp(curTypeStr, "Combo Box"))
 		rearrangementRequired = false; // Index of combo box Item, always same data size
@@ -547,7 +567,7 @@ char * PropIndex(EDITDATA * edPtr, unsigned int ID, unsigned int * size)
 
 		if (!_strnicmp(curStr, "Editbox String", sizeof("Editbox String") - 1))
 			Current += strlen(Current) + 1;
-		else if (!_stricmp(curStr, "Editbox Number") || !_stricmp(curStr, "Combo Box"))
+		else if (!_stricmp(curStr, "Editbox Number") || !_stricmp(curStr, "Editbox Float") || !_stricmp(curStr, "Combo Box"))
 			Current += sizeof(unsigned int);
 
 		if (i == ID - 1)

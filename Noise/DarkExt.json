@@ -314,6 +314,12 @@
 				"DefaultState": 123
 			},
 			{
+				"Title": "Test",
+				"Info": "test.",
+				"Type": "Editbox Float",
+				"DefaultState": 12.45
+			},
+			{
 				"Title": "Version",
 				"Info": "Noise Object version.",
 				"Type": "Text",

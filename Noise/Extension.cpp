@@ -79,14 +79,15 @@ Extension::Extension(RuntimeFunctions & runFuncs, EDITDATA * edPtr, void * objCE
 		LinkExpression(30, current_cellular_return_type);
 	}
 
-	DarkEdif::MsgBox::Info(_T("test"), _T("%i"), edPtr->GetPropertyNum(0));
+	DarkEdif::MsgBox::Info(_T("test"), _T("%i"), edPtr->GetPropertyInt(0));
+	DarkEdif::MsgBox::Info(_T("test2"), _T("%f"), edPtr->GetPropertyFloat(1));
 }
 
 Extension::~Extension() {
 }
 
 
-int EDITDATA::GetPropertyNum(int propID) {
+int EDITDATA::GetPropertyInt(int propID) {
 	if (propID < 0 || (size_t)propID > CurLang["Properties"].u.array.length) {
 		return 0;
 		//DarkEdif::Log(DARKEDIF_LOG_FATAL, _T("Property ID not found."));
@@ -96,6 +97,23 @@ int EDITDATA::GetPropertyNum(int propID) {
 
 	if (!_stricmp(prop["Type"], "Editbox Number")) {
 		return *(int *)PropIndex(this, propID, nullptr);
+	}
+	else {
+		return 0;
+		//DarkEdif::Log(DARKEDIF_LOG_FATAL, _T("Property is not a number."));
+	}
+}
+
+float EDITDATA::GetPropertyFloat(int propID) {
+	if (propID < 0 || (size_t)propID > CurLang["Properties"].u.array.length) {
+		return 0;
+		//DarkEdif::Log(DARKEDIF_LOG_FATAL, _T("Property ID not found."));
+	}
+
+	const json_value &prop = CurLang["Properties"][propID];
+
+	if (!_stricmp(prop["Type"], "Editbox Float")) {
+		return *(float *)PropIndex(this, propID, nullptr);
 	}
 	else {
 		return 0;
