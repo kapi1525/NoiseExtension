@@ -79,7 +79,7 @@ Extension::Extension(RuntimeFunctions & runFuncs, EDITDATA * edPtr, void * objCE
 		LinkExpression(30, current_cellular_return_type);
 	}
 
-	LOGD(edPtr->GetPropertyNum(0));
+	LOGE(edPtr->GetPropertyNum(0));
 }
 
 Extension::~Extension() {
