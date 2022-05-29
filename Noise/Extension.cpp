@@ -79,8 +79,10 @@ Extension::Extension(RuntimeFunctions & runFuncs, EDITDATA * edPtr, void * objCE
 		LinkExpression(30, current_cellular_return_type);
 	}
 
-	DarkEdif::MsgBox::Info(_T("test"), _T("%i"), edPtr->GetPropertyInt(0));
-	DarkEdif::MsgBox::Info(_T("test2"), _T("%f"), edPtr->GetPropertyFloat(1));
+	// Properties
+	{
+		DarkEdif::MsgBox::Info(_T("TSDFgfgh"), _T("%i"), edPtr->GetPropertyInt(1));
+	}
 }
 
 Extension::~Extension() {
