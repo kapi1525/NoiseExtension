@@ -337,7 +337,7 @@
 
 			{
 				"Title": "Fractal type",
-				"Info": "Fractal type",
+				"Info": "Method for combining octaves into a fractal.",
 				"Type": "Combo Box",
 				"DefaultState": "None",
 				"Items": [
@@ -350,32 +350,32 @@
 			},
 			{
 				"Title": "Fractal octaves",
-				"Info": "Fractal octaves",
+				"Info": "Number of noise layers used to create a fractal.",
 				"Type": "Editbox Number",
 				"DefaultState": 3
 			},
 			{
 				"Title": "Fractal lacunarity",
-				"Info": "Fractal lacunarity",
+				"Info": "Frequency multiplayer for octaves.",
 				"Type": "Editbox Float",
 				"DefaultState": 2.0
 			},
 			{
 				"Title": "Fractal weighted strength",
-				"Info": "Fractal weighted strength",
+				"Info": "Weight for octaves, higher values decrease impact of higher octaves. Keep input between 0.0 and 1.0 to keep noise output between -1.0 and 1.0.",
 				"Type": "Editbox Float",
 				"DefaultState": 0.0
 			},
 			{
 				"Title": "Fractal PingPong strength",
-				"Info": "Fractal PingPong strength",
+				"Info": "PingPong fractal type strength.",
 				"Type": "Editbox Float",
 				"DefaultState": 2.0
 			},
 
 			{
 				"Title": "Cellular distance function",
-				"Info": "Cellular distance function",
+				"Info": "Function used to create a cell for a given point. Only noise type cellular",
 				"Type": "Combo Box",
 				"DefaultState": "EuclideanSq",
 				"Items": [
@@ -387,7 +387,7 @@
 			},
 			{
 				"Title": "Cellular return type",
-				"Info": "Cellular return type",
+				"Info": "Controls what cellular function returns.",
 				"Type": "Combo Box",
 				"DefaultState": "Distance",
 				"Items": [
@@ -402,7 +402,7 @@
 			},
 			{
 				"Title": "Cellular jitter",
-				"Info": "Cellular jitter",
+				"Info": "Maximum distance cell point can move from grid position.",
 				"Type": "Editbox Float",
 				"DefaultState": 1.0
 			},
