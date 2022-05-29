@@ -169,7 +169,8 @@ std::int16_t FusionAPI GetRunObjectInfos(mv * mV, kpxRunInfos * infoPtr)
 				// Folder or FolderEnd - no data, folders are cosmetic
 				!_strnicmp(curPropType, "Folder", sizeof("Folder") - 1) ||
 				// Buttons - no data, they're just clickable
-				!_stricmp(curPropType, "Edit button"))
+				!_stricmp(curPropType, "Edit button") ||
+				!_stricmp(curPropType, "Group"))
 			{
 				// skip 'em, no changeable data
 			}
