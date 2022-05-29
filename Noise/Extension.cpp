@@ -79,7 +79,7 @@ Extension::Extension(RuntimeFunctions & runFuncs, EDITDATA * edPtr, void * objCE
 		LinkExpression(30, current_cellular_return_type);
 	}
 
-	LOGE(edPtr->GetPropertyNum(0));
+	LOGE("%i", edPtr->GetPropertyNum(0));
 }
 
 Extension::~Extension() {
@@ -88,7 +88,7 @@ Extension::~Extension() {
 
 int EDITDATA::GetPropertyNum(int propID) {
 	if (propID < 0 || (size_t)propID > CurLang["Properties"].u.array.length) {
-		LOGF(_T("Property ID not found."));
+		LOGF("Property ID not found.");
 	}
 
 	const json_value &prop = CurLang["Properties"][propID];
@@ -97,7 +97,7 @@ int EDITDATA::GetPropertyNum(int propID) {
 		return *(int *)PropIndex(this, propID, nullptr);
 	}
 	else {
-		LOGF(_T("Property is not a number."));
+		LOGF("Property is not a number.");
 	}
 }
 
