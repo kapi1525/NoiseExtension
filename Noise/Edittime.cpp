@@ -131,7 +131,9 @@ BOOL FusionAPI GetProperties(mv * mV, EDITDATA * edPtr, BOOL bMasterItem)
 	else if (edPtr->eHeader.extVersion < 12) {
 		InitializePropertiesFromJSON(mV, edPtr);
 		mvInvalidateObject(mV, edPtr);
+		DarkEdif::MsgBox::Info(_T("test"), _T("%i"), edPtr->eHeader.extVersion);
 		edPtr->eHeader.extVersion = 12;
+		DarkEdif::MsgBox::Info(_T("test"), _T("%i"), edPtr->eHeader.extVersion);
 	}
 
 	// OK
