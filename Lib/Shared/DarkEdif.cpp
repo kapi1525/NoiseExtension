@@ -306,7 +306,7 @@ void InitializePropertiesFromJSON(mv * mV, EDITDATA * edPtr)
 				double a = JProp["DefaultState"];
 				double b = (float)a;
 				
-				unsigned int i = *reinterpret_cast<long long*>(&b) & 0xFFFFFFFF;	// this is getting weird
+				unsigned int i = *reinterpret_cast<unsigned int*>(&b);	// this is getting weird
 
 				propValues.write((char *)&i, sizeof(unsigned int));
 
