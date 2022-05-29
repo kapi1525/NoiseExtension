@@ -115,6 +115,7 @@ HGLOBAL FusionAPI UpdateEditStructure(mv* mV, void* OldEdPtr) {
 #pragma DllExportHint
 	EDITDATA* oldEDITDATA = (EDITDATA*)OldEdPtr;
 	DarkEdif::MsgBox::Info(_T("dfhfg"), _T("%i"), oldEDITDATA->eHeader.extVersion);
+	return 0;
 }
 
 
