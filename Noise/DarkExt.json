@@ -362,10 +362,8 @@
 			},
 			{
 				"Title": "Fractal weighted strength",
-				"Info": "Weight for octaves, higher values decrease impact of higher octaves.",
+				"Info": "Weight for octaves, higher values decrease impact of higher octaves. Keep input between 0.0 and 1.0 otherwise Noise output may be outside -1.0 and 1.0 range.",
 				"Type": "Editbox Float",
-				"Minimum": 0.0,
-				"Maximum": 1.0,
 				"DefaultState": 0.0
 			},
 			{

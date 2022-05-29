@@ -710,7 +710,7 @@ Edif::SDK::SDK(mv * mV, json_value &_json) : json (_json)
 				case PROPTYPE_EDIT_FLOAT:
 				{
 					float* temp = new float[2];
-					// some magic \/
+					// some magic \/ FIXME: This dosent work(?)
 					double prop_min = Property["Minimum"];
 					double prop_max = Property["Maximum"];
 					std::int64_t prop_min_b = *reinterpret_cast<std::int64_t*>(&prop_min) & 0xFFFFFFFF;
