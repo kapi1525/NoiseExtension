@@ -81,7 +81,17 @@ Extension::Extension(RuntimeFunctions & runFuncs, EDITDATA * edPtr, void * objCE
 
 	// Properties
 	{
-		DarkEdif::MsgBox::Info(_T("TSDFgfgh"), _T("%i"), edPtr->GetPropertyInt(1));
+		set_seed(string_to_seed(edPtr->GetPropertyStr(0).c_str()));
+		set_noise_type(edPtr->GetPropertyInt(1));
+		set_noise_frequency(edPtr->GetPropertyFloat(2));
+		set_fractal_type(edPtr->GetPropertyInt(3));
+		set_fractal_octaves(edPtr->GetPropertyInt(4));
+		set_fractal_lacunarity(edPtr->GetPropertyFloat(5));
+		set_fractal_weighted(edPtr->GetPropertyFloat(6));
+		set_fractal_pingpong(edPtr->GetPropertyFloat(7));
+		set_cellular_distance_function(edPtr->GetPropertyInt(8));
+		set_cellular_return_type(edPtr->GetPropertyInt(9));
+		set_cellular_jitter(edPtr->GetPropertyFloat(10));
 	}
 }
 
