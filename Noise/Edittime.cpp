@@ -117,6 +117,7 @@ HGLOBAL FusionAPI UpdateEditStructure(mv* mV, void* OldEdPtr) {
 	if(oldEDITDATA->eHeader.extVersion < 12) {
 		DarkEdif::MsgBox::Info(_T("Properties"), _T("This project was saved with Noise version %i. Object properties will be reset to prevent some errors."), oldEDITDATA->eHeader.extVersion);
 		InitializePropertiesFromJSON(mV, (EDITDATA*)OldEdPtr);
+		oldEDITDATA->eHeader.extVersion = Extension::Version;
 	}
 	return 0;
 }
