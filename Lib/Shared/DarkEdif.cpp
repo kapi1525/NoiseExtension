@@ -296,7 +296,6 @@ void InitializePropertiesFromJSON(mv * mV, EDITDATA * edPtr)
 
 			case PROPTYPE_EDIT_FLOAT:
 			{
-				// TODO: PROPTYPE_EDIT_FLOAT
 				if (JProp["DefaultState"].type != json_double)
 				{
 					DarkEdif::MsgBox::WarningOK(_T("Property warning"), _T("Invalid or no default integer value specified for property %s (ID %u)."),
@@ -305,7 +304,6 @@ void InitializePropertiesFromJSON(mv * mV, EDITDATA * edPtr)
 
 				double a = JProp["DefaultState"];
 				float b = (float)a;
-				
 				unsigned int i = *reinterpret_cast<unsigned int*>(&b);	// this is getting weird
 
 				propValues.write((char *)&i, sizeof(unsigned int));
