@@ -90,7 +90,6 @@ Extension::~Extension() {
 int EDITDATA::GetPropertyInt(int propID) {
 	if (propID < 0 || (size_t)propID > CurLang["Properties"].u.array.length) {
 		return 0;
-		//DarkEdif::Log(DARKEDIF_LOG_FATAL, _T("Property ID not found."));
 	}
 
 	const json_value &prop = CurLang["Properties"][propID];
@@ -100,14 +99,12 @@ int EDITDATA::GetPropertyInt(int propID) {
 	}
 	else {
 		return 0;
-		//DarkEdif::Log(DARKEDIF_LOG_FATAL, _T("Property is not a number."));
 	}
 }
 
 float EDITDATA::GetPropertyFloat(int propID) {
 	if (propID < 0 || (size_t)propID > CurLang["Properties"].u.array.length) {
-		return 0;
-		//DarkEdif::Log(DARKEDIF_LOG_FATAL, _T("Property ID not found."));
+		return 0.f;
 	}
 
 	const json_value &prop = CurLang["Properties"][propID];
@@ -116,8 +113,7 @@ float EDITDATA::GetPropertyFloat(int propID) {
 		return *(float *)PropIndex(this, propID, nullptr);
 	}
 	else {
-		return 0;
-		//DarkEdif::Log(DARKEDIF_LOG_FATAL, _T("Property is not a number."));
+		return 0.f;
 	}
 }
 

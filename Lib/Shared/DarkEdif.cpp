@@ -303,7 +303,7 @@ void InitializePropertiesFromJSON(mv * mV, EDITDATA * edPtr)
 						::SDK->EdittimeProperties[i].Title, i);
 				}
 
-				unsigned int i = unsigned int(long long(JProp["DefaultState"]) & 0xFFFFFFFF);
+				unsigned int i = (unsigned int)((JProp["DefaultState"].operator double()) & 0xFFFFFFFF);
 				propValues.write((char *)&i, sizeof(unsigned int)); // embedded nulls upset the << operator
 
 				if (JProp["ChkDefault"])
