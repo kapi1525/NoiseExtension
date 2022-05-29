@@ -115,7 +115,7 @@ HGLOBAL FusionAPI UpdateEditStructure(mv* mV, void* OldEdPtr) {
 #pragma DllExportHint
 
 	if(((EDITDATA*)OldEdPtr)->eHeader.extVersion < 12) {
-		EDITDATA* edPtr;
+		EDITDATA* edPtr = new EDITDATA;
 
 		InitializePropertiesFromJSON(mV, edPtr);
 		edPtr->eHeader.extVersion = Extension::Version;
