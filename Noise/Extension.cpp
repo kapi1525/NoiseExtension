@@ -94,7 +94,7 @@ int EDITDATA::GetPropertyInt(int propID) {
 
 	const json_value &prop = CurLang["Properties"][propID];
 
-	if (!_stricmp(prop["Type"], "Editbox Number")) {
+	if (!_stricmp(prop["Type"], "Editbox Number") || !_stricmp(prop["Type"], "Combo Box")) {
 		return *(int *)PropIndex(this, propID, nullptr);
 	}
 	else {
