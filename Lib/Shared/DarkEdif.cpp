@@ -304,10 +304,12 @@ void InitializePropertiesFromJSON(mv * mV, EDITDATA * edPtr)
 				}
 
 				unsigned int i = (unsigned int)((JProp["DefaultState"].operator double()) & 0xFFFFFFFF);
-				propValues.write((char *)&i, sizeof(unsigned int)); // embedded nulls upset the << operator
+				double abc = JProp["DefaultState"];
+				propValues.write((char *)&abc, sizeof(float)); // embedded nulls upset the << operator
 
 				if (JProp["ChkDefault"])
-					propChkboxes[i / CHAR_BIT] |= 1 << (i % CHAR_BIT);
+					DarkEdif::MsgBox::WarningOK(_T("idk"), _T("yedtdgfhjdgh"));
+					propChkboxes[abc / CHAR_BIT] |= 1 << (std::fmod(abc, CHAR_BIT));
 
 				break;
 			}
