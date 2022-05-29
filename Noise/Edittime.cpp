@@ -117,9 +117,8 @@ BOOL FusionAPI GetProperties(mv * mV, EDITDATA * edPtr, BOOL bMasterItem)
 #pragma DllExportHint
 	mvInsertProps(mV, edPtr, SDK->EdittimeProperties, PROPID_TAB_GENERAL, TRUE);
 
-	if (edPtr->DarkEdif_Prop_Size == 0 || edPtr->eHeader.extVersion < 12)
+	if (edPtr->DarkEdif_Prop_Size == 0)
 	{
-		DarkEdif::MsgBox::Info(_T("Test"), _T("prop init"));
 		InitializePropertiesFromJSON(mV, edPtr);
 		mvInvalidateObject(mV, edPtr);
 	}
