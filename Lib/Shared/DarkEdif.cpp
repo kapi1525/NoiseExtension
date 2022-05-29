@@ -303,13 +303,15 @@ void InitializePropertiesFromJSON(mv * mV, EDITDATA * edPtr)
 						::SDK->EdittimeProperties[i].Title, i);
 				}
 
-				double abc = JProp["DefaultState"];
-				unsigned int i = (unsigned int)((unsigned int)abc & 0xFFFFFFFF);
-				propValues.write((char *)&i, sizeof(unsigned int)); // embedded nulls upset the << operator
+				double a = JProp["DefaultState"];
+				double b = (float)a;
+				
+				unsigned int i = *reinterpret_cast<long long*>(&b) & 0xFFFFFFFF;	// this is getting weird
+
+				propValues.write((char *)&i, sizeof(unsigned int));
 
 				if (JProp["ChkDefault"])
-					DarkEdif::MsgBox::WarningOK(_T("idk"), _T("yedtdgfhjdgh"));
-					propChkboxes[abc / CHAR_BIT] |= 1 << ((i % CHAR_BIT));
+					propChkboxes[i / CHAR_BIT] |= 1 << (i % CHAR_BIT);
 
 				break;
 			}
