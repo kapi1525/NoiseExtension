@@ -110,14 +110,6 @@ BOOL FusionAPI EditObject(mv *mV, ObjInfo * oiPtr, LevelObject * loPtr, EDITDATA
 // PROPERTIES
 // ============================================================================
 
-// Copied from original SDK
-HGLOBAL FusionAPI UpdateEditStructure(mv* mV, void* OldEdPtr) {
-#pragma DllExportHint
-	EDITDATA* oldEDITDATA = (EDITDATA*)OldEdPtr;
-	DarkEdif::MsgBox::Info(_T("dfhfg"), _T("%i"), oldEDITDATA->eHeader.extVersion);
-	return 0;
-}
-
 
 // Inserts properties into the properties of the object.
 BOOL FusionAPI GetProperties(mv * mV, EDITDATA * edPtr, BOOL bMasterItem)
@@ -125,7 +117,7 @@ BOOL FusionAPI GetProperties(mv * mV, EDITDATA * edPtr, BOOL bMasterItem)
 #pragma DllExportHint
 	mvInsertProps(mV, edPtr, SDK->EdittimeProperties, PROPID_TAB_GENERAL, TRUE);
 
-	if (edPtr->DarkEdif_Prop_Size == 0)
+	if (edPtr->DarkEdif_Prop_Size == 0 || edPtr->eHeader.extVersion < 12)	// Reinit props when updated to version 12+
 	{
 		InitializePropertiesFromJSON(mV, edPtr);
 		mvInvalidateObject(mV, edPtr);
