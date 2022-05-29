@@ -117,8 +117,14 @@ BOOL FusionAPI GetProperties(mv * mV, EDITDATA * edPtr, BOOL bMasterItem)
 #pragma DllExportHint
 	mvInsertProps(mV, edPtr, SDK->EdittimeProperties, PROPID_TAB_GENERAL, TRUE);
 
-	if (edPtr->DarkEdif_Prop_Size == 0 || edPtr->eHeader.extVersion < 12)	// Reinit props when updated to version 12+
+	if (edPtr->DarkEdif_Prop_Size == 0)
 	{
+		InitializePropertiesFromJSON(mV, edPtr);
+		mvInvalidateObject(mV, edPtr);
+	} 
+	else if (edPtr->eHeader.extVersion < 12)	// Reinitialize props when updating from older version to 0.9.0 and greater.
+	{
+		DarkEdif::MsgBox::Info(_T("Note"), _T("This project was saved with older noise version (%i), Noise v0.9.0 (12) added new properties, this broke something so properties will be reset to prevent errors."), edPtr->eHeader.extVersion);
 		InitializePropertiesFromJSON(mV, edPtr);
 		mvInvalidateObject(mV, edPtr);
 	}
