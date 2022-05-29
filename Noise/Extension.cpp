@@ -79,7 +79,7 @@ Extension::Extension(RuntimeFunctions & runFuncs, EDITDATA * edPtr, void * objCE
 		LinkExpression(30, current_cellular_return_type);
 	}
 
-	LOGE("%i", edPtr->GetPropertyNum(0));
+	DarkEdif::Log(DARKEDIF_LOG_ERROR, _T("%i"), edPtr->GetPropertyNum(0));
 }
 
 Extension::~Extension() {
@@ -88,7 +88,7 @@ Extension::~Extension() {
 
 int EDITDATA::GetPropertyNum(int propID) {
 	if (propID < 0 || (size_t)propID > CurLang["Properties"].u.array.length) {
-		LOGF("Property ID not found.");
+		DarkEdif::Log(DARKEDIF_LOG_FATAL, _T("Property ID not found."));
 	}
 
 	const json_value &prop = CurLang["Properties"][propID];
@@ -97,7 +97,7 @@ int EDITDATA::GetPropertyNum(int propID) {
 		return *(int *)PropIndex(this, propID, nullptr);
 	}
 	else {
-		LOGF("Property is not a number.");
+		DarkEdif::Log(DARKEDIF_LOG_FATAL, _T("Property is not a number."));
 	}
 }
 
