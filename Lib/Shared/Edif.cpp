@@ -708,7 +708,17 @@ Edif::SDK::SDK(mv * mV, json_value &_json) : json (_json)
 
 				// Edit box for floating point numbers, Parameters = min value, max value, options (signed, float, spin)
 				case PROPTYPE_EDIT_FLOAT:
-					SetAllProps(0, NULL);
+				{
+					float* temp = new float[2];
+					// some magic \/
+					double prop_min = Property["Minimum"];
+					double prop_max = Property["Maximum"];
+					std::int64_t prop_min_b = *reinterpret_cast<std::int64_t*>(&prop_min) & 0xFFFFFFFF;
+					std::int64_t prop_max_b = *reinterpret_cast<std::int64_t*>(&prop_max) & 0xFFFFFFFF;
+					temp[0] = (float)(*reinterpret_cast<double*>(&prop_min_b));
+					temp[1] = (float)(*reinterpret_cast<double*>(&prop_max_b));
+					SetAllProps(PROPOPT_PARAMREQUIRED, temp);
+				}
 
 				// Edit box for multiline texts, no Parameter
 				case PROPTYPE_EDIT_MULTILINE:
