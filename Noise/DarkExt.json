@@ -336,6 +336,11 @@
 			},
 
 			{
+				"Title": "Fractals",
+				"Info": "Fractals.",
+				"Type": "Group"
+			},
+			{
 				"Title": "Fractal type",
 				"Info": "Method for combining octaves into a fractal.",
 				"Type": "Combo Box",
@@ -374,6 +379,11 @@
 			},
 
 			{
+				"Title": "Cellular",
+				"Info": "Cellular.",
+				"Type": "Group"
+			},
+			{
 				"Title": "Cellular distance function",
 				"Info": "Function used to create a cell for a given point. Only noise type cellular",
 				"Type": "Combo Box",
@@ -408,8 +418,8 @@
 			},
 
 			{
-				"Title": "Tets",
-				"Info": "dfgjfghjk.",
+				"Title": "Other",
+				"Info": "Other.",
 				"Type": "Group"
 			},
 			{
