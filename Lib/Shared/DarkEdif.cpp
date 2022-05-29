@@ -304,7 +304,7 @@ void InitializePropertiesFromJSON(mv * mV, EDITDATA * edPtr)
 				}
 
 				double abc = JProp["DefaultState"];
-				unsigned int i = (unsigned int)(abc & 0xFFFFFFFF);
+				unsigned int i = (unsigned int)((unsigned int)abc & 0xFFFFFFFF);
 				propValues.write((char *)&i, sizeof(unsigned int)); // embedded nulls upset the << operator
 
 				if (JProp["ChkDefault"])
