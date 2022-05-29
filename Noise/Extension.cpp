@@ -78,15 +78,55 @@ Extension::Extension(RuntimeFunctions & runFuncs, EDITDATA * edPtr, void * objCE
 		LinkExpression(29, current_cellular_function);
 		LinkExpression(30, current_cellular_return_type);
 	}
+
+	// Properties
+	{
+		set_seed(string_to_seed(edPtr->GetPropertyStr(0).c_str()));
+		set_noise_type(edPtr->GetPropertyInt(1));
+		set_noise_frequency(edPtr->GetPropertyFloat(2));
+		set_fractal_type(edPtr->GetPropertyInt(3));
+		set_fractal_octaves(edPtr->GetPropertyInt(4));
+		set_fractal_lacunarity(edPtr->GetPropertyFloat(5));
+		set_fractal_weighted(edPtr->GetPropertyFloat(6));
+		set_fractal_pingpong(edPtr->GetPropertyFloat(7));
+		set_cellular_distance_function(edPtr->GetPropertyInt(8));
+		set_cellular_return_type(edPtr->GetPropertyInt(9));
+		set_cellular_jitter(edPtr->GetPropertyFloat(10));
+	}
 }
 
 Extension::~Extension() {
 }
 
 
-int Extension::test(EDITDATA* edPtr, int propID) {
+int EDITDATA::GetPropertyInt(int propID) {
+	if (propID < 0 || (size_t)propID > CurLang["Properties"].u.array.length) {
+		return 0;
+	}
+
 	const json_value &prop = CurLang["Properties"][propID];
-	return (int)prop["Items"][*(int *)PropIndex(edPtr, propID, nullptr)];
+
+	if (!_stricmp(prop["Type"], "Editbox Number") || !_stricmp(prop["Type"], "Combo Box")) {
+		return *(int *)PropIndex(this, propID, nullptr);
+	}
+	else {
+		return 0;
+	}
+}
+
+float EDITDATA::GetPropertyFloat(int propID) {
+	if (propID < 0 || (size_t)propID > CurLang["Properties"].u.array.length) {
+		return 0.f;
+	}
+
+	const json_value &prop = CurLang["Properties"][propID];
+
+	if (!_stricmp(prop["Type"], "Editbox Float")) {
+		return *(float *)PropIndex(this, propID, nullptr);
+	}
+	else {
+		return 0.f;
+	}
 }
 
 
