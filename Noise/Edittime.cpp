@@ -115,14 +115,14 @@ HGLOBAL FusionAPI UpdateEditStructure(mv* mV, void* OldEdPtr) {
 #pragma DllExportHint
 
 	if(((EDITDATA*)OldEdPtr)->eHeader.extVersion < 12) {
-		EDITDATA* edPtr = (EDITDATA*)OldEdPtr;
+		EDITDATA* edPtr;
 
-		InitializePropertiesFromJSON(mV, (EDITDATA*)OldEdPtr);
+		InitializePropertiesFromJSON(mV, edPtr);
 		edPtr->eHeader.extVersion = Extension::Version;
 		edPtr->eHeader.extSize = sizeof(EDITDATA);
 		DarkEdif::MsgBox::Info(_T("test"), _T("%i"), edPtr->eHeader.extVersion);
 
-		return (HGLOBAL)new EDITDATA(*edPtr);
+		return (HGLOBAL)edPtr;
 	}
 
 	return 0;
