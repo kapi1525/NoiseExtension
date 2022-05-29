@@ -113,6 +113,18 @@ BOOL FusionAPI EditObject(mv *mV, ObjInfo * oiPtr, LevelObject * loPtr, EDITDATA
 // Copied from original SDK
 HGLOBAL FusionAPI UpdateEditStructure(mv* mV, void* OldEdPtr) {
 #pragma DllExportHint
+
+	if(((EDITDATA*)OldEdPtr)->eHeader.extVersion < 12) {
+		EDITDATA* edPtr = (EDITDATA*)OldEdPtr;
+
+		InitializePropertiesFromJSON(mV, (EDITDATA*)OldEdPtr);
+		edPtr->eHeader.extVersion = Extension::Version;
+		edPtr->eHeader.extSize = sizeof(EDITDATA);
+		DarkEdif::MsgBox::Info(_T("test"), _T("%i"), edPtr->eHeader.extVersion);
+
+		return (HGLOBAL)new EDITDATA(*edPtr);
+	}
+
 	return 0;
 }
 
@@ -127,14 +139,6 @@ BOOL FusionAPI GetProperties(mv * mV, EDITDATA * edPtr, BOOL bMasterItem)
 	{
 		InitializePropertiesFromJSON(mV, edPtr);
 		mvInvalidateObject(mV, edPtr);
-	}
-	else if (edPtr->eHeader.extVersion < 12) {
-		DarkEdif::MsgBox::Info(_T("test"), _T("%i"), edPtr->eHeader.extVersion);
-		InitializePropertiesFromJSON(mV, edPtr);
-		mvInvalidateObject(mV, edPtr);
-		DarkEdif::MsgBox::Info(_T("test"), _T("%i"), edPtr->eHeader.extVersion);
-		edPtr->eHeader.extVersion = 12;
-		DarkEdif::MsgBox::Info(_T("test"), _T("%i"), edPtr->eHeader.extVersion);
 	}
 
 	// OK
