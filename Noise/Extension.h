@@ -37,7 +37,7 @@ public:
 #endif
 	~Extension();
 
-
+	// TODO: Add DomainWarp in v1.1
 	FastNoiseLite noise;
 	int seed = 1337;	// FastNoiseLite's seed is set to 1337 at start
 
