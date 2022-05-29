@@ -8,17 +8,6 @@
 
 
 
-enum class NoisePropID {
-	Seed,
-	NoiseType,
-	FractalType,
-	CellularDistFunc,
-	CellularRetType,
-	Version
-};
-
-
-
 // edPtr : Used at edittime and saved in the MFA/CCN/EXE files
 struct EDITDATA {
 	// Header - required
@@ -36,6 +25,7 @@ struct EDITDATA {
 	bool IsPropChecked(int propID);						// Returns property checked or unchecked.
 	std::tstring GetPropertyStr(const char * propName);	// Returns std::tstring property setting from property name.
 	std::tstring GetPropertyStr(int propID);			// Returns std::tstring property string from property ID.
+	int GetPropertyNum(int propID);						// Returns int property setting from property ID.
 };
 
 class Extension;

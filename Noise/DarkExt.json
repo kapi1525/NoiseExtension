@@ -308,6 +308,12 @@
 
 		"Properties": [
 			{
+				"Title": "Test",
+				"Info": "test.",
+				"Type": "Editbox Number",
+				"DefaultState": 123
+			},
+			{
 				"Title": "Version",
 				"Info": "Noise Object version.",
 				"Type": "Text",
