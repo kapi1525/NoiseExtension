@@ -316,7 +316,7 @@
 
 			{
 				"Title": "Noise type",
-				"Info": "Noise type.",
+				"Info": "Noise algorythm used to generate noise values.",
 				"Type": "Combo Box",
 				"DefaultState": "OpenSimplex2",
 				"Items": [
@@ -385,7 +385,7 @@
 			},
 			{
 				"Title": "Cellular distance function",
-				"Info": "Function used to create a cell for a given point. Only noise type cellular",
+				"Info": "Function used to create a cell for a given point. Only noise type cellular.",
 				"Type": "Combo Box",
 				"DefaultState": "EuclideanSq",
 				"Items": [
