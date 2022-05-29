@@ -113,12 +113,6 @@ BOOL FusionAPI EditObject(mv *mV, ObjInfo * oiPtr, LevelObject * loPtr, EDITDATA
 // Copied from original SDK
 HGLOBAL FusionAPI UpdateEditStructure(mv* mV, void* OldEdPtr) {
 #pragma DllExportHint
-	EDITDATA* oldEDITDATA = (EDITDATA*)OldEdPtr;
-	if(oldEDITDATA->eHeader.extVersion < 12) {
-		DarkEdif::MsgBox::Info(_T("Properties"), _T("This project was saved with Noise version %i. Object properties will be reset to prevent some errors."), oldEDITDATA->eHeader.extVersion);
-		InitializePropertiesFromJSON(mV, (EDITDATA*)OldEdPtr);
-		oldEDITDATA->eHeader.extVersion = Extension::Version;
-	}
 	return 0;
 }
 
@@ -133,6 +127,11 @@ BOOL FusionAPI GetProperties(mv * mV, EDITDATA * edPtr, BOOL bMasterItem)
 	{
 		InitializePropertiesFromJSON(mV, edPtr);
 		mvInvalidateObject(mV, edPtr);
+	}
+	else if (edPtr->eHeader.extVersion < 12) {
+		InitializePropertiesFromJSON(mV, edPtr);
+		mvInvalidateObject(mV, edPtr);
+		edPtr->eHeader.extVersion = 12;
 	}
 
 	// OK
