@@ -110,6 +110,17 @@ BOOL FusionAPI EditObject(mv *mV, ObjInfo * oiPtr, LevelObject * loPtr, EDITDATA
 // PROPERTIES
 // ============================================================================
 
+// Copied from original SDK
+HGLOBAL FusionAPI UpdateEditStructure(mv* mV, void* OldEdPtr) {
+#pragma DllExportHint
+	EDITDATA* oldEDITDATA = (EDITDATA*)OldEdPtr;
+	if(oldEDITDATA->eHeader.extVersion < 12) {
+		DarkEdif::MsgBox::Info(_T("Properties"), _T("This project was saved with Noise version %i. Object properties will be reset to prevent some errors."), oldEDITDATA->eHeader.extVersion);
+		InitializePropertiesFromJSON(mV, (EDITDATA*)OldEdPtr);
+	}
+	return 0;
+}
+
 
 // Inserts properties into the properties of the object.
 BOOL FusionAPI GetProperties(mv * mV, EDITDATA * edPtr, BOOL bMasterItem)
@@ -119,12 +130,6 @@ BOOL FusionAPI GetProperties(mv * mV, EDITDATA * edPtr, BOOL bMasterItem)
 
 	if (edPtr->DarkEdif_Prop_Size == 0)
 	{
-		InitializePropertiesFromJSON(mV, edPtr);
-		mvInvalidateObject(mV, edPtr);
-	} 
-	else if (edPtr->eHeader.extVersion < 12)	// Reinitialize props when updating from older version to 0.9.0 and greater.
-	{
-		DarkEdif::MsgBox::Info(_T("Note"), _T("This project was saved with older noise version (%i), Noise v0.9.0 (12) added new properties, this broke something so properties will be reset to prevent errors."), edPtr->eHeader.extVersion);
 		InitializePropertiesFromJSON(mV, edPtr);
 		mvInvalidateObject(mV, edPtr);
 	}
