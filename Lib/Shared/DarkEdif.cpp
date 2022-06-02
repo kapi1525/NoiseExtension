@@ -306,7 +306,7 @@ void InitializePropertiesFromJSON(mv * mV, EDITDATA * edPtr)
 				float b = (float)a;
 				unsigned int i = *reinterpret_cast<unsigned int*>(&b);	// this is getting weird
 
-				propValues.write((char *)&i, sizeof(unsigned int));
+				propValues.write((char *)&b, sizeof(float));
 
 				if (JProp["ChkDefault"])
 					propChkboxes[i / CHAR_BIT] |= 1 << (i % CHAR_BIT);
@@ -442,8 +442,10 @@ Prop * GetProperty(EDITDATA * edPtr, size_t ID)
 				"Characters will be replaced with filler."), (const char *)jsonItem["Title"], ID, Current);
 		}
 	}
-	else if (!_stricmp(curStr, "Editbox Number") || !_stricmp(curStr, "Editbox Float") || !_stricmp(curStr, "Combo Box"))
+	else if (!_stricmp(curStr, "Editbox Number") || !_stricmp(curStr, "Combo Box"))
 		ret = new Prop_UInt(*(unsigned int *)Current);
+	else if (!_stricmp(curStr, "Editbox Float"))
+		ret = new Prop_Float(*(float *)Current);
 	else if (_stricmp(curStr, "Checkbox") && _strnicmp(curStr, "Folder", sizeof("Folder") - 1))
 	{
 		// UTF-8 can't convert to ANSI easily, but should have no issue converting to UTF-16 (Wide)
@@ -569,8 +571,10 @@ char * PropIndex(EDITDATA * edPtr, unsigned int ID, unsigned int * size)
 
 		if (!_strnicmp(curStr, "Editbox String", sizeof("Editbox String") - 1))
 			Current += strlen(Current) + 1;
-		else if (!_stricmp(curStr, "Editbox Number") || !_stricmp(curStr, "Editbox Float") || !_stricmp(curStr, "Combo Box"))
+		else if (!_stricmp(curStr, "Editbox Number") || !_stricmp(curStr, "Combo Box"))
 			Current += sizeof(unsigned int);
+		else if (!_stricmp(curStr, "Editbox Float"))
+			Current += sizeof(float);
 
 		if (i == ID - 1)
 			StartPos = Current;

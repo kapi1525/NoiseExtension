@@ -162,8 +162,10 @@ std::int16_t FusionAPI GetRunObjectInfos(mv * mV, kpxRunInfos * infoPtr)
 				fullSize += (defaultText ? strlen(defaultText) : 0) + 1; // UTF-8
 			}
 			// Stores a number (in combo box, an index)
-			else if (!_stricmp(curPropType, "Editbox Number") || !_stricmp(curPropType, "Editbox Float") || !_stricmp(curPropType, "Combo Box"))
+			else if (!_stricmp(curPropType, "Editbox Number") || !_stricmp(curPropType, "Combo Box"))
 				fullSize += sizeof(int);
+			else if (!_stricmp(curPropType, "Editbox Float"))
+				fullSize += sizeof(float);
 			// No content, or already stored in checkbox part before this for loop
 			else if (!_stricmp(curPropType, "Text") || !_stricmp(curPropType, "Checkbox") ||
 				// Folder or FolderEnd - no data, folders are cosmetic
