@@ -110,7 +110,6 @@ BOOL FusionAPI EditObject(mv *mV, ObjInfo * oiPtr, LevelObject * loPtr, EDITDATA
 // PROPERTIES
 // ============================================================================
 
-
 // Inserts properties into the properties of the object.
 BOOL FusionAPI GetProperties(mv * mV, EDITDATA * edPtr, BOOL bMasterItem)
 {
@@ -408,5 +407,4 @@ void FusionAPI SetPropCheck(mv * mV, EDITDATA * edPtr, unsigned int PropID_, BOO
 	// _tfopen(manifestPath.c_str(), _T("ab"))
 	// and you're free to edit the manifest
 }*/
-
 #endif // EditorBuild

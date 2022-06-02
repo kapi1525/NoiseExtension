@@ -167,7 +167,6 @@ goto :exit
     echo.
     echo [CMD] %*
     %*
-    if not %ERRORLEVEL%==0 exit 1
     exit /B 0
 
 

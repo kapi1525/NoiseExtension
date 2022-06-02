@@ -32,15 +32,14 @@ JavaVM * global_vm;
 
 // Checks Fusion runtime is compatible with your extension.
 // In Runtime, this expression should not be called and always returns false.
-#if !RuntimeBuild
-	static int isCompatibleResult = -1;
-#endif
+static int isCompatibleResult = -1;
 
 bool IS_COMPATIBLE(mv * v)
 {
 #if RuntimeBuild
 	// mV is not valid at runtime; so someone's trying to use a Runtime MFX as Editor,
 	// which won't work anyway because Runtime MFX lacks A/C/E menus and such.
+	(void)isCompatibleResult;
 	return false;
 #else
 	// No GetVersion function provided, abort
@@ -1431,9 +1430,10 @@ ProjectFunc void PROJ_FUNC_GEN(PROJECT_NAME_RAW, _expressionJump(void * cppExtPt
 	long Parameters[16];
 	std::uintptr_t Result = 0;
 
-	// int ExpressionRet2 = (int)ExpressionRet;
+	int ExpressionRet2 = (int)ExpressionRet;
+	(void)ExpressionRet2;
 #ifdef _WIN32
-	int ExpressionRet2 = (int)ExpressionRet; // easier for ASM
+	// int ExpressionRet2 = (int)ExpressionRet; // easier for ASM
 #else
 	int argStackCount = ParameterCount;
 	// if > 4 params, they're stored on stack

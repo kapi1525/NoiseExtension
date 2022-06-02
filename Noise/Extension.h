@@ -1,7 +1,6 @@
 #pragma once
 #include "DarkEdif.h"
 
-
 class Extension
 {
 public:
