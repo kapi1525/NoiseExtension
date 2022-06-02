@@ -1,12 +1,49 @@
-// ============================================================================
-// This file contains routines that are handled only during the Edittime,
-// under the Frame and Event editors.
-//
-// Including creating, display, and setting up your object.
-// ============================================================================
-
 #include "Common.h"
 #include "DarkEdif.h"
+
+
+void resetProps(EDITDATA* edPtr) {
+	// Set default object settings from DefaultState.
+	memset(((char *)edPtr) + sizeof(edPtr->eHeader), 0, sizeof(EDITDATA) - sizeof(EDITDATA::eHeader));
+	const auto& propsJSON = CurLang["Properties"];
+
+	// TODO: Read defaults from json file.
+	edPtr->noise_seed = 1337;
+
+	edPtr->noise_type = 0;
+	edPtr->noise_frequency = 0.01f;
+
+	edPtr->fractal_type = 0;
+	edPtr->fractal_octaves = 3;
+	edPtr->fractal_lacunarity = 2.0f;
+	edPtr->fractal_weighted_strength = 0.0f;
+	edPtr->fractal_pingpong_strength = 2.0f;
+
+	edPtr->cellular_distance_func = 1;
+	edPtr->cellular_ret_type = 1;
+	edPtr->cellular_jitter = 1.0f;
+
+	edPtr->eHeader.extVersion = Extension::Version;
+}
+
+
+HGLOBAL FusionAPI UpdateEditStructure(mv* mV, void* oldEdPtr) {
+#pragma DllExportHint
+	if(((EDITDATA*)oldEdPtr)->eHeader.extVersion < 13) {
+		DarkEdif::MsgBox::Info(_T("Update"), _T("This project was saved with older Noise Object version (v0.9.0 or older), to prevent some bugs object propeties will be reset."));
+
+		EDITDATA* newEdPtr = (EDITDATA*)GlobalAlloc(GPTR,sizeof(EDITDATA));
+
+		memcpy(&newEdPtr->eHeader, &((EDITDATA*)oldEdPtr)->eHeader, sizeof(extHeader));
+		newEdPtr->eHeader.extSize = sizeof(EDITDATA);
+
+		resetProps(newEdPtr);
+		return (HGLOBAL)newEdPtr;
+	}
+
+	return NULL;
+}
+
 
 // ============================================================================
 // ROUTINES USED UNDER FRAME EDITOR
@@ -14,11 +51,11 @@
 
 #if EditorBuild
 
+
 // Called once object is created or modified, just after setup.
 // Also called before showing the "Insert an object" dialog if your object
 // has no icon resource
-int FusionAPI MakeIconEx(mv * mV, cSurface * pIconSf, TCHAR * lpName, ObjInfo * oiPtr, EDITDATA * edPtr)
-{
+int FusionAPI MakeIconEx(mv * mV, cSurface * pIconSf, TCHAR * lpName, ObjInfo * oiPtr, EDITDATA * edPtr) {
 #pragma DllExportHint
 	pIconSf->Delete();
 	pIconSf->Clone(*SDK->Icon);
@@ -27,21 +64,30 @@ int FusionAPI MakeIconEx(mv * mV, cSurface * pIconSf, TCHAR * lpName, ObjInfo * 
 	return 0;
 }
 
+
 // Called when you choose "Create new object". It should display the setup box
 // and initialize everything in the datazone.
-int FusionAPI CreateObject(mv * mV, LevelObject * loPtr, EDITDATA * edPtr)
-{
+int FusionAPI CreateObject(mv * mV, LevelObject * loPtr, EDITDATA * edPtr) {
 #pragma DllExportHint
 	if (!IS_COMPATIBLE(mV))
 		return -1;
 
 	Edif::Init(mV, edPtr);
+	
+	if (edPtr->eHeader.extSize < sizeof(EDITDATA)) {
+		void* newEd = mvReAllocEditData(mV, edPtr, sizeof(EDITDATA));
+		if (!newEd)
+			return DarkEdif::MsgBox::Error(_T("Invalid properties"), _T("Failed to allocate enough size for properties."), sizeof(EDITDATA)), -1;
+		edPtr = (EDITDATA *) newEd;
+	}
+
+	resetProps(edPtr);
 	return 0;
 }
 
+
 // Displays the object under the frame editor
-void FusionAPI EditorDisplay(mv *mV, ObjectInfo * oiPtr, LevelObject * loPtr, EDITDATA * edPtr, RECT * rc)
-{
+void FusionAPI EditorDisplay(mv *mV, ObjectInfo * oiPtr, LevelObject * loPtr, EDITDATA * edPtr, RECT * rc) {
 #pragma DllExportHint
 	cSurface * Surface = WinGetSurface((int) mV->IdEditWin);
 	if (!Surface)
@@ -54,219 +100,204 @@ void FusionAPI EditorDisplay(mv *mV, ObjectInfo * oiPtr, LevelObject * loPtr, ED
 	::SDK->Icon->Blit(*Surface, rc->left, rc->top, BMODE_TRANSP, BOP_COPY, 0);
 }
 
-// This routine tells MMF2 if the mouse pointer is over a transparent zone of the object.
-// If not exported, the entire display is assumed to be opaque.
-/*
-BOOL FusionAPI IsTransparent(mv *mV, LevelObject * loPtr, EDITDATA * edPtr, int dx, int dy)
-{
-#pragma DllExportHint
-	return FALSE;
-}
-*/
-
-// Called when the object has been resized
-/*
-BOOL FusionAPI SetEditSize(mv * mv, EDITDATA * edPtr, int cx, int cy)
-{
-#pragma DllExportHint
-	// Check compatibility
-	if (!IS_COMPATIBLE(mV))
-		return FALSE;
-
-	edPtr->swidth = cx;
-	edPtr->sheight = cy;
-	return TRUE;
-}
-*/
-
-// Returns the size of the rectangle of the object in the frame editor.
-// If this function isn't define, a size of 32x32 is assumed.
-/* void FusionAPI GetObjectRect(mv * mV, RECT * rc, LevelObject * loPtr, EDITDATA * edPtr)
-{
-#pragma DllExportHint
-	if (!mV || !rc || !edPtr)
-		return;
-
-	rc->right = rc->left + SDK->Icon->GetWidth();	// edPtr->swidth;
-	rc->bottom = rc->top + SDK->Icon->GetHeight();	// edPtr->sheight;
-}*/
-
-// Called when the user selects the Edit command in the object's popup menu
-/*
-BOOL FusionAPI EditObject(mv *mV, ObjInfo * oiPtr, LevelObject * loPtr, EDITDATA * edPtr)
-{
-#pragma DllExportHint
-	// Check compatibility
-	if (!IS_COMPATIBLE(mV))
-		return FALSE;
-
-	// do stuff
-	return TRUE;
-}
-*/
 
 
 // ============================================================================
 // PROPERTIES
 // ============================================================================
 
+enum class noise_propid {
+	noise_seed = PROPID_EXTITEM_CUSTOM_FIRST,
+
+	noise_type,
+	noise_frequency,
+
+	fractal_type = noise_frequency + 2,
+	fractal_octaves,
+	fractal_lacunarity,
+	fractal_weighted_strength,
+	fractal_pingpong_strength,
+
+	cellular_distance_func = fractal_pingpong_strength + 2,
+	cellular_ret_type,
+	cellular_jitter,
+
+	version = cellular_jitter + 2
+};
+
+
 // Inserts properties into the properties of the object.
-BOOL FusionAPI GetProperties(mv * mV, EDITDATA * edPtr, BOOL bMasterItem)
-{
+BOOL FusionAPI GetProperties(mv * mV, EDITDATA * edPtr, BOOL bMasterItem) {
 #pragma DllExportHint
 	mvInsertProps(mV, edPtr, SDK->EdittimeProperties, PROPID_TAB_GENERAL, TRUE);
-
-	if (edPtr->DarkEdif_Prop_Size == 0)
-	{
-		InitializePropertiesFromJSON(mV, edPtr);
-		mvInvalidateObject(mV, edPtr);
-	}
-
-	// OK
 	return TRUE;
 }
 
+
 // Called when the properties are removed from the property window.
-void FusionAPI ReleaseProperties(mv * mV, EDITDATA * edPtr, BOOL bMasterItem)
-{
+void FusionAPI ReleaseProperties(mv * mV, EDITDATA * edPtr, BOOL bMasterItem) {
 #pragma DllExportHint
 }
+
 
 // Returns the value of properties that have a value.
 // Note: see GetPropCheck for checkbox properties
-Prop * FusionAPI GetPropValue(mv * mV, EDITDATA * edPtr, unsigned int PropID_)
-{
-#pragma DllExportHint
-	std::uint32_t PropID = (PropID_ - PROPID_EXTITEM_CUSTOM_FIRST) % 1000;
-	// Not our responsibility; ID unrecognised
-	if (CurLang["Properties"].type == json_null || CurLang["Properties"].u.array.length <= PropID)
-		return NULL;
+Prop* FusionAPI GetPropValue(mv * mV, EDITDATA * edPtr, unsigned int PropID) {
+#pragma DllExportHint	
+	Prop* prop_ptr = nullptr;
 
-	return GetProperty(edPtr, PropID);
+	switch(noise_propid(PropID))
+	{
+		case noise_propid::noise_seed:
+			prop_ptr = new Prop_Str(std::to_tstring(edPtr->noise_seed).c_str());
+			break;
+			
+		case noise_propid::noise_type:
+			prop_ptr = new Prop_UInt(edPtr->noise_type);
+			break;
+
+		case noise_propid::noise_frequency:
+			prop_ptr = new Prop_Float(edPtr->noise_frequency);
+			break;
+			
+
+		case noise_propid::fractal_type:
+			prop_ptr = new Prop_UInt(edPtr->fractal_type);
+			break;
+			
+		case noise_propid::fractal_octaves:
+			prop_ptr = new Prop_SInt(edPtr->fractal_octaves);
+			break;
+			
+		case noise_propid::fractal_lacunarity:
+			prop_ptr = new Prop_Float(edPtr->fractal_lacunarity);
+			break;
+			
+		case noise_propid::fractal_weighted_strength:
+			prop_ptr = new Prop_Float(edPtr->fractal_weighted_strength);
+			break;
+			
+		case noise_propid::fractal_pingpong_strength:
+			prop_ptr = new Prop_Float(edPtr->fractal_pingpong_strength);
+			break;
+			
+
+		case noise_propid::cellular_distance_func:
+			prop_ptr = new Prop_UInt(edPtr->cellular_distance_func);
+			break;
+			
+		case noise_propid::cellular_ret_type:
+			prop_ptr = new Prop_UInt(edPtr->cellular_ret_type);
+			break;
+			
+		case noise_propid::cellular_jitter:
+			prop_ptr = new Prop_Float(edPtr->cellular_jitter);
+			break;
+
+			
+		case noise_propid::version:
+			// TODO: Read version from json file.
+			prop_ptr = new Prop_Str(_T("Noise v0.9.1 (Extension: v13, SDK: Modified DarkEdif v13 from commit 2f9533bfae009e91ab6d19eb6d3f1d1b32853caf)"));
+			break;
+	}
+
+	return prop_ptr;
 }
+
 
 // Returns the checked state of properties that have a check box.
-BOOL FusionAPI GetPropCheck(mv * mV, EDITDATA * edPtr, unsigned int PropID_)
-{
+BOOL FusionAPI GetPropCheck(mv * mV, EDITDATA * edPtr, unsigned int PropID_) {
 #pragma DllExportHint
-	std::uint32_t PropID = (PropID_ - PROPID_EXTITEM_CUSTOM_FIRST) % 1000;
-
-	// Not our responsibility; ID unrecognised
-	if (CurLang["Properties"].type == json_null || CurLang["Properties"].u.array.length <= PropID)
-		return FALSE;
-
-	return (edPtr->DarkEdif_Props[PropID / CHAR_BIT] >> (PropID % CHAR_BIT) & 1);
+	return FALSE;   // No checkboxes here
 }
+
 
 // Called by Fusion after a property has been modified.
-void FusionAPI SetPropValue(mv * mV, EDITDATA * edPtr, unsigned int PropID_, void * Param)
-{
+void FusionAPI SetPropValue(mv * mV, EDITDATA * edPtr, unsigned int PropID, void * Param) {
 #pragma DllExportHint
-	Prop * prop = (Prop *)Param;
 
-	unsigned int i = prop->GetClassID(), PropID = (PropID_ - PROPID_EXTITEM_CUSTOM_FIRST) % 1000;
-
-	// Not our responsibility; ID unrecognised
-	if (CurLang["Properties"].type == json_null || CurLang["Properties"].u.array.length <= PropID)
+	switch(noise_propid(PropID))
 	{
-#ifdef _DEBUG
-		std::stringstream str;
-		str << "Accessed property ID " << PropID << ", outside of custom extension range; ignoring it.\n";
-		OutputDebugStringA(str.str().c_str());
-#endif
-		return;
-	}
-
-	switch (i)
-	{
-		case 'DATA': // Buffer or string
-		{
-			const json_value & propjson = CurLang["Properties"][PropID];
-			// Buff can be used for a string property
-			if (!_stricmp(propjson["Type"], "Editbox String"))
+		case noise_propid::noise_seed:
 			{
-				std::string utf8Str = TStringToUTF8(((Prop_Str *)prop)->String);
-				PropChange(mV, edPtr, PropID, utf8Str.c_str(), utf8Str.size() + 1);
-			}
-			// If we get a Buff and it's not a string property, DarkEdif doesn't know how to handle it.
-			else
-				DarkEdif::MsgBox::Error(_T("Property error"), _T("Got Buff type for non-string property."));
-			break;
-		}
-		case 'STRA': // ANSI string
-		{
-			std::string utf8Str = ANSIToUTF8(((Prop_AStr *)prop)->String);
-			PropChange(mV, edPtr, PropID, utf8Str.c_str(), utf8Str.size() + 1);
-			break;
-		}
-		case 'STRW': // Unicode string
-		{
-			std::string utf8Str = WideToUTF8(((Prop_WStr *)prop)->String);
-			PropChange(mV, edPtr, PropID, utf8Str.c_str(), utf8Str.size() + 1);
-			break;
-		}
-		case 'INT ': // 4-byte signed int
-		{
-			Prop_SInt * prop2 = (Prop_SInt *)prop;
-			PropChange(mV, edPtr, PropID, &prop2->Value, sizeof(int));
-			break;
-		}
-		case 'DWRD': // 4-byte unsigned int
-		{
-			Prop_UInt * prop2 = (Prop_UInt *)prop;
-			PropChange(mV, edPtr, PropID, &prop2->Value, sizeof(unsigned int));
-			break;
-		}
-		case 'INT2': // 8-byte signed int
-		{
-			Prop_Int64 * prop2 = (Prop_Int64 *)prop;
-			PropChange(mV, edPtr, PropID, &prop2->Value, sizeof(__int64));
-			break;
-		}
-		case 'DBLE': // 8-byte floating point var
-		{
-			Prop_Double * prop2 = (Prop_Double *)prop;
-			PropChange(mV, edPtr, PropID, &prop2->Value, sizeof(double));
-			break;
-		}
-		case 'FLOT': // 4-byte floating point var
-		{
-			Prop_Float * prop2 = (Prop_Float *)prop;
-			PropChange(mV, edPtr, PropID, &prop2->Value, sizeof(float));
-			break;
-		}
-		case 'SIZE': // Two ints depicting a size
-		{
-			Prop_Size * prop2 = (Prop_Size *)prop;
-			PropChange(mV, edPtr, PropID, &prop2->X, sizeof(int)*2);
-			break;
-		}
-		default: // Custom property
-		{
-			Prop_Custom * prop2 = (Prop_Custom *)prop;
-			// PropChange(mV, edPtr, PropID, prop2->GetPropValue(), prop2->GetPropValueSize());
+				std::string Text = TStringToANSI(std::tstring(((Prop_Str*)Param)->String));
 
-			DarkEdif::MsgBox::Error(_T("Property error"), _T("Assuming class ID %i is custom - but no custom code written."), i);
+				unsigned int Seed = 0;
+
+				for (size_t i = 0; i < Text.length(); i++) {
+					if (Text.at(i) >= '0' && Text.at(i) <= '9') {
+						Seed = Seed * 10;
+						Seed = Seed + (Text.at(i) - 48);
+					}
+					else {
+						Seed = Seed * 100;
+						srand((int)Text.at(i) + i);
+						Seed = Seed + rand() % 99;
+					}
+				}
+
+				edPtr->noise_seed = Seed;
+			}
 			break;
-		}
+
+		case noise_propid::noise_type:
+			edPtr->noise_type = ((Prop_UInt*)Param)->Value;
+			break;
+
+		case noise_propid::noise_frequency:
+			edPtr->noise_frequency = ((Prop_Float*)Param)->Value;
+			break;
+			
+
+		case noise_propid::fractal_type:
+			edPtr->fractal_type = ((Prop_UInt*)Param)->Value;
+			break;
+			
+		case noise_propid::fractal_octaves:
+			edPtr->fractal_octaves = ((Prop_SInt*)Param)->Value;
+			break;
+			
+		case noise_propid::fractal_lacunarity:
+			edPtr->fractal_lacunarity = ((Prop_Float*)Param)->Value;
+			break;
+			
+		case noise_propid::fractal_weighted_strength:
+			edPtr->fractal_weighted_strength = ((Prop_Float*)Param)->Value;
+			break;
+			
+		case noise_propid::fractal_pingpong_strength:
+			edPtr->fractal_pingpong_strength = ((Prop_Float*)Param)->Value;
+			break;
+			
+
+		case noise_propid::cellular_distance_func:
+			edPtr->cellular_distance_func = ((Prop_UInt*)Param)->Value;
+			break;
+			
+		case noise_propid::cellular_ret_type:
+			edPtr->cellular_ret_type = ((Prop_UInt*)Param)->Value;
+			break;
+			
+		case noise_propid::cellular_jitter:
+			edPtr->cellular_jitter = ((Prop_Float*)Param)->Value;
+			break;
+		
+
+		default:
+			LOGE(_T("SetPropValue tried to set property that dosent exist!"));
+			break;
 	}
 }
+
 
 // Called by Fusion when the user modifies a checkbox in the properties.
-void FusionAPI SetPropCheck(mv * mV, EDITDATA * edPtr, unsigned int PropID_, BOOL checked)
-{
+void FusionAPI SetPropCheck(mv * mV, EDITDATA * edPtr, unsigned int PropID, BOOL checked) {
 #pragma DllExportHint
-	std::uint32_t PropID = (PropID_ - PROPID_EXTITEM_CUSTOM_FIRST) % 1000;
-	// Not our responsibility; ID unrecognised
-	if (CurLang["Properties"].type == json_null || CurLang["Properties"].u.array.length <= PropID)
-		return;
-
-	PropChangeChkbox(edPtr, PropID, checked != FALSE);
 }
 
+
 // Called by Fusion when the user clicks the button of a Button or EditButton property.
-/*BOOL FusionAPI EditProp(mv * mV, EDITDATA * edPtr, unsigned int PropID)
-{
+/*BOOL FusionAPI EditProp(mv * mV, EDITDATA * edPtr, unsigned int PropID) {
 #pragma DllExportHint
 	// Example
 	// -------
@@ -281,9 +312,9 @@ void FusionAPI SetPropCheck(mv * mV, EDITDATA * edPtr, unsigned int PropID_, BOO
 	return FALSE;
 }*/
 
+
 // Called by Fusion to request the enabled state of a property.
-/*BOOL FusionAPI IsPropEnabled(mv * mV, EDITDATA * edPtr, unsigned int PropID)
-{
+/*BOOL FusionAPI IsPropEnabled(mv * mV, EDITDATA * edPtr, unsigned int PropID) {
 #pragma DllExportHint
 	// Example
 	// -------
@@ -300,8 +331,7 @@ void FusionAPI SetPropCheck(mv * mV, EDITDATA * edPtr, unsigned int PropID_, BOO
 
 // Called when a property is initialized and its creation parameter is NULL (in the PropData).
 // Allows you, for example, to change the content of a combobox property according to specific settings in the EDITDATA structure.
-/*LPARAM FusionAPI GetPropCreateParam(mv *mV, EDITDATA *edPtr, unsigned int PropID)
-{
+/*LPARAM FusionAPI GetPropCreateParam(mv *mV, EDITDATA *edPtr, unsigned int PropID) {
 #pragma DllExportHint
 	// Example
 	// -------
@@ -319,74 +349,14 @@ void FusionAPI SetPropCheck(mv * mV, EDITDATA * edPtr, unsigned int PropID_, BOO
 	return NULL;
 }*/
 
+
 // Called after a property has been initialized.
 // Allows you, for example, to free memory allocated in GetPropCreateParam.
-/*void FusionAPI ReleasePropCreateParam(mv *mV, EDITDATA *edPtr, unsigned int PropID, LPARAM lParam)
-{
+/*void FusionAPI ReleasePropCreateParam(mv *mV, EDITDATA *edPtr, unsigned int PropID, LPARAM lParam) {
 #pragma DllExportHint
 }*/
 
-// ============================================================================
-// TEXT PROPERTIES
-// ============================================================================
 
-// Return the text capabilities of the object under the frame editor.
-/*std::uint32_t FusionAPI GetTextCaps(mv * mV, EDITDATA * edPtr)
-{
-#pragma DllExportHint
-	return 0;	// (TEXT_ALIGN_LEFT|TEXT_ALIGN_HCENTER|TEXT_ALIGN_RIGHT|TEXT_ALIGN_TOP|TEXT_ALIGN_VCENTER|TEXT_ALIGN_BOTTOM|TEXT_FONT|TEXT_COLOR);
-}*/
-
-// Return the font used the object.
-// Note: the pStyle and cbSize parameters are obsolete and passed for compatibility reasons only.
-/*BOOL FusionAPI GetTextFont(mv * mV, EDITDATA * edPtr, LOGFONT * Font, TCHAR * pStyle, unsigned int cbSize)
-{
-#pragma DllExportHint
-	// Example: copy LOGFONT structure from EDITDATA
-	// memcpy(plf, &edPtr->m_lf, sizeof(LOGFONT));
-
-	return TRUE;
-}*/
-
-// Change the font used the object.
-// Note: the pStyle parameter is obsolete and passed for compatibility reasons only.
-//
-/*BOOL FusionAPI SetTextFont(mv * mV, EDITDATA * edPtr, LOGFONT * Font, [[deprecated]] const char * pStyle)
-{
-#pragma DllExportHint
-	// Example: copy LOGFONT structure to EDITDATA
-	// memcpy(&edPtr->m_lf, plf, sizeof(LOGFONT));
-
-	return TRUE;
-}*/
-
-// Get the text color of the object.
-/*COLORREF FusionAPI GetTextClr(mv * mV, EDITDATA * edPtr)
-{
-#pragma DllExportHint
-	return 0; // try RGB()
-}*/
-
-// Called by Fusion to set the text color of the object.
-/*void FusionAPI SetTextClr(mv *mV, EDITDATA * edPtr, COLORREF color)
-{
-#pragma DllExportHint
-	// Example
-	// edPtr->fontColor = color;
-}*/
-
-// Get the text alignment of the object.
-/*std::uint32_t FusionAPI GetTextAlignment(mv *mV, EDITDATA * edPtr)
-{
-#pragma DllExportHint
-	return 0;
-}*/
-
-// Set the text alignment of the object.
-/*void FusionAPI SetTextAlignment(mv *mV, EDITDATA * edPtr, unsigned int AlignFlags)
-{
-#pragma DllExportHint
-}*/
 
 
 // ============================================================================
@@ -397,8 +367,7 @@ void FusionAPI SetPropCheck(mv * mV, EDITDATA * edPtr, unsigned int PropID_, BOO
 // It enables you to modify the Android manifest file to add your own content, or otherwise check the Android build.
 // It is called in the Extensions[\Unicode] MFX, for any extension in the MFA that defines PrepareAndroidBuild,
 // including exts that have no corresponding Data\Runtime\Android file and would create a not-compatible build warning.
-/*void FusionAPI PrepareAndroidBuild(mv* mV, EDITDATA* edPtr, LPCTSTR androidDirectoryPathname)
-{
+/*void FusionAPI PrepareAndroidBuild(mv* mV, EDITDATA* edPtr, LPCTSTR androidDirectoryPathname) {
 #pragma DllExportHint
 	// Erase the manifest file so the build will fail
 	std::tstring manifestPath = androidDirectoryPathname;

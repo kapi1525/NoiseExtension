@@ -2,6 +2,7 @@
 
 #define MMFEXT
 
+#define NOPROPS
 #include "DarkEdif.h"
 
 #include "FastNoiseLite.h"
@@ -13,22 +14,21 @@ struct EDITDATA {
 	// Header - required
 	extHeader		eHeader;
 
-	
+	// Properties (not using DarkEdif props since they are unfinished)
+	int   noise_seed;
 
-	// Keep DarkEdif variables as last. Undefined behaviour otherwise.
-	int				DarkEdif_Prop_Size;
-	char			DarkEdif_Props[];
+	UINT  noise_type;
+	float noise_frequency;
 
-	// =====
-	// DarkEdif functions, use within Extension ctor.
-	// =====
-	bool IsPropChecked(int propID);						// Returns property checked or unchecked.
-	std::tstring GetPropertyStr(const char * propName);	// Returns std::tstring property setting from property name.
-	std::tstring GetPropertyStr(int propID);			// Returns std::tstring property string from property ID.
+	UINT  fractal_type;
+	int   fractal_octaves;
+	float fractal_lacunarity;
+	float fractal_weighted_strength;
+	float fractal_pingpong_strength;
 
-	// Added by me: (why arent these in official DarkEdif???)
-	int GetPropertyInt(int propID);
-	float GetPropertyFloat(int propID);
+	UINT  cellular_distance_func;
+	UINT  cellular_ret_type;
+	float cellular_jitter;
 };
 
 class Extension;
