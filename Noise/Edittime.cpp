@@ -197,7 +197,7 @@ Prop* FusionAPI GetPropValue(mv * mV, EDITDATA * edPtr, unsigned int PropID) {
 			
 		case noise_propid::version:
 			// TODO: Read version from json file.
-			prop_ptr = new Prop_Str(_T("Noise v0.9.1 (Extension: v13, SDK: Modified DarkEdif v13 from commit 2f9533bfae009e91ab6d19eb6d3f1d1b32853caf)"));
+			prop_ptr = new Prop_Str(_T("Noise v0.9.2 (Extension: v14, SDK: Modified DarkEdif v13 from commit 2f9533bfae009e91ab6d19eb6d3f1d1b32853caf)"));
 			break;
 	}
 
