@@ -39,14 +39,12 @@ public:
 
 	// TODO: Add DomainWarp in v1.1
 	FastNoiseLite noise;
-	int seed = 1337;	// FastNoiseLite's seed is set to 1337 at start
+	int seed;
 
-	int noise_type = FastNoiseLite::NoiseType::NoiseType_OpenSimplex2;
-	int fractal_type = FastNoiseLite::FractalType::FractalType_None;
-	int cellular_function = FastNoiseLite::CellularDistanceFunction::CellularDistanceFunction_EuclideanSq;
-	int cellular_return_type = FastNoiseLite::CellularReturnType::CellularReturnType_Distance;
-
-	int test(EDITDATA* edPtr, int porpID);
+	int noise_type;
+	int fractal_type;
+	int cellular_function;
+	int cellular_return_type;
 
 	// Actions
 		void set_seed(int Seed);
