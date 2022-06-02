@@ -15,20 +15,20 @@ struct EDITDATA {
 	extHeader		eHeader;
 
 	// Properties (not using DarkEdif props since they are unfinished)
-	int   noise_seed;
+	int          noise_seed;
 
-	UINT  noise_type;
-	float noise_frequency;
+	unsigned int noise_type;
+	float        noise_frequency;
 
-	UINT  fractal_type;
-	int   fractal_octaves;
-	float fractal_lacunarity;
-	float fractal_weighted_strength;
-	float fractal_pingpong_strength;
+	unsigned int fractal_type;
+	int          fractal_octaves;
+	float        fractal_lacunarity;
+	float        fractal_weighted_strength;
+	float        fractal_pingpong_strength;
 
-	UINT  cellular_distance_func;
-	UINT  cellular_ret_type;
-	float cellular_jitter;
+	unsigned int cellular_distance_func;
+	unsigned int cellular_ret_type;
+	float        cellular_jitter;
 };
 
 class Extension;
