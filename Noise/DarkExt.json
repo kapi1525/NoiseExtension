@@ -318,7 +318,7 @@
 				"Title": "Noise type",
 				"Info": "Noise algorythm used to generate noise values.",
 				"Type": "Combo Box",
-				"DefaultState": "OpenSimplex2",
+				"DefaultState": 0,
 				"Items": [
 					"OpenSimplex2",
 					"OpenSimplex2S",
@@ -344,7 +344,7 @@
 				"Title": "Fractal type",
 				"Info": "Method for combining octaves into a fractal.",
 				"Type": "Combo Box",
-				"DefaultState": "None",
+				"DefaultState": 0,
 				"Items": [
 					"None",
 					"FBm",
@@ -387,7 +387,7 @@
 				"Title": "Cellular distance function",
 				"Info": "Function used to create a cell for a given point. Only noise type cellular.",
 				"Type": "Combo Box",
-				"DefaultState": "EuclideanSq",
+				"DefaultState": 1,
 				"Items": [
 					"Euclidean",
 					"EuclideanSq",
@@ -399,7 +399,7 @@
 				"Title": "Cellular return type",
 				"Info": "Controls what cellular function returns.",
 				"Type": "Combo Box",
-				"DefaultState": "Distance",
+				"DefaultState": 1,
 				"Items": [
 					"CellValue",
 					"Distance",
@@ -426,7 +426,7 @@
 				"Title": "Version",
 				"Info": "Noise Object version.",
 				"Type": "Text",
-				"DefaultState": "Noise v0.9.0 (Extension: v12, SDK: Modified DarkEdif v13 from commit 2f9533bfae009e91ab6d19eb6d3f1d1b32853caf)"
+				"DefaultState": "Noise v0.9.1 (Extension: v13, SDK: Modified DarkEdif v13 from commit 2f9533bfae009e91ab6d19eb6d3f1d1b32853caf)"
 			}
 		]
 	}
