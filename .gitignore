@@ -13,3 +13,6 @@ nextbuild.bat
 
 # Fusion backup files.
 *.[0-9][0-9][0-9]
+
+Examples/Noise/*.exe
+Examples/Noise/*.apk
