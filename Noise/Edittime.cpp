@@ -5,23 +5,23 @@
 void resetProps(EDITDATA* edPtr) {
 	// Set default object settings from DefaultState.
 	memset(((char *)edPtr) + sizeof(edPtr->eHeader), 0, sizeof(EDITDATA) - sizeof(EDITDATA::eHeader));
-	const auto& propsJSON = CurLang["Properties"];
+	const auto& jprop = CurLang["Properties"];
 
 	// TODO: Read defaults from json file.
-	edPtr->noise_seed = 1337;
+	edPtr->noise_seed = (int)jprop[0]["DefaultState"];
 
-	edPtr->noise_type = 0;
-	edPtr->noise_frequency = 0.01f;
+	edPtr->noise_type = (unsigned int)long long(jprop[1]["DefaultState"]);
+	edPtr->noise_frequency = (float)double(jprop[2]["DefaultState"]);
 
-	edPtr->fractal_type = 0;
-	edPtr->fractal_octaves = 3;
-	edPtr->fractal_lacunarity = 2.0f;
-	edPtr->fractal_weighted_strength = 0.0f;
-	edPtr->fractal_pingpong_strength = 2.0f;
+	edPtr->fractal_type = (unsigned int)long long(jprop[4]["DefaultState"]);
+	edPtr->fractal_octaves = (int)long long(jprop[5]["DefaultState"]);
+	edPtr->fractal_lacunarity = (float)double(jprop[6]["DefaultState"]);
+	edPtr->fractal_weighted_strength = (float)double(jprop[7]["DefaultState"]);
+	edPtr->fractal_pingpong_strength = (float)double(jprop[8]["DefaultState"]);
 
-	edPtr->cellular_distance_func = 1;
-	edPtr->cellular_ret_type = 1;
-	edPtr->cellular_jitter = 1.0f;
+	edPtr->cellular_distance_func = (unsigned int)long long(jprop[10]["DefaultState"]);
+	edPtr->cellular_ret_type = (unsigned int)long long(jprop[11]["DefaultState"]);
+	edPtr->cellular_jitter = (float)double(jprop[12]["DefaultState"]);
 
 	edPtr->eHeader.extVersion = Extension::Version;
 }
@@ -197,7 +197,7 @@ Prop* FusionAPI GetPropValue(mv * mV, EDITDATA * edPtr, unsigned int PropID) {
 			
 		case noise_propid::version:
 			// TODO: Read version from json file.
-			prop_ptr = new Prop_Str(_T("Noise v0.9.2 (Extension: v14, SDK: Modified DarkEdif v13 from commit 2f9533bfae009e91ab6d19eb6d3f1d1b32853caf)"));
+			prop_ptr = new Prop_Str(UTF8ToTString(std::string(CurLang["Properties"][14]["DefaultState"])).c_str());
 			break;
 	}
 

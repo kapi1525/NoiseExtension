@@ -311,7 +311,7 @@
 				"Title": "Seed",
 				"Info": "Noise seed, converted to a number using string to seed expression.",
 				"Type": "Editbox String",
-				"DefaultState": "1337"
+				"DefaultState": 1337
 			},
 
 			{
