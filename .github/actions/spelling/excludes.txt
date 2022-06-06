@@ -15,10 +15,3 @@ ignore$
 \.png$
 \.wav$
 ^\.github/
-^Examples/Noise/Noise Android Example\.mfa$
-^Examples/Noise/Noise Example\.mfa$
-^Examples/Noise/NoiseLoopingAnimation\.mfa$
-^Examples/Noise/NoiseSandbox\.mfa$
-^Examples/Noise/NoiseWorldGenerator\.mfa$
-^Inc/Windows/SystemObjects\.h$
-^Lib/Windows/mmfs2\.lib$
