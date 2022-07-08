@@ -127,7 +127,6 @@ const TCHAR ** FusionAPI GetDependencies()
 	return Dependencies;
 }
 
-
 /// <summary> Called every time the extension is being created from nothing.
 ///			  Default property contents should be loaded from JSON. </summary>
 std::int16_t FusionAPI GetRunObjectInfos(mv * mV, kpxRunInfos * infoPtr)
@@ -144,55 +143,13 @@ std::int16_t FusionAPI GetRunObjectInfos(mv * mV, kpxRunInfos * infoPtr)
 	static unsigned short EDITDATASize = 0;
 	if (EDITDATASize == 0)
 	{
-		infoPtr->EDITDATASize = sizeof(EDITDATA);
-#ifndef NOPROPS
-		const json_value& JSON = CurLang["Properties"];
-		size_t fullSize = sizeof(EDITDATA);
-		// Store one bit per property, for any checkboxes
-		fullSize += (int)ceil(JSON.u.array.length / ((float)CHAR_BIT));
-
-		for (unsigned int i = 0; i < JSON.u.array.length; ++i)
-		{
-			const json_value& propjson = *JSON.u.array.values[i];
-			const char* curPropType = propjson["Type"];
-
-			if (!_strnicmp(curPropType, "Editbox String", sizeof("Editbox String") - 1))
-			{
-				const char* defaultText = CurLang["Properties"]["DefaultState"];
-				fullSize += (defaultText ? strlen(defaultText) : 0) + 1; // UTF-8
-			}
-			// Stores a number (in combo box, an index)
-			else if (!_stricmp(curPropType, "Editbox Number") || !_stricmp(curPropType, "Combo Box"))
-				fullSize += sizeof(int);
-			else if (!_stricmp(curPropType, "Editbox Float"))
-				fullSize += sizeof(float);
-			// No content, or already stored in checkbox part before this for loop
-			else if (!_stricmp(curPropType, "Text") || !_stricmp(curPropType, "Checkbox") ||
-				// Folder or FolderEnd - no data, folders are cosmetic
-				!_strnicmp(curPropType, "Folder", sizeof("Folder") - 1) ||
-				// Buttons - no data, they're just clickable
-				!_stricmp(curPropType, "Edit button") ||
-				!_stricmp(curPropType, "Group"))
-			{
-				// skip 'em, no changeable data
-			}
-			else
-			{
-				DarkEdif::MsgBox::Error(_T("Property error"), _T("Property type \"%hs\" has no code for storing its value"),
-					curPropType);
-			}
-		}
-		// Too large for EDITDATASize
-		if (fullSize > UINT16_MAX)
-			DarkEdif::MsgBox::Error(_T("Property error"), _T("Property default sizes are too large (%zu bytes)."), fullSize);
-		else
-			infoPtr->EDITDATASize = EDITDATASize = (unsigned short)fullSize;
-#else // NOPROPS
-		EDITDATASize = infoPtr->EDITDATASize;
+#ifdef NOPROPS
+		EDITDATASize = sizeof(EDITDATA);
+#else 
+		EDITDATASize = DarkEdif::DLL::Internal_GetEDITDATASizeFromJSON();
 #endif // NOPROPS
 	}
-
-	//+(GetPropertyChbx(edPtr, CurLang["Properties"].u.object.length+1)-&edPtr);
+	infoPtr->EDITDATASize = EDITDATASize;
 
 	infoPtr->WindowProcPriority = Extension::WindowProcPriority;
 
@@ -313,7 +270,7 @@ static RuntimeFunctions runFuncs;
 ProjectFunc jlong createRunObject(JNIEnv * env, jobject javaExtPtr, ByteBufferDirect edPtr, CCreateObjectInfo coi, jint version)
 {
 	void * edPtrReal = mainThreadJNIEnv->GetDirectBufferAddress(edPtr);
-	LOGI("Note: mainThreadJNIEnv is %p, env is %p; javaExtPtr is %p, edPtr %p, edPtrReal %p, coi %p.", mainThreadJNIEnv, env, javaExtPtr, edPtr, edPtrReal, coi);
+	LOGI("Note: mainThreadJNIEnv is %p, env is %p; javaExtPtr is %p, edPtr %p, edPtrReal %p, coi %p.\n", mainThreadJNIEnv, env, javaExtPtr, edPtr, edPtrReal, coi);
 	global<jobject> javaExtP(javaExtPtr, "createRunObject javaExtPtr");
 	runFuncs.ext = javaExtP;
 
@@ -326,10 +283,10 @@ ProjectFunc jlong createRunObject(JNIEnv * env, jobject javaExtPtr, ByteBufferDi
 ProjectFunc void destroyRunObject(JNIEnv *, jobject, jlong ext, jboolean fast)
 {
 	JNIExceptionCheck();
-	LOGV("Running " PROJECT_NAME " extension dtor in destroyRunObject...");
+	LOGV("Running " PROJECT_NAME " extension dtor in destroyRunObject...\n");
 	delete ((Extension *)ext);
 	JNIExceptionCheck();
-	LOGV("Ran " PROJECT_NAME " extension dtor OK.");
+	LOGV("Ran " PROJECT_NAME " extension dtor OK.\n");
 }
 
 ProjectFunc REFLAG handleRunObject(JNIEnv *, jobject, jlong ext)
@@ -455,9 +412,9 @@ jstring CStrToJStr(const char * String)
 {
 #ifdef _DEBUG
 	if (threadEnv->ExceptionCheck())
-		LOGF("Already a bug when returning a string!! Error %s, text to return %s.", GetJavaExceptionStr().c_str(), String);
+		LOGF("Already a bug when returning a string!! Error %s, text to return %s.\n", GetJavaExceptionStr().c_str(), String);
 	if (String == nullptr)
-		LOGF("String pointer is null in CStrToJStr()!");
+		LOGF("String pointer is null in CStrToJStr()!\n");
 #endif
 
 	// Java doesn't use regular UTF-8, but "modified" UTF-8, or CESU-8.
@@ -476,15 +433,15 @@ jstring CStrToJStr(const char * String)
 		if (bytes[k] >= 0xF0 && bytes[k] <= 0xF5)
 			goto reconvert;
 	}
-	LOGV("UTF-8 String \"%s\" should already be valid Modified UTF-8.", String);
+	LOGV("UTF-8 String \"%s\" should already be valid Modified UTF-8.\n", String);
 
 	// No 4-byte characters, safe to convert directly
 	jstr = threadEnv->NewStringUTF(String);
 	if (threadEnv->ExceptionCheck())
-		LOGE("Failed to convert string, got error %s.", GetJavaExceptionStr().c_str());
+		LOGE("Failed to convert string, got error %s.\n", GetJavaExceptionStr().c_str());
 	return jstr;
 reconvert:
-	LOGV("Reconverting UTF-8 to Modified UTF-8 in Runtime.CopyStringEx().");
+	LOGV("Reconverting UTF-8 to Modified UTF-8 in Runtime.CopyStringEx().\n");
 	std::string newString(strU8Len + (strU8Len >> 2), '\0');
 	int inputByteIndex = 0, outputByteIndex = 0;
 	while (inputByteIndex < strU8Len) {
@@ -550,7 +507,7 @@ reconvert:
 
 	jstr = threadEnv->NewStringUTF(String);
 	if (threadEnv->ExceptionCheck())
-		LOGE("Failed to convert string, got error %s.", GetJavaExceptionStr().c_str());
+		LOGE("Failed to convert string, got error %s.\n", GetJavaExceptionStr().c_str());
 	return jstr;
 }
 
@@ -561,7 +518,7 @@ std::string ThreadIDToStr(std::thread::id id)
 	std::ostringstream str;
 	if (id != std::this_thread::get_id())
 	{
-		LOGE("Not the right ID.");
+		LOGE("Not the right ID.\n");
 		str << std::hex << id;
 	}
 	else
@@ -593,7 +550,7 @@ void freeString(void * ext, RuntimeFunctions::string str)
 	str = { NULL, NULL };
 }
 void generateEvent(void * javaExtPtr, int code, int param) {
-	LOGW("GenerateEvent ID %i attempting...", code);
+	LOGW("GenerateEvent ID %i attempting...\n", code);
 	static global<jclass> expClass(threadEnv->GetObjectClass((jobject)javaExtPtr), "static global<> expClass, from generateEvent");
 	static jfieldID getHo(threadEnv->GetFieldID(expClass, "ho", "LObjects/CExtension;")); // ?
 	jobject ho = threadEnv->GetObjectField((jobject)javaExtPtr, getHo);
@@ -630,7 +587,7 @@ void Indirect_JNIExceptionCheck(const char * file, const char * func, int line)
 {
 	if (!threadEnv)
 	{
-		LOGF("JNIExceptionCheck() called before threadEnv was inited.");
+		LOGF("JNIExceptionCheck() called before threadEnv was initialized.\n");
 		return;
 	}
 	if (!threadEnv->ExceptionCheck())
@@ -642,7 +599,7 @@ void Indirect_JNIExceptionCheck(const char * file, const char * func, int line)
 
 	jstring excStr = (jstring)threadEnv->CallObjectMethod(exc, getMsgMeth);
 	const char * c = threadEnv->GetStringUTFChars(excStr, NULL);
-	LOGF("JNIExceptionCheck() in file \"%s\", func \"%s\", line %d, found a JNI exception: %s.",
+	LOGF("JNIExceptionCheck() in file \"%s\", func \"%s\", line %d, found a JNI exception: %s.\n",
 		file, func, line, c);
 
 	raise(SIGINT);
@@ -769,8 +726,8 @@ static void my_handler(const int code, siginfo_t * const si, void * const sc)
 
 	dumpBacktrace(oss, buffer, captureBacktrace(buffer, max));
 
-	LOGI("%s", oss.str().c_str());
-	LOGE("signal code raised: %d, %s.", code, signalName);
+	LOGI("%s\n", oss.str().c_str());
+	LOGE("signal code raised: %d, %s.\n", code, signalName);
 	// Breakpoint
 #ifdef _DEBUG
 	raise(SIGTRAP);
@@ -791,7 +748,7 @@ static void prepareSignals()
 		sa.sa_sigaction = my_handler;
 		sa.sa_flags = SA_SIGINFO;
 		if (sigaction(signalCatches[i].signalNum, &sa, &sa_old) != 0) {
-			LOGW("Failed to set up %s sigaction.", signalCatches[i].signalName);
+			LOGW("Failed to set up %s sigaction.\n", signalCatches[i].signalName);
 		}
 #if 0 && __ANDROID_API__ >= 28
 		struct sigaction64 sa64;
@@ -801,12 +758,12 @@ static void prepareSignals()
 		sa.sa_sigaction = my_handler;
 		sa.sa_flags = SA_SIGINFO;
 		if (sigaction64(signalCatches[i].signalNum, &sa64, &sa64_old) != 0) {
-			LOGW("Failed to set up %s sigaction (64 bit).", signalCatches[i].signalName);
+			LOGW("Failed to set up %s sigaction (64 bit).\n", signalCatches[i].signalName);
 		}
 #endif
 	}
 
-	LOGI("Set up %zu sigactions.", std::size(signalCatches));
+	LOGI("Set up %zu sigactions.\n", std::size(signalCatches));
 }
 #endif // _DEBUG
 
@@ -827,18 +784,18 @@ ProjectFunc jint JNICALL JNI_OnLoad(JavaVM * vm, void * reserved) {
 
 	jint error = vm->GetEnv(reinterpret_cast<void **>(&mainThreadJNIEnv), JNI_VERSION_1_6);
 	if (error != JNI_OK) {
-		LOGF("GetEnv failed with error %d.", error);
+		LOGF("GetEnv failed with error %d.\n", error);
 		return -1;
 	}
 	global_vm = vm;
-	LOGV("GetEnv OK, returned %p.", mainThreadJNIEnv);
+	LOGV("GetEnv OK, returned %p.\n", mainThreadJNIEnv);
 
 	JavaVMAttachArgs args;
 	args.version = JNI_VERSION_1_6; // choose your JNI version
 	args.name = PROJECT_NAME ", JNI_Load"; // you might want to give the java thread a name
 	args.group = NULL; // you might want to assign the java thread to a ThreadGroup
 	if ((error = vm->AttachCurrentThread(&mainThreadJNIEnv, NULL)) != JNI_OK) {
-		LOGF("AttachCurrentThread failed with error %d.", error);
+		LOGF("AttachCurrentThread failed with error %d.\n", error);
 		return -1;
 	}
 
@@ -846,28 +803,28 @@ ProjectFunc jint JNICALL JNI_OnLoad(JavaVM * vm, void * reserved) {
 	// Register methods with mainThreadJNIEnv->RegisterNatives.
 	std::string classNameCRun("Extensions/" "CRun" PROJECT_NAME_UNDERSCORES);
 	std::string className("Extensions/" PROJECT_NAME_UNDERSCORES);
-	LOGV("Looking for class %s... [1/2]", classNameCRun.c_str());
+	LOGV("Looking for class %s... [1/2]\n", classNameCRun.c_str());
 	jclass clazz = mainThreadJNIEnv->FindClass(classNameCRun.c_str());
 	if (clazz == NULL) {
-		LOGV("Couldn't find %s, now looking for %s... [2/2]", classNameCRun.c_str(), className.c_str());
+		LOGV("Couldn't find %s, now looking for %s... [2/2]\n", classNameCRun.c_str(), className.c_str());
 		if (mainThreadJNIEnv->ExceptionCheck()) {
 			mainThreadJNIEnv->ExceptionClear();
-			LOGV("EXCEPTION [1] %d", 0);
+			LOGV("EXCEPTION [1] %d\n", 0);
 		}
 		clazz = mainThreadJNIEnv->FindClass(className.c_str());
 		if (clazz == NULL)
 		{
 			if (mainThreadJNIEnv->ExceptionCheck()) {
 				mainThreadJNIEnv->ExceptionClear();
-				LOGV("EXCEPTION [2] %d", 0);
+				LOGV("EXCEPTION [2] %d\n", 0);
 			}
-			LOGF("Couldn't find class %s. Aborting load of extension.", className.c_str());
+			LOGF("Couldn't find class %s. Aborting load of extension.\n", className.c_str());
 			return JNI_VERSION_1_6;
 		}
-		LOGV("Found %s. [2/2]", className.c_str());
+		LOGV("Found %s. [2/2]\n", className.c_str());
 	}
 	else
-		LOGV("Found %s. [1/2]", classNameCRun.c_str());
+		LOGV("Found %s. [1/2]\n", classNameCRun.c_str());
 
 #define method(a,b) { "darkedif_" #a, b, (void *)&a }
 	//public native long DarkEdif_createRunObject(ByteBuffer edPtr, CCreateObjectInfo cob, int version);
@@ -885,14 +842,14 @@ ProjectFunc jint JNICALL JNI_OnLoad(JavaVM * vm, void * reserved) {
 		EXTRAFUNCS
 	};
 
-	LOGV("Registering natives for %s...", PROJECT_NAME);
+	LOGV("Registering natives for %s...\n", PROJECT_NAME);
 	if (mainThreadJNIEnv->RegisterNatives(clazz, methods, sizeof(methods) / sizeof(methods[0])) < 0) {
 		threadEnv = mainThreadJNIEnv;
 		std::string excStr = GetJavaExceptionStr();
-		LOGF("Failed to register natives for ext %s; error %s.", PROJECT_NAME, excStr.c_str());
+		LOGF("Failed to register natives for ext %s; error %s.\n", PROJECT_NAME, excStr.c_str());
 	}
 	else
-		LOGV("Registered natives for ext %s successfully.", PROJECT_NAME);
+		LOGV("Registered natives for ext %s successfully.\n", PROJECT_NAME);
 	mainThreadJNIEnv->DeleteLocalRef(clazz);
 	runFuncs.ext = NULL;
 
@@ -925,7 +882,7 @@ ProjectFunc jint JNICALL JNI_OnLoad(JavaVM * vm, void * reserved) {
 
 	mv * mV = NULL;
 	if (!::SDK) {
-		LOGV("The SDK is being initialized.");
+		LOGV("The SDK is being initialized.\n");
 		Edif::Init(mV, false);
 	}
 
@@ -933,7 +890,7 @@ ProjectFunc jint JNICALL JNI_OnLoad(JavaVM * vm, void * reserved) {
 }
 ProjectFunc void JNICALL JNI_OnUnload(JavaVM * vm, void * reserved)
 {
-	LOGV("JNI_Unload.");
+	LOGV("JNI_Unload.\n");
 
 #ifdef _DEBUG
 	// Reset signals

@@ -11,7 +11,7 @@ int Extension::get_seed() {
 }
 
 int Extension::string_to_seed(const TCHAR* String) {
-	std::string Text = TStringToANSI(std::tstring(String));
+	std::string Text = DarkEdif::TStringToANSI(std::tstring(String));
 
 	unsigned int Seed = 0;
 

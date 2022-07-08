@@ -7,7 +7,7 @@ void resetProps(EDITDATA* edPtr) {
 	memset(((char *)edPtr) + sizeof(edPtr->eHeader), 0, sizeof(EDITDATA) - sizeof(EDITDATA::eHeader));
 	const auto& jprop = CurLang["Properties"];
 
-	// TODO: Read defaults from json file.
+	// Read defaults from json file.
 	edPtr->noise_seed = (int)jprop[0]["DefaultState"];
 
 	edPtr->noise_type = (unsigned int)long long(jprop[1]["DefaultState"]);
@@ -129,7 +129,7 @@ enum class noise_propid {
 // Inserts properties into the properties of the object.
 BOOL FusionAPI GetProperties(mv * mV, EDITDATA * edPtr, BOOL bMasterItem) {
 #pragma DllExportHint
-	mvInsertProps(mV, edPtr, SDK->EdittimeProperties, PROPID_TAB_GENERAL, TRUE);
+	mvInsertProps(mV, edPtr, SDK->EdittimeProperties.get(), PROPID_TAB_GENERAL, TRUE);
 	return TRUE;
 }
 
@@ -197,7 +197,7 @@ Prop* FusionAPI GetPropValue(mv * mV, EDITDATA * edPtr, unsigned int PropID) {
 			
 		case noise_propid::version:
 			// TODO: Read version from json file.
-			prop_ptr = new Prop_Str(UTF8ToTString(std::string(CurLang["Properties"][14]["DefaultState"])).c_str());
+			prop_ptr = new Prop_Str(DarkEdif::UTF8ToTString(std::string(CurLang["Properties"][14]["DefaultState"])).c_str());
 			break;
 	}
 
@@ -220,7 +220,7 @@ void FusionAPI SetPropValue(mv * mV, EDITDATA * edPtr, unsigned int PropID, void
 	{
 		case noise_propid::noise_seed:
 			{
-				std::string Text = TStringToANSI(std::tstring(((Prop_Str*)Param)->String));
+				std::string Text = DarkEdif::TStringToANSI(std::tstring(((Prop_Str*)Param)->String));
 
 				unsigned int Seed = 0;
 

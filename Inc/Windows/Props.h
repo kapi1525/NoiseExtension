@@ -9,7 +9,7 @@
 #endif
 
 #include <tchar.h>
-#include "WindowsDefines.hpp"
+#include "Windows/WindowsDefines.hpp"
 
 ///////////////////////////////////////////////////////
 // Property data - used in property definition table.
@@ -483,7 +483,7 @@ public:
 		{
 #ifndef _WIN32
 			// Shouldn't need implementing
-			LOGF("Unimplemented Prop_WStr function.");
+			LOGF("Unimplemented Prop_WStr function.\n");
 #else
 			// Convert string to Unicode
 			size_t length = MultiByteToWideChar(CP_UTF8, 0, utf8String, -1, 0, 0);

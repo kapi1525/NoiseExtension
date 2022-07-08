@@ -1,6 +1,6 @@
 #pragma once
-#include <windef.h>
-#include <wingdi.h>
+#include <WinDef.h>
+#include <WinGDI.h>
 
 struct csPalette
 {
