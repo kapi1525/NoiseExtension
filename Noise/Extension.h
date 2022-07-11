@@ -107,7 +107,7 @@ public:
 		int current_fractal_type();
 		int current_cellular_function();
 		int current_cellular_return_type();
-
+fgjhnbsij
 
 	// These are called if there's no function linked to an ID
 
