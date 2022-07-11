@@ -33,15 +33,16 @@ To build Noise Object yourself you need Visual Studio 2022 with C/C++ toolkit an
 
 You can open Noise.sln solution in Visual Studio and compile it from VS or if you don't like VS like me, use build.bat script.
 
-Using this command will build entire Noise Object and install it onto your Fusion install (by default "C:\Program Files (x86)\Steam\steamapps\common\Clickteam Fusion 2.5\" change it inside build.bat script, if you need, don't commit that change of course.)
+Using this command will build entire Noise Object and install it onto your Fusion installation (It should find it automaticaly using fusionpath.exe tool).
 ```cmd
-build.bat --install
+build.bat --install --full --release
 ```
 
-Other build.bat flags:
+Other *usefull* build.bat flags:
 
-- `--fast` Build only Windows Edittime and Runtime.
-- `--debug` Build using debug configuration.
+- `--full` Build all targets (Windows and Android) (only Windows is built by default).
+- `--release` Build using release configurations (Debug configurations are used by default).
 - `--clean` Clean the build directory before building.
 - `--bundle` Bundle Noise Object, help file and examples into single zip file.
 - `--sdkconfig` Create "FusionSDKConfig.ini" file with default settings inside, in parent directory.
+- `--verbose` Enables more msbuild logging
