@@ -139,12 +139,6 @@ goto :exit
     )
 
     call :run msbuild ./%project%.sln -t:"%~1" -p:Configuration="%~2";Platform="%~3";WarningLevel=all -nologo -m -clp:Summary;ForceNoAlign;verbosity=%verbosity%
-    
-    if not %ERRORLEVEL%==0 (
-        if %failonerr%==0 (
-            exit 1
-        )
-    )
 
     exit /B 0
 
@@ -188,6 +182,13 @@ goto :exit
     :: - cmd
     echo [CMD] %*
     %*
+
+    if not %ERRORLEVEL%==0 (
+        if %failonerr%==1 (
+            exit 1
+        )
+    )
+
     exit /B 0
 
 
