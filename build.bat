@@ -1,72 +1,65 @@
 @echo off
 
 :: --------------------------------------------------
-::          Noise Object build script v1.6.0         
+::          Noise Object build script v1.7.0         
 :: --------------------------------------------------
 :: Run arguments:
-:: --fast       -f      build only windows
-:: --full       -F      build everything
+:: --fast               (default) build only windows
+:: --full               build everything
 :: 
-:: --debug      -d
-:: --release    -r
+:: --debug              (default)
+:: --release
 ::
-:: --clean      -c      delete old build before building
-:: --install    -i      copy extension to your fusion install
+:: --clean              delete old build before building
+:: --install            copy extension to your fusion install
 ::
-:: --bundle     -b      create zip file with extension
+:: --bundle             create zip file with extension
 ::
-:: --sdkconfig  -s      create FusionSDKConfig.ini with usefull settings
+:: --sdkconfig          create FusionSDKConfig.ini with usefull settings
+::
+:: --verbose            more logging
+::
+:: --failonerr          fail with error code if build failed (made for github actions)
 :: --------------------------------------------------
 
 setlocal enabledelayedexpansion
 
-:: Modify this path if you have fusion installed somewhere else.
-set ctf_path="C:\Program Files (x86)\Steam\steamapps\common\Clickteam Fusion 2.5\"
+
 
 set project=Noise
 
-:: Thiese are deafult
-set full=1
-set release=1
+:: These are deafult
+set full=0
+set release=0
 set clean=0
 set install=0
 set bundle=0
 set sdkconfig=0
+set verbose=0
+set failonerr=0
 
 
 for %%x in (%*) do (
     if %%~x==--fast (
         set full=0
-    ) else if %%~x==-f (
-        set full=0
     ) else if %%~x==--full (
-        set full=1
-    ) else if %%~x==-F (
         set full=1
     ) else if %%~x==--debug (
         set release=0
-    ) else if %%~x==-d (
-        set release=0
     ) else if %%~x==--release (
-        set release=1
-    ) else if %%~x==-r (
         set release=1
     ) else if %%~x==--clean (
         set clean=1
-    ) else if %%~x==-c (
-        set clean=1
     ) else if %%~x==--install (
-        set install=1
-    ) else if %%~x==-i (
         set install=1
     ) else if %%~x==--bundle (
         set bundle=1
-    ) else if %%~x==-b (
-        set bundle=1
     ) else if %%~x==--sdkconfig (
         set sdkconfig=1
-    ) else if %%~x==-s (
-        set sdkconfig=1
+    ) else if %%~x==--verbose (
+        set verbose=1
+    ) else if %%~x==--failonerr (
+        set failonerr=1
     ) else (
         echo Argument %%~x is not defined!
         goto :exit
@@ -82,6 +75,7 @@ if %sdkconfig%==1 (
     call :setupsdkconfig
 )
 
+
 if %release%==1 (
     call :build "%project%_Windows" , "Edittime Unicode" , "x86"
     call :build "%project%_Windows" , "Runtime Unicode" , "x86"
@@ -89,19 +83,19 @@ if %release%==1 (
     call :build "%project%_Windows" , "Debug Unicode" , "x86"
 )
 
-if %full%==1 (
-    if %release%==1 (
-        call :build "%project%_Android" , "Runtime" , "ARM"
-        call :build "%project%_Android" , "Runtime" , "ARM64"
-        call :build "%project%_Android" , "Runtime" , "x86"
-        call :build "%project%_Android" , "Runtime" , "x64"
-    ) else (
-        call :build "%project%_Android" , "Debug" , "ARM"
-        call :build "%project%_Android" , "Debug" , "ARM64"
-        call :build "%project%_Android" , "Debug" , "x86"
-        call :build "%project%_Android" , "Debug" , "x64"
-    )
+if %release%==1 (
+    set conf=Runtime
+) else (
+    set conf=Debug
 )
+
+if %full%==1 (
+    call :build "%project%_Android" , "%conf%" , "ARM"
+    call :build "%project%_Android" , "%conf%" , "ARM64"
+    call :build "%project%_Android" , "%conf%" , "x86"
+    call :build "%project%_Android" , "%conf%" , "x64"
+)
+
 
 if %install%==1 (
     call :install
@@ -137,16 +131,44 @@ goto :exit
     :: - project name
     :: - configuration
     :: - platform
-    call :run msbuild ./%project%.sln -t:"%~1" -p:Configuration="%~2";Platform="%~3";WarningLevel=all -nologo -m -clp:Summary;ForceNoAlign;verbosity=quiet
+
+    if %verbose%==1 (
+        set verbosity=minimal
+    ) else (
+        set verbosity=quiet
+    )
+
+    call :run msbuild ./%project%.sln -t:"%~1" -p:Configuration="%~2";Platform="%~3";WarningLevel=all -nologo -m -clp:Summary;ForceNoAlign;verbosity=%verbosity%
+    
+    if not %ERRORLEVEL%==0 (
+        if %failonerr%==0 (
+            exit 1
+        )
+    )
+
     exit /B 0
 
 
 :install
+    echo Searching for Fusion installation...
+
+    fusionpath.exe > fusionpath.temp
+    set /p ctf_path=<fusionpath.temp
+    del /q fusionpath.temp
+    set ctf_path="%ctf_path%"
+
+    if %ctf_path%=="" (
+        echo Could not find any Fusion installations.
+        exit /B 0
+    )
+
+    echo Found: %ctf_path%
+
     TASKLIST | FINDSTR /I "mmf2u.exe" > NUL
-    IF not %ERRORLEVEL%==1 (
-        echo Waiting for fusion to close...
+    if not %ERRORLEVEL%==1 (
+        echo Waiting for Fusion to close...
         timeout /T 1 > NUL
-        GOTO :install
+        goto :install
     )
 
     call :run xcopy /s /v /c /y %~dp0MFX\*.* %ctf_path%
@@ -164,7 +186,6 @@ goto :exit
 :run
     :: arguments:
     :: - cmd
-    echo.
     echo [CMD] %*
     %*
     exit /B 0
