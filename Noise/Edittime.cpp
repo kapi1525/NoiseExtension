@@ -8,7 +8,7 @@ void resetProps(EDITDATA* edPtr) {
 	const auto& jprop = CurLang["Properties"];
 
 	// Read defaults from json file.
-	edPtr->noise_seed = (int)jprop[0]["DefaultState"];
+	edPtr->noise_seed = (int)long long(jprop[0]["DefaultState"]);
 
 	edPtr->noise_type = (unsigned int)long long(jprop[1]["DefaultState"]);
 	edPtr->noise_frequency = (float)double(jprop[2]["DefaultState"]);
