@@ -27,7 +27,7 @@ jobs:
     - name: Run compile script
       run: |
         cd NoiseExtension.wiki
-        chmod +x ./compile.sh
+        chmod +x ./other/compile.sh
         ./other/compile.sh
         cd ..
         mv NoiseExtension.wiki/temp/Noise.chm NoiseExtension/Help/Noise.chm
