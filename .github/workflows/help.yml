@@ -28,7 +28,7 @@ jobs:
       run: |
         cd NoiseExtension.wiki
         chmod +x ./compile.sh
-        ./compile.sh
+        ./other/compile.sh
         cd ..
         mv NoiseExtension.wiki/temp/Noise.chm NoiseExtension/Help/Noise.chm
     
