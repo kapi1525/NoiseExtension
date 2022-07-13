@@ -19,7 +19,7 @@ public:
 	Edif::Runtime Runtime;
 
 	static const int MinimumBuild = 254;
-	static const int Version = 15;
+	static const int Version = 16;
 
 	static const OEFLAGS OEFLAGS = OEFLAGS::NONE;
 	static const OEPREFS OEPREFS = OEPREFS::NONE;
@@ -55,6 +55,7 @@ public:
 		void set_fractal_type(int type);
 		void set_fractal_octaves(int octaves);
 		void set_fractal_lacunarity(float lacunarity);
+		void set_fractal_gain(float gain);
 		void set_fractal_weighted(float weighted);
 		void set_fractal_pingpong(float pingpong);
 

@@ -20,6 +20,7 @@
 			[ 3, "Set fractal type" ],
 			[ 4, "Set fractal octaves" ],
 			[ 5, "Set fractal lacunarity" ],
+			[ 11, "Set fractal gain" ],
 			[ 6, "Set fractal weighted strength" ],
 			[ 7, "Set fractal PingPong strength" ],
 			"---",
@@ -148,6 +149,12 @@
 				"Title": "Set cellular jitter to %0",
 				"Parameters": [
 					[ "float", "Jitter" ]
+				]
+			},
+			{
+				"Title": "Set fractal gain to %0",
+				"Parameters": [
+					[ "float", "Gain" ]
 				]
 			}
 		],
@@ -349,7 +356,6 @@
 					"None",
 					"FBm",
 					"Rigid",
-					"Perlin",
 					"PingPong"
 				]
 			},
@@ -364,6 +370,12 @@
 				"Info": "Frequency multiplayer for octaves.",
 				"Type": "Editbox Float",
 				"DefaultState": 2.0
+			},
+			{
+				"Title": "Fractal gain",
+				"Info": "The relative strength of noise from each layer when compared to the last.",
+				"Type": "Editbox Float",
+				"DefaultState": 0.5
 			},
 			{
 				"Title": "Fractal weighted strength",
@@ -426,7 +438,7 @@
 				"Title": "Version",
 				"Info": "Noise Object version.",
 				"Type": "Text",
-				"DefaultState": "Noise v0.9.3 (Extension: v15, SDK: Modified DarkEdif v14 from commit 155caa97b244c4a67c40deee36fe36b871c2fcca)"
+				"DefaultState": "Noise v0.9.4 (Extension: v16, SDK: Modified DarkEdif v14 from commit 155caa97b244c4a67c40deee36fe36b871c2fcca)"
 			}
 		]
 	}

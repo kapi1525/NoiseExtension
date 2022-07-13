@@ -30,6 +30,10 @@ void Extension::set_fractal_lacunarity(float lacunarity) {
 	noise.SetFractalLacunarity(lacunarity);
 }
 
+void Extension::set_fractal_gain(float gain) {
+	noise.SetFractalGain(gain);
+}
+
 void Extension::set_fractal_weighted(float weighted) {
 	noise.SetFractalWeightedStrength(weighted);
 }

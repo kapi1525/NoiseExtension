@@ -26,6 +26,7 @@ Extension::Extension(RuntimeFunctions & runFuncs, EDITDATA * edPtr, void * objCE
 		LinkAction(3, set_fractal_type);
 		LinkAction(4, set_fractal_octaves);
 		LinkAction(5, set_fractal_lacunarity);
+		LinkAction(11, set_fractal_gain);		// IDs pain...
 		LinkAction(6, set_fractal_weighted);
 		LinkAction(7, set_fractal_pingpong);
 
@@ -89,6 +90,7 @@ Extension::Extension(RuntimeFunctions & runFuncs, EDITDATA * edPtr, void * objCE
 		set_fractal_type(edPtr->fractal_type);
 		set_fractal_octaves(edPtr->fractal_octaves);
 		set_fractal_lacunarity(edPtr->fractal_lacunarity);
+		set_fractal_gain(edPtr->fractal_gain);
 		set_fractal_weighted(edPtr->fractal_weighted_strength);
 		set_fractal_pingpong(edPtr->fractal_pingpong_strength);
 
