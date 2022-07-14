@@ -82,7 +82,7 @@ Extension::Extension(RuntimeFunctions & runFuncs, EDITDATA * edPtr, void * objCE
 
 	// Properties
 	{
-		// set_seed(string_to_seed(edPtr->GetPropertyStr(0).c_str()));
+		set_seed(edPtr->noise_seed);
 
 		set_noise_type(edPtr->noise_type);
 		set_noise_frequency(edPtr->noise_frequency);
