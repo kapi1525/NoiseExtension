@@ -2,6 +2,36 @@
 #include "DarkEdif.h"
 
 
+
+inline float AsFloat(const json_value& json) {
+	if(json.type == json_double) {
+		return (float)double(json);
+	} else {
+		DarkEdif::MsgBox::Error(_T("Incorect type"), _T("Expected type %d but got %d."), json_double, json.type);
+		return 0.f;
+	}
+}
+
+inline int AsInt(const json_value& json) {
+	if(json.type == json_integer) {
+		return (int)long long(json);
+	} else {
+		DarkEdif::MsgBox::Error(_T("Incorect type"), _T("Expected type %d but got %d."), json_integer, json.type);
+		return 0;
+	}
+}
+
+inline unsigned int AsUInt(const json_value& json) {
+	if(json.type == json_integer) {
+		return (unsigned int)long long(json);
+	} else {
+		DarkEdif::MsgBox::Error(_T("Incorect type"), _T("Expected type %d but got %d."), json_integer, json.type);
+		return 0u;
+	}
+}
+
+
+
 inline void ResetProps(EDITDATA* edPtr) {
 	// Set default object settings from DefaultState.
 	const json_value& Props = CurLang["Properties"];
@@ -9,21 +39,21 @@ inline void ResetProps(EDITDATA* edPtr) {
 	edPtr->editdata_rev = 1;
 
 	// Read defaults from json file.
-	edPtr->noise_seed = (int)long long(Props[0]["DefaultState"]);
+	edPtr->noise_seed = AsInt(Props[0]["DefaultState"]);
 
-	edPtr->noise_type = (unsigned int)long long(Props[1]["DefaultState"]);
-	edPtr->noise_frequency = (float)double(Props[2]["DefaultState"]);
+	edPtr->noise_type = AsUInt(Props[1]["DefaultState"]);
+	edPtr->noise_frequency = AsFloat(Props[2]["DefaultState"]);
 
-	edPtr->fractal_type = (unsigned int)long long(Props[4]["DefaultState"]);
-	edPtr->fractal_octaves = (int)long long(Props[5]["DefaultState"]);
-	edPtr->fractal_lacunarity = (float)double(Props[6]["DefaultState"]);
-	edPtr->fractal_gain = (float)double(Props[7]["DefaultState"]);
-	edPtr->fractal_weighted_strength = (float)double(Props[8]["DefaultState"]);
-	edPtr->fractal_pingpong_strength = (float)double(Props[9]["DefaultState"]);
+	edPtr->fractal_type = AsUInt(Props[4]["DefaultState"]);
+	edPtr->fractal_octaves = AsInt(Props[5]["DefaultState"]);
+	edPtr->fractal_lacunarity = AsFloat(Props[6]["DefaultState"]);
+	edPtr->fractal_gain = AsFloat(Props[7]["DefaultState"]);
+	edPtr->fractal_weighted_strength = AsFloat(Props[8]["DefaultState"]);
+	edPtr->fractal_pingpong_strength = AsFloat(Props[9]["DefaultState"]);
 
-	edPtr->cellular_distance_func = (unsigned int)long long(Props[11]["DefaultState"]);
-	edPtr->cellular_ret_type = (unsigned int)long long(Props[12]["DefaultState"]);
-	edPtr->cellular_jitter = (float)double(Props[13]["DefaultState"]);
+	edPtr->cellular_distance_func = AsUInt(Props[11]["DefaultState"]);
+	edPtr->cellular_ret_type = AsUInt(Props[12]["DefaultState"]);
+	edPtr->cellular_jitter = AsFloat(Props[13]["DefaultState"]);
 
 	edPtr->eHeader.extVersion = Extension::Version;
 }
