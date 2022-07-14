@@ -3,7 +3,7 @@
 #ifdef PI
 	#undef PI
 #endif
-#define PI 3.141592741F
+#define PI 3.141592741f
 
 
 int Extension::get_seed() {
