@@ -49,7 +49,7 @@ inline void DebugVersionUpdateLog(const TCHAR* string) {
 
 // Update EDITDATA from versions v0.9.3 - v0.9.1
 inline EDITDATA* UpdateEDITDATA_prerev(EDITDATA_prerev* edPtr) {
-	DebugVersionUpdateLog(_T("EDITDATA was updated from v0.9.1 - v0.9.3 EDITDATA layout."));
+	DebugVersionUpdateLog(_T("EDITDATA was updated from v0.9.3 - v0.9.1 EDITDATA layout."));
 
 	EDITDATA* new_edPtr = NewEDITDATA();
 	HeaderCopy(new_edPtr, edPtr);
