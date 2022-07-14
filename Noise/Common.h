@@ -9,15 +9,13 @@
 
 
 
-// edPtr : Used at edittime and saved in the MFA/CCN/EXE files
-
 // Latest EDITDATA revision
 struct EDITDATA {
 	NO_DEFAULT_CTORS(EDITDATA)
 
 	// Header - required
-	extHeader	eHeader;
-	short		editdata_rev;
+	extHeader eHeader;
+	short editdata_rev;
 
 	// Properties
 	int          noise_seed;
@@ -43,7 +41,7 @@ struct EDITDATA_prerev {
 	NO_DEFAULT_CTORS(EDITDATA_prerev)
 
 	// Header - required
-	extHeader		eHeader;
+	extHeader eHeader;
 
 	// Properties
 	int          noise_seed;
@@ -61,6 +59,14 @@ struct EDITDATA_prerev {
 	unsigned int cellular_ret_type;
 	float        cellular_jitter;
 };
+
+
+struct EDITDATA_bare {
+	NO_DEFAULT_CTORS(EDITDATA_bare)
+	extHeader eHeader;
+	short editdata_rev;	// Note: This may not be here
+};
+
 
 
 class Extension;

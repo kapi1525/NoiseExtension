@@ -2,83 +2,109 @@
 #include "DarkEdif.h"
 
 
-void resetProps(EDITDATA* edPtr) {
+inline void ResetProps(EDITDATA* edPtr) {
 	// Set default object settings from DefaultState.
-	memset(((char *)edPtr) + sizeof(edPtr->eHeader), 0, sizeof(EDITDATA) - sizeof(EDITDATA::eHeader));
-	const auto& jprop = CurLang["Properties"];
+	const json_value& Props = CurLang["Properties"];
 
 	edPtr->editdata_rev = 1;
 
 	// Read defaults from json file.
-	edPtr->noise_seed = (int)long long(jprop[0]["DefaultState"]);
+	edPtr->noise_seed = (int)long long(Props[0]["DefaultState"]);
 
-	edPtr->noise_type = (unsigned int)long long(jprop[1]["DefaultState"]);
-	edPtr->noise_frequency = (float)double(jprop[2]["DefaultState"]);
+	edPtr->noise_type = (unsigned int)long long(Props[1]["DefaultState"]);
+	edPtr->noise_frequency = (float)double(Props[2]["DefaultState"]);
 
-	edPtr->fractal_type = (unsigned int)long long(jprop[4]["DefaultState"]);
-	edPtr->fractal_octaves = (int)long long(jprop[5]["DefaultState"]);
-	edPtr->fractal_lacunarity = (float)double(jprop[6]["DefaultState"]);
-	edPtr->fractal_gain = (float)double(jprop[7]["DefaultState"]);
-	edPtr->fractal_weighted_strength = (float)double(jprop[8]["DefaultState"]);
-	edPtr->fractal_pingpong_strength = (float)double(jprop[9]["DefaultState"]);
+	edPtr->fractal_type = (unsigned int)long long(Props[4]["DefaultState"]);
+	edPtr->fractal_octaves = (int)long long(Props[5]["DefaultState"]);
+	edPtr->fractal_lacunarity = (float)double(Props[6]["DefaultState"]);
+	edPtr->fractal_gain = (float)double(Props[7]["DefaultState"]);
+	edPtr->fractal_weighted_strength = (float)double(Props[8]["DefaultState"]);
+	edPtr->fractal_pingpong_strength = (float)double(Props[9]["DefaultState"]);
 
-	edPtr->cellular_distance_func = (unsigned int)long long(jprop[11]["DefaultState"]);
-	edPtr->cellular_ret_type = (unsigned int)long long(jprop[12]["DefaultState"]);
-	edPtr->cellular_jitter = (float)double(jprop[13]["DefaultState"]);
+	edPtr->cellular_distance_func = (unsigned int)long long(Props[11]["DefaultState"]);
+	edPtr->cellular_ret_type = (unsigned int)long long(Props[12]["DefaultState"]);
+	edPtr->cellular_jitter = (float)double(Props[13]["DefaultState"]);
 
 	edPtr->eHeader.extVersion = Extension::Version;
 }
 
 
-HGLOBAL FusionAPI UpdateEditStructure(mv* mV, void* oldEdPtr) {
-#pragma DllExportHint
-	if(((EDITDATA*)oldEdPtr)->eHeader.extVersion < 13) {
-		DarkEdif::MsgBox::Info(_T("Update"), _T("This project was saved with older Noise Object version (v0.9.0 or older), to prevent some bugs object propeties will be reset."));
 
-		EDITDATA* newEdPtr = (EDITDATA*)GlobalAlloc(GPTR,sizeof(EDITDATA));
-
-		memcpy(&newEdPtr->eHeader, &((EDITDATA*)oldEdPtr)->eHeader, sizeof(extHeader));
-		newEdPtr->eHeader.extSize = sizeof(EDITDATA);
-
-		resetProps(newEdPtr);
-		return (HGLOBAL)newEdPtr;
-	}
-
-	if(((EDITDATA*)oldEdPtr)->eHeader.extVersion < 16) {
-		// DarkEdif::MsgBox::Info(_T("Update"), _T("Updating EDITDATA from EDITDATA_prerev..."));
-
-		EDITDATA_prerev* edPtr = (EDITDATA_prerev*)oldEdPtr;
-		EDITDATA* newEdPtr = (EDITDATA*)GlobalAlloc(GPTR,sizeof(EDITDATA));
-		memcpy(&newEdPtr->eHeader, &edPtr->eHeader, sizeof(extHeader));
-		newEdPtr->eHeader.extSize = sizeof(EDITDATA);
-
-		resetProps(newEdPtr);
-
-		// I hate this
-		newEdPtr->noise_seed = edPtr->noise_seed;
-
-		newEdPtr->noise_type = edPtr->noise_type;
-		newEdPtr->noise_frequency = edPtr->noise_frequency;
-
-		newEdPtr->fractal_type = edPtr->fractal_type;
-		newEdPtr->fractal_octaves = edPtr->fractal_octaves;
-		newEdPtr->fractal_lacunarity = edPtr->fractal_lacunarity;
-		newEdPtr->fractal_weighted_strength = edPtr->fractal_weighted_strength;
-		newEdPtr->fractal_pingpong_strength = edPtr->fractal_pingpong_strength;
-
-		newEdPtr->cellular_distance_func = edPtr->cellular_distance_func;
-		newEdPtr->cellular_ret_type = edPtr->cellular_ret_type;
-		newEdPtr->cellular_jitter = edPtr->cellular_jitter;
-
-		if(newEdPtr->fractal_type == 4) {
-			newEdPtr->fractal_type = 3;
-		}
-
-		return (HGLOBAL)newEdPtr;
-	}
-
-	return NULL;
+inline EDITDATA* NewEDITDATA() {
+	return (EDITDATA*)GlobalAlloc(GPTR,sizeof(EDITDATA));
 }
+
+inline void HeaderCopy(EDITDATA* target, void* source) {
+	memcpy(&target->eHeader, &((EDITDATA*)source)->eHeader, sizeof(extHeader));
+	target->eHeader.extSize = sizeof(EDITDATA);
+}
+
+inline void DebugVersionUpdateLog(const TCHAR* string) {
+	#ifdef _DEBUG
+	DarkEdif::MsgBox::Info(_T("Update"), string);
+	#endif
+}
+
+
+
+// Update EDITDATA from versions v0.9.3 - v0.9.1
+inline EDITDATA* UpdateEDITDATA_prerev(EDITDATA_prerev* edPtr) {
+	DebugVersionUpdateLog(_T("EDITDATA was updated from v0.9.1 - v0.9.3 EDITDATA layout."));
+
+	EDITDATA* new_edPtr = NewEDITDATA();
+	HeaderCopy(new_edPtr, edPtr);
+	ResetProps(new_edPtr);
+
+	// Move over everything we can
+	new_edPtr->noise_seed = edPtr->noise_seed;
+	new_edPtr->noise_type = edPtr->noise_type;
+	new_edPtr->noise_frequency = edPtr->noise_frequency;
+	new_edPtr->fractal_type = edPtr->fractal_type;
+	new_edPtr->fractal_octaves = edPtr->fractal_octaves;
+	new_edPtr->fractal_lacunarity = edPtr->fractal_lacunarity;
+	new_edPtr->fractal_weighted_strength = edPtr->fractal_weighted_strength;
+	new_edPtr->fractal_pingpong_strength = edPtr->fractal_pingpong_strength;
+	new_edPtr->cellular_distance_func = edPtr->cellular_distance_func;
+	new_edPtr->cellular_ret_type = edPtr->cellular_ret_type;
+	new_edPtr->cellular_jitter = edPtr->cellular_jitter;
+
+	// There was an aditional fractal type in properties by mistake
+	if(new_edPtr->fractal_type == 4) {
+		new_edPtr->fractal_type = 3;
+	}
+
+	return new_edPtr;
+}
+
+
+
+// Update EDITDATA from versions v0.9.0 and older.
+inline EDITDATA* UpdateEDITDATA_old(EDITDATA_bare* edPtr) {
+	DebugVersionUpdateLog(_T("EDITDATA was updated from v0.9.0 and older EDITDATA layout."));
+
+	EDITDATA* new_edPtr = NewEDITDATA();
+	HeaderCopy(new_edPtr, edPtr);
+	ResetProps(new_edPtr);
+
+	return new_edPtr;
+}
+
+
+
+EDITDATA* FusionAPI UpdateEditStructure(mv* mV, EDITDATA_bare* oldEdPtr) {
+#pragma DllExportHint
+	if(oldEdPtr->eHeader.extVersion < 13) {
+		return UpdateEDITDATA_old(oldEdPtr);
+	}
+
+	if(oldEdPtr->eHeader.extVersion < 16) {
+		return UpdateEDITDATA_prerev((EDITDATA_prerev*)oldEdPtr);
+	}
+
+	// No update
+	return nullptr;
+}
+
 
 
 // ============================================================================
@@ -117,7 +143,7 @@ int FusionAPI CreateObject(mv * mV, LevelObject * loPtr, EDITDATA * edPtr) {
 		edPtr = (EDITDATA *) newEd;
 	}
 
-	resetProps(edPtr);
+	ResetProps(edPtr);
 	return 0;
 }
 
