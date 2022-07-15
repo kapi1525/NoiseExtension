@@ -30,6 +30,7 @@ jobs:
         chmod +x ./compile.sh
         ./compile.sh
         cd ..
+        mkdir -p NoiseExtension/Help
         mv NoiseExtension.wiki/temp/Noise.chm NoiseExtension/Help/
     
     - name: Upload artifact
