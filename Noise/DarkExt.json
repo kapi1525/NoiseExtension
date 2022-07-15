@@ -367,7 +367,7 @@
 			},
 			{
 				"Title": "Fractal lacunarity",
-				"Info": "Frequency multiplayer for octaves.",
+				"Info": "Frequency multiplier for octaves.",
 				"Type": "Editbox Float",
 				"DefaultState": 2.0
 			},
