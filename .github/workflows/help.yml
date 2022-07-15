@@ -19,10 +19,10 @@ jobs:
         repository: 'kapigames/NoiseExtension.wiki'
         path: 'NoiseExtension.wiki'
 
-    - uses: awalsh128/cache-apt-pkgs-action@v1
-      with:
-        packages: fpc pandoc
-        version: 1.0
+    - name: Install packages
+      run: |
+        sudo apt-get update -y
+        sudo apt-get install fpc pandoc -y
 
     - name: Run compile script
       run: |
