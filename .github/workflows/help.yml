@@ -5,7 +5,7 @@ on: gollum
 
 jobs:
   help:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
 
     steps:
     - name: Checkout master
@@ -22,7 +22,7 @@ jobs:
     - name: Install packages
       run: |
         sudo apt-get update -y
-        sudo apt-get install fp-utils-3.0.4 pandoc -y
+        sudo apt-get install fp-utils-3.2.2 pandoc -y
 
     - name: Run compile script
       run: |
