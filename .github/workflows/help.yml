@@ -22,7 +22,7 @@ jobs:
     - name: Install packages
       run: |
         sudo apt-get update -y
-        sudo apt-get install fp-utils-3.2.2 pandoc -y
+        sudo apt-get --no-install-recommends install fp-utils-3.2.2 pandoc -y
 
     - name: Run compile script
       run: |
