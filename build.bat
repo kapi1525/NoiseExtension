@@ -1,7 +1,7 @@
 @echo off
 
 :: --------------------------------------------------
-::          Noise Object build script v1.7.0         
+::          Noise Object build script v1.7.1         
 :: --------------------------------------------------
 :: Run arguments:
 :: --fast               (default) build only windows
