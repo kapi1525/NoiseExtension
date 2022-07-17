@@ -1,12 +1,12 @@
 
-# ![Logo](https://github.com/kapigames/NoiseExtensionResources/raw/master/Icon.png) Noise Object
+# ![Logo](https://raw.githubusercontent.com/kapigames/NoiseExtensionResources/master/Icon.png) Noise Object
 
 Noise object is Clickteam Fusion extension that allows you to use most of [FastNoiseLite](https://github.com/Auburn/FastNoiseLite) library funtionality in Clickteam Fusion and add some fancy noise stuff.
 
 
 ## Screenshot
 
-![Screenshot](https://github.com/kapigames/NoiseExtensionResources/raw/master/ss.png)
+![Screenshot](https://raw.githubusercontent.com/kapigames/NoiseExtensionResources/master/ss.png)
 
 (Noise Example.mfa running on linux through proton ge)
 
