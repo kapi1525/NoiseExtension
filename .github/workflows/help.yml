@@ -22,8 +22,8 @@ jobs:
 
     - name: Install packages
       run: |
-        sudo apt-get update -y
-        sudo apt-get --no-install-recommends install fp-utils pandoc -y
+        sudo apt-fast update -y
+        sudo apt-fast --no-install-recommends install fp-utils pandoc -y
 
     - name: Run compile script
       run: |
