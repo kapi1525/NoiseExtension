@@ -2,7 +2,6 @@ name: Update help file
 
 on: gollum
    
-# fp-utils-3.2.2 fpc-source-3.2.2 libcmark-gfm-extensions0.29.0.gfm.3 libcmark-gfm0.29.0.gfm.3 pandoc pandoc-data
 
 
 jobs:
@@ -21,10 +20,10 @@ jobs:
         repository: 'kapigames/NoiseExtension.wiki'
         path: 'NoiseExtension.wiki'
 
-    - uses: awalsh128/cache-apt-pkgs-action@v1
-      with:
-        packages: fp-utils-3.2.2 pandoc pandoc-data libcmark-gfm0.29.0.gfm.3 libcmark-gfm-extensions0.29.0.gfm.3
-        version: 1.0
+    - name: Install packages
+      run: |
+        sudo apt-get update -y
+        sudo apt-get --no-install-recommends install fp-utils pandoc -y
 
     - name: Run compile script
       run: |
