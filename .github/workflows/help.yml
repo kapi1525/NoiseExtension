@@ -23,7 +23,7 @@ jobs:
 
     - uses: awalsh128/cache-apt-pkgs-action@v1
       with:
-        packages: fp-utils pandoc pandoc-data libcmark-gfm0.29.0.gfm.3 libcmark-gfm-extensions0.29.0.gfm.3
+        packages: fp-utils-3.2.2 pandoc pandoc-data libcmark-gfm0.29.0.gfm.3 libcmark-gfm-extensions0.29.0.gfm.3
         version: 1.0
 
     - name: Run compile script
