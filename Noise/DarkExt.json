@@ -14,8 +14,8 @@
 		"ActionMenu": [
 			[ 0, "Set seed" ],
 			"---",
-			[ 1, "Set Noise type" ],
-			[ 2, "Set Noise frequency" ],
+			[ 1, "Set noise type" ],
+			[ 2, "Set noise frequency" ],
 			"---",
 			[ 3, "Set fractal type" ],
 			[ 4, "Set fractal octaves" ],
@@ -35,10 +35,10 @@
 			[ 0, "Get current seed" ],
 			[ 1, "Convert string to seed" ],
 			"---",
-			[ 2, "Get Noise 3D" ],
-			[ 3, "Get Noise 2D" ],
-			[ 4, "Get Noise 1D" ],
-			[ 5, "Get looping Noise 1D" ],
+			[ 2, "Get noise 3D" ],
+			[ 3, "Get noise 2D" ],
+			[ 4, "Get noise 1D" ],
+			[ 5, "Get looping noise 1D" ],
 			"---",
 			[
 				"Noise types",
@@ -74,7 +74,7 @@
 				[ 26, "Distance2Div" ]
 			],
 			"---",
-			[ 27, "Current Noise type" ],
+			[ 27, "Current noise type" ],
 			[ 28, "Current fractal type" ],
 			[ 29, "Current cellular distance function" ],
 			[ 30, "Current cellular return type" ],
@@ -90,13 +90,13 @@
 			},
 
 			{
-				"Title": "Set Noise type to %0",
+				"Title": "Set noise type to %0",
 				"Parameters": [
 					[ "Integer", "Type" ]
 				]
 			},
 			{
-				"Title": "Set Noise frequency to %0",
+				"Title": "Set noise frequency to %0",
 				"Parameters": [
 					[ "Float", "Frequency" ]
 				]
