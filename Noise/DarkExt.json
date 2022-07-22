@@ -20,13 +20,13 @@
 			[  3, "Set fractal type" ],
 			[  4, "Set fractal octaves" ],
 			[  5, "Set fractal lacunarity" ],
-			[ 11,"Set fractal gain" ],
+			[ 11, "Set fractal gain" ],
 			[  6, "Set fractal weighted strength" ],
 			[  7, "Set fractal PingPong strength" ],
 			"---",
 			[  8, "Set cellular distance function" ],
 			[  9, "Set cellular return type" ],
-			[ 10,"Set cellular jitter" ],
+			[ 10, "Set cellular jitter" ],
 			"---"
 		],
 		"ConditionMenu": [
