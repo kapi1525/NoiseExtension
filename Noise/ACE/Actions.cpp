@@ -55,7 +55,7 @@ void Extension::set_fractal_pingpong(float pingpong) {
 
 void Extension::set_cellular_distance_function(int function) {
 	#if EditorBuild
-	if(function < 0 || function > FastNoiseLite::FractalType_PingPong) {
+	if(function < 0 || function > FastNoiseLite::CellularDistanceFunction_Hybrid) {
 		DarkEdif::MsgBox::WarningOK(_T("Set cellular distance function"), _T("Set cellular distance function action expects one of cellular distance functions (see: Cellular distance functions expressions) but got random value.\nNote: This warning only shows up in Fusion editor so you can fix your events."));
 	}
 	#endif
@@ -65,7 +65,7 @@ void Extension::set_cellular_distance_function(int function) {
 
 void Extension::set_cellular_return_type(int return_type) {
 	#if EditorBuild
-	if(return_type < 0 || return_type > FastNoiseLite::FractalType_PingPong) {
+	if(return_type < 0 || return_type > FastNoiseLite::CellularReturnType_Distance2Div) {
 		DarkEdif::MsgBox::WarningOK(_T("Set cellular return type"), _T("Set cellular return type action expects one of cellular return types (see: Cellular return types expressions) but got random value.\nNote: This warning only shows up in Fusion editor so you can fix your events."));
 	}
 	#endif
