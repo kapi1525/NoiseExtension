@@ -1,7 +1,7 @@
 @echo off
 
 :: --------------------------------------------------
-::          Noise Object build script v1.7.1         
+::          Noise Object build script v1.7.2         
 :: --------------------------------------------------
 :: Run arguments:
 :: --fast               (default) build only windows
@@ -164,6 +164,9 @@ goto :exit
         timeout /T 1 > NUL
         goto :install
     )
+    
+    call :run mkdir %~dp0MFX\Examples\
+    call :run xcopy /s /v /c /y %~dp0Examples\*.* %~dp0MFX\Examples\
 
     call :run xcopy /s /v /c /y %~dp0MFX\*.* %ctf_path%
     exit /B 0
@@ -172,7 +175,6 @@ goto :exit
 :bundle
     call :run mkdir %~dp0MFX\Examples\
     call :run xcopy /s /v /c /y %~dp0Examples\*.* %~dp0MFX\Examples\
-    call :run xcopy /s /v /c /y %~dp0Help\*.* %~dp0MFX\Help\
     call :run tar -a -cf %project%.zip -C MFX *.*
     exit /B 0
 
