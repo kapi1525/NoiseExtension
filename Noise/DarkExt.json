@@ -202,8 +202,8 @@
 				"Returns": "Float",
 				"Parameters": [
 					[ "Float", "X" ],
-					[ "Float", "X Offset" ],
-					[ "Float", "X Size" ]
+					[ "Float", "X offset" ],
+					[ "Float", "X size" ]
 				]
 			},
 
