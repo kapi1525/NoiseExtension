@@ -293,7 +293,6 @@ Prop* FusionAPI GetPropValue(mv * mV, EDITDATA * edPtr, unsigned int PropID) {
 
 			
 		case noise_propid::version:
-			// TODO: Read version from json file.
 			prop_ptr = new Prop_Str(DarkEdif::UTF8ToTString(std::string(CurLang["Properties"][15]["DefaultState"])).c_str());
 			break;
 	}
