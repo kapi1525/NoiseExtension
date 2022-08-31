@@ -8,7 +8,7 @@ Noise object is Clickteam Fusion extension that allows you to use most of [FastN
 
 ![Screenshot](https://raw.githubusercontent.com/kapigames/NoiseExtensionResources/master/ss.png)
 
-(Noise sandbox.mfa running on linux through proton ge 7.1)
+(Noise sandbox.mfa example)
 
 
 ## Examples
