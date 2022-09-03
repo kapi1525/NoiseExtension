@@ -1,7 +1,7 @@
 
 # ![Logo](https://raw.githubusercontent.com/kapigames/NoiseExtensionResources/master/Icon.png) Noise Object
 
-Noise object is Clickteam Fusion extension that allows you to use most of [FastNoiseLite](https://github.com/Auburn/FastNoiseLite) library funtionality in Clickteam Fusion and add some fancy noise stuff.
+Noise object is Clickteam Fusion extension that allows you to use most of [FastNoiseLite](https://github.com/Auburn/FastNoiseLite) library funtionality in Clickteam Fusion and adds some other fancy stuff.
 
 
 ## Screenshot
@@ -16,10 +16,14 @@ Noise object is Clickteam Fusion extension that allows you to use most of [FastN
 There are some [included examples](Examples/Noise/), you can also find them in your Clickteam Fusion 2.5/Examples/Noise/ folder after you installed Noise.
 
 
-## Wiki / Help file
+## Wiki
 
-I recently finaly created Noise Object wiki on github. Wiki is also automaticaly converted to help file that you can read offline, you can find handy link to it in about page inside object properties.
-Note: currently this wiki/help file is very much work in progress, not everythings is documented yet.
+I recently finaly created Noise Object [wiki on github](https://github.com/kapigames/NoiseExtension/wiki). There you can find more info about what each ACEs and properties do and some nice screenshots.
+
+
+## Help file
+
+I wanted to automaticaly convert github wiki to help file, but in the end it was too complicated and buggy so i scrapped it. Currently help button Noise object about properties just redirects you to github wiki.
 
 
 ## Installing
