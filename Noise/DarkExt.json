@@ -4,8 +4,8 @@
 	"UK English": {
 		"About": {
 			"Name": "Noise",
-			"Author": "Kacper Bugla 'Kapi'",
-			"Copyright": "Copyright \u00A9 2022 Kacper Bugla 'Kapi'",
+			"Author": "Kacper Bugla",
+			"Copyright": "Copyright \u00A9 2022 Kacper Bugla",
 			"Comment": "Generates Noise using many different algorithms.",
 			"Help": "https://github.com/kapigames/NoiseExtension/wiki",
 			"URL": "https://github.com/kapigames/NoiseExtension"
@@ -436,7 +436,7 @@
 			},
 			{
 				"Title": "Version",
-				"Info": "Noise Object version.",
+				"Info": "Noise object version.",
 				"Type": "Text",
 				"DefaultState": "Noise v1.0.0 (Extension: v19, SDK: Modified DarkEdif v14 from commit 155caa97b244c4a67c40deee36fe36b871c2fcca)"
 			}
