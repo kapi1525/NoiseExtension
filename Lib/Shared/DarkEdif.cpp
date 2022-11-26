@@ -4,10 +4,6 @@
 #include <math.h>
 #include "Extension.h"
 
-// To "fix" some warnings
-#define _WINSOCK_DEPRECATED_NO_WARNINGS
-
-
 #ifdef _WIN32
 extern HINSTANCE hInstLib;
 #endif
@@ -110,7 +106,7 @@ const TCHAR* const DarkEdif::JSON::LanguageName()
 
 #endif // EditorBuild
 
-inline ACEInfo * ACEInfoAlloc(unsigned int NumParams)
+ACEInfo * ACEInfoAlloc(unsigned int NumParams)
 {
 	// Allocate space for ACEInfo struct, plus Parameter[NumParams] so it has valid memory
 	return (ACEInfo *)calloc(sizeof(ACEInfo) + (NumParams * sizeof(short) * 2), 1);	// The *2 is for reserved variables
@@ -471,7 +467,6 @@ struct DarkEdif::DLL::PropAccesser
 	decltype(Properties::sizeBytes) sizeBytes;
 	// The actual data for properties, merged together
 	// Starts with checkboxes, then data, which is Data struct: type ID followed by binary.
-	SuppressZeroArraySizeWarning
 	decltype(DarkEdif::Properties::dataForProps) dataForProps; /* [], inherited from decltype*/;
 
 	// Note: There is a single bit for each checkbox.
@@ -1504,7 +1499,7 @@ struct Properties::JSONPropertyReader : Properties::PropertyReader
 			if (!_stricmp(prop["Case"], "Lower"))
 				std::transform(data.begin(), data.end(), data.begin(), [](std::uint8_t c) { return std::tolower(c); });
 			else if (!_stricmp(prop["Case"], "Upper"))
-				std::transform(data.begin(), data.end(), data.begin(), [](std::uint8_t c) { return std::tolower(c); });
+				std::transform(data.begin(), data.end(), data.begin(), [](std::uint8_t c) { return std::toupper(c); });
 			return convRet->Return_OK(_strdup(data.c_str()), sizeOfStr, [](const void* v) { free((void *)v); });
 		}
 		// Stores text of item, but checks it's in Items

@@ -117,6 +117,9 @@ Params ReadActionOrConditionParameterType(const char * Text, bool &IsFloat)
 	if (!_stricmp(Text, "Object"))
 		return Params::Object;
 
+	if (!_stricmp(Text, "Time"))
+		return Params::Time;
+
 	if (!_stricmp(Text, "Position"))
 		return Params::Position;
 
@@ -387,10 +390,6 @@ int Edif::Init(mv * mV, bool fusionStartupScreen)
 	::SDK = new Edif::SDK(mV, *json);
 #endif
 
-#ifdef INTENSE_FUNCTIONS_EXTENSION
-	Extension::AutoGenerateExpressions(*::SDK);
-#endif
-
 	return 0;	// no error
 }
 
@@ -540,6 +539,10 @@ Edif::SDK::SDK(mv * mV, json_value &_json) : json (_json)
 		CreateNewExpressionInfo();
 	}
 
+	#ifdef DARKSCRIPT_EXTENSION
+		// Generates all the extra expressions dynamically
+		Extension::AutoGenerateExpressions();
+	#endif
 #if EditorBuild
 	// Object properties, as they appear in Properties tab, in the frame editor only.
 	DarkEdif::DLL::GeneratePropDataFromJSON();
@@ -575,9 +578,6 @@ Edif::SDK::SDK(mv * mV, json_value &_json) : json (_json)
 		}
 	#endif
 
-	#ifdef INTENSE_FUNCTIONS_EXTENSION
-		Extension::AutoGenerateExpressions();
-	#endif
 #endif // EditorBuild
 }
 
@@ -594,6 +594,9 @@ Edif::SDK::~SDK()
 	delete Icon;
 #endif
 }
+#ifdef DARKSCRIPT_EXTENSION
+long* actParameters;
+#endif
 
 long ActionOrCondition(void * Function, int ID, Extension * ext, const ACEInfo * info, ACEParamReader &params, bool isCond)
 {
@@ -602,10 +605,14 @@ long ActionOrCondition(void * Function, int ID, Extension * ext, const ACEInfo *
 	long Result = 0L;
 #if defined(__arm__) && defined(__ANDROID__)
 	long argStackCount; // Must be declared here or error reports in param reading won't compile
-	(void)argStackCount;// To stop clang from complaining
 #elif defined(_WIN32)
 	// Reset by CNC_GetParam inside params.GetXX(). CurrentParam being correct only matters if you have object parameters, though.
 	EventParam* saveCurParam = ext->rdPtr->rHo.CurrentParam;
+#endif
+#ifdef DARKSCRIPT_EXTENSION
+	// Store action parameters so when evaluating the Func() expression, the prior Action parameters are available
+	if (!isCond)
+		actParameters = Parameters;
 #endif
 
 	// If this JSON variable is set, this func doesn't read all the ACE parameters, which allows advanced users to call
@@ -663,7 +670,8 @@ long ActionOrCondition(void * Function, int ID, Extension * ext, const ACEInfo *
 				break;
 
 			default:
-				Parameters[i] = params.GetInteger(i);
+				// GetString uses GetParam, as opposed to GetIntParam.
+				Parameters[i] = (long)params.GetString(i);
 				break;
 		}
 	}
@@ -738,26 +746,34 @@ endFunc:
 struct ConditionOrActionManager_Windows : ACEParamReader
 {
 	RUNDATA * rdPtr;
+	bool isTwoOrLess;
 	ConditionOrActionManager_Windows(bool isCondition, RUNDATA * rdPtr, long param1, long param2)
 		: rdPtr(rdPtr)
 	{
+		isTwoOrLess = ((isCondition ? ::SDK->ConditionInfos : ::SDK->ActionInfos)[rdPtr->rHo.EventNumber]->NumOfParams <= 2);
 		rdPtr->pExtension->Runtime.param1 = param1;
 		rdPtr->pExtension->Runtime.param2 = param2;
 	}
 	// Inherited via ACEParamReader
 	virtual float GetFloat(int index)
 	{
+		if (isTwoOrLess)
+			return index == 0 ? *(float *)&rdPtr->pExtension->Runtime.param1 : *(float*)&rdPtr->pExtension->Runtime.param2;
 		int i = (int)CNC_GetFloatParameter(rdPtr);
 		return *(float*)&i;
 	}
 
 	virtual const TCHAR * GetString(int index)
 	{
+		if (isTwoOrLess)
+			return (const TCHAR *)(index == 0 ? rdPtr->pExtension->Runtime.param1 : rdPtr->pExtension->Runtime.param2);
 		return (const TCHAR *)CNC_GetStringParameter(rdPtr);
 	}
 
 	virtual std::int32_t GetInteger(int index)
 	{
+		if (isTwoOrLess)
+			return (index == 0 ? rdPtr->pExtension->Runtime.param1 : rdPtr->pExtension->Runtime.param2);
 		return (std::int32_t)CNC_GetIntParameter(rdPtr);
 	}
 };
@@ -907,7 +923,7 @@ ProjectFunc long PROJ_FUNC_GEN(PROJECT_NAME_RAW, _conditionJump(void * cppExtPtr
 	Extension* ext = (Extension*)cppExtPtr;
 	ConditionOrActionManager_iOS params(true, ext, cndExt);
 #endif
-	LOGV(_T("Condition ID %i start.\n"), ID);
+	LOGV(PROJECT_NAME _T(" Condition ID %i start.\n"), ID);
 
 	if (::SDK->ConditionFunctions.size() < (unsigned int)ID) {
 		DarkEdif::MsgBox::Error(_T("Condition linking error"), _T("Missing condition ID %d in extension %s. This ID was not linked in Extension ctor with LinkCondition()."),
@@ -925,7 +941,7 @@ ProjectFunc long PROJ_FUNC_GEN(PROJECT_NAME_RAW, _conditionJump(void * cppExtPtr
 
 	long Result = ActionOrCondition(Function, ID, ext, ::SDK->ConditionInfos[ID], params, true);
 
-	LOGV(_T("Condition ID %i end.\n"), ID);
+	LOGV(_T(PROJECT_NAME " Condition ID %i end.\n"), ID);
 	return Result;
 }
 
@@ -954,7 +970,7 @@ ProjectFunc void PROJ_FUNC_GEN(PROJECT_NAME_RAW, _actionJump(void * cppExtPtr, i
 	ConditionOrActionManager_iOS params(false, ext, act);
 #define actreturn /* void */
 #endif
-	LOGV(_T("Action ID %i start.\n"), ID);
+	LOGV(PROJECT_NAME _T(" Action ID %i start.\n"), ID);
 
 	if (::SDK->ActionFunctions.size() < (unsigned int)ID)
 	{
@@ -971,7 +987,7 @@ ProjectFunc void PROJ_FUNC_GEN(PROJECT_NAME_RAW, _actionJump(void * cppExtPtr, i
 
 	ActionOrCondition(Function, ID, ext, ::SDK->ActionInfos[ID], params, false);
 
-	LOGV(_T("Action ID %i end.\n"), ID);
+	LOGV(PROJECT_NAME _T(" Action ID %i end.\n"), ID);
 	return actreturn;
 #undef actreturn
 }
@@ -1051,26 +1067,38 @@ struct ExpressionManager_Android : ACEParamReader {
 
 struct ExpressionManager_Windows : ACEParamReader {
 	RUNDATA * rdPtr;
+	bool isOneOrLess = false;
+	int param;
 	ExpressionManager_Windows(RUNDATA * rdPtr) : rdPtr(rdPtr)
 	{
-
+	}
+	void SetOneOrLess(long param)
+	{
+		isOneOrLess = true;
+		this->param = param;
 	}
 
 	// Inherited via ACEParamReader
 	virtual float GetFloat(int index) override
 	{
+		if (isOneOrLess && index == 0)
+			return *(float*)&param;
 		int i = (int)CallRunTimeFunction(rdPtr, RFUNCTION::GET_PARAM_1 + (index > 0), TYPE_FLOAT, index);
 		return *(float*)&i;
 	}
 
 	virtual const TCHAR * GetString(int index) override
 	{
+		if (isOneOrLess && index == 0)
+			return (const TCHAR*)param;
 		// We don't have to free this memory; Fusion will manage it
 		return (const TCHAR *)CallRunTimeFunction(rdPtr, RFUNCTION::GET_PARAM_1 + (index > 0), TYPE_STRING, index);
 	}
 
 	virtual std::int32_t GetInteger(int index) override
 	{
+		if (isOneOrLess && index == 0)
+			return param;
 		return (std::int32_t)CallRunTimeFunction(rdPtr, RFUNCTION::GET_PARAM_1 + (index > 0), TYPE_INT, index);
 	}
 
@@ -1157,7 +1185,7 @@ long FusionAPI Edif::ExpressionJump(RUNDATA * rdPtr, long param)
 	int ID = rdPtr->rHo.EventNumber;
 	Extension * ext = (Extension *)rdPtr->pExtension;
 	ExpressionManager_Windows params(rdPtr);
-	LOGV(_T("Expression ID %i start.\n"), ID);
+	LOGV(PROJECT_NAME _T(" Expression ID %i start.\n"), ID);
 #elif defined(__ANDROID__)
 ProjectFunc void expressionJump(JNIEnv *, jobject, jlong extPtr, jint ID, CNativeExpInstance expU)
 {
@@ -1182,6 +1210,11 @@ ProjectFunc void PROJ_FUNC_GEN(PROJECT_NAME_RAW, _expressionJump(void * cppExtPt
 	ExpReturnType ExpressionRet = info->Flags.ef;
 
 	int ParameterCount = info->NumOfParams;
+#if _WIN32
+	if (ParameterCount <= 1)
+		((ExpressionManager_Windows)params).SetOneOrLess(param);
+#endif
+
 
 	// If this JSON variable is set, this func doesn't read all the ACE parameters, which allows advanced users to call
 	// CNC_XX Expression macros to get parameters themselves.
@@ -1199,7 +1232,6 @@ ProjectFunc void PROJ_FUNC_GEN(PROJECT_NAME_RAW, _expressionJump(void * cppExtPt
 	std::uintptr_t Result = 0;
 
 	int ExpressionRet2 = (int)ExpressionRet;
-	(void)ExpressionRet2;
 #ifdef _WIN32
 	//int ExpressionRet2 = (int)ExpressionRet; // easier for ASM
 #else
@@ -1252,12 +1284,12 @@ ProjectFunc void PROJ_FUNC_GEN(PROJECT_NAME_RAW, _expressionJump(void * cppExtPt
 		}
 	}
 
-#ifdef INTENSE_FUNCTIONS_EXTENSION
+#ifdef DARKSCRIPT_EXTENSION
 	_CrtCheckMemory();
 
 	if (::SDK->ExpressionFunctions[ID] == Edif::MemberFunctionPointer(&Extension::VariableFunction))
 	{
-		Result = ext->VariableFunction((TCHAR *)Parameters[paramInc], ID, &Parameters[1 + paramInc]);
+		Result = ext->VariableFunction((const TCHAR *)Parameters[0], *info, Parameters);
 		_CrtCheckMemory();
 		goto endFunc;
 	}
@@ -1300,7 +1332,7 @@ endFunc:
 	// Must set return type after the expression func is evaluated, as sub-expressions inside the
 	// expression func (e.g. from generating events) could change it to something else
 	params.SetReturnType(ExpressionRet);
-	LOGV(_T("Expression ID %i end.\n"), ID);
+	LOGV(PROJECT_NAME _T(" Expression ID %i end.\n"), ID);
 	return Result;
 
 	// if you add back old ARM ASM, remember to increment paramInc

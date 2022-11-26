@@ -136,7 +136,7 @@
 			>$([System.Text.RegularExpressions.Regex]::Match($(_FusionSDKConfig), $(_RunAnalyzerRegex)).Result('$1'))</RunAnalyzerSetting>
 
 		<!-- RunCodeAnalysis is the property MSVC will read. -->
-		<RunCodeAnalysis Condition="$(_TargetPlat)=='Windows' AND ($(RunAnalyzerSetting)=='true' OR ($(RunAnalyzerSetting)=='debugonly' AND $(DbgBuild)==1))">true</RunCodeAnalysis>
+		<RunCodeAnalysis Condition="$(RunAnalyzerSetting)=='true' OR ($(RunAnalyzerSetting)=='debugonly' AND $(DbgBuild)==1)">true</RunCodeAnalysis>
 
 		<!-- Static analysis won't run on the XP-compatible toolset. -->
 		<WindowsXPCompatibility Condition="$(RunCodeAnalysis)=='true'">0</WindowsXPCompatibility>
@@ -405,11 +405,7 @@
 		<PlatformToolset Condition="$(WindowsXPCompatibility)==1">v141_xp</PlatformToolset>
 		<!-- Prevent Windows XP not-being-supported-later warnings -->
 		<XPDeprecationWarning Condition="$(WindowsXPCompatibility)==1">false</XPDeprecationWarning>
-
-		<!--WHY IS THIS XP ONLY I ALWAYS HAVE THIS WARNING-->
-		<MSBuildWarningsAsMessages>MSB8012</MSBuildWarningsAsMessages>
-		<!--MSBuildWarningsAsMessages Condition="$(WindowsXPCompatibility)==1">MSB8012</MSBuildWarningsAsMessages-->
-
+		<MSBuildWarningsAsMessages Condition="$(WindowsXPCompatibility)==1">MSB8012;$(MSBuildWarningsAsMessages)</MSBuildWarningsAsMessages>
 
 		<!-- If not XP, then use the latest compiler. $(PlatformToolsetVersion) is not available,
 			 so the following "check for toolset" are copied from Microsoft.Cpp.Defaults.props;

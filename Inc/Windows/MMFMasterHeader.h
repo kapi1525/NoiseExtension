@@ -5,8 +5,8 @@
 #error Included the wrong header for this OS.
 #endif
 
-#include "../Shared/AllPlatformDefines.hpp"
-#include "Windows/WindowsDefines.hpp"
+#include "..\Shared\AllPlatformDefines.hpp"
+#include "Windows\WindowsDefines.hpp"
 
 #if EditorBuild
 #include "Surface.hpp"
@@ -677,7 +677,7 @@ struct event2 {
 		struct
 		{
 			short	evtType,		// 2 Type of object
-					evtNum;			// 4 Number of action/condition (SUBTRACT 81 FOR A/C ID, and negate for C ID)
+					evtNum;			// 4 Number of action/condition (SUBTRACT 80 FOR A/C ID, and negate for C ID)
 		};
 	};
 	OINUM	evtOi;					// 6 Object Identifier (if normal object)
@@ -1121,7 +1121,7 @@ struct ParamStringExp {
 };
 struct ParamInkEffect {
 	short	ID,			// ID of effect
-			Parameter;	// Effect parameter
+			ParameterEffect;	// Effect parameter
 	long	Free;		// Ignore - free
 };
 struct ParamMenu {
@@ -1768,7 +1768,7 @@ struct HeaderObject {
 
 	OEFLAGS				OEFlags;		// Objects flags
 	HeaderObjectFlags	Flags;			// HeaderObjectFlags (originally HOF_)
-	
+
 	// 0 or 1; indicates this object was filtered/selected by conditions in the event.
 	// If 0, all the object instances should be considered selected; if 1, only the selected ones.
 	// Invalid if not an OR event! (check EventGroup->Flags & EventGroupFlags::OrInGroup != 0)
@@ -2002,7 +2002,7 @@ struct AltVals {
 			long					Free1[25 - 1];	// 26 = number of alterable values
 			long					InternalFlags;	// Bitmask of all internal flags; flag 0 is accessed via (InternalFlags & 1). Previously named ValueFlags.
 			unsigned char			Free2[26];		// 26 = number of alterable values
-			const TCHAR* const*		Strings;		// Alterable strings (will be null if never used, including if blank in obj properties)
+			const TCHAR* const*		Strings;		// Alterable strings (will be null if never used, including if blank in obj properties); change with mvMalloc/mvFree
 			int						NumAltStrings;
 		} CF25;
 		struct MMF2 {
@@ -2010,7 +2010,7 @@ struct AltVals {
 			long	rvFree1[26 - 1];
 			long	rvValueFlags;
 			BYTE	rvFree2[26];
-			LPTSTR	rvStrings[10];
+			LPTSTR	rvStrings[10]; // Alterable strings (will be null if never used, including if blank in obj properties); change with mvMalloc/mvFree
 		} MMF2;
 	};
 };
