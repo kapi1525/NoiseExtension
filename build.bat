@@ -1,7 +1,7 @@
 @echo off
 
 :: --------------------------------------------------
-::          Noise Object build script v1.7.2         
+::          Noise Object build script v1.7.3         
 :: --------------------------------------------------
 :: Run arguments:
 :: --fast               (default) build only windows
@@ -15,7 +15,7 @@
 ::
 :: --bundle             create zip file with extension
 ::
-:: --sdkconfig          create FusionSDKConfig.ini with usefull settings
+:: --sdkconfig          create FusionSDKConfig.ini with preset settings for github actions
 ::
 :: --verbose            more logging
 ::
@@ -116,7 +116,7 @@ goto :exit
     echo FavorSizeOrSpeed = speed >> ..\FusionSDKConfig.ini
     echo UseLinkTimeCodeGeneration = true >> ..\FusionSDKConfig.ini
     echo DarkEdifUpdateCheckerTagging = Noise >> ..\FusionSDKConfig.ini
-    echo EchoAllDefinesFromPropsFileDuringBuild = true >> ..\FusionSDKConfig.ini
+    :: echo EchoAllDefinesFromPropsFileDuringBuild = true >> ..\FusionSDKConfig.ini
     exit /B 0
 
 
