@@ -28,6 +28,8 @@ I wanted to automaticaly convert github wiki to help file, but in the end it was
 
 ## Installing
 
+You can find Noise object in Clickteam Fusion's extension manager, or install it manualy by following install instructions below.
+
 To install Noise Object, just download [latest release](https://github.com/kapigames/NoiseExtension/releases/latest), unzip it and copy all files to correct directories in your Fusion install (Often: "C:\Program Files (x86)\Steam\steamapps\common\Clickteam Fusion 2.5\"). Also this extension uses dark edif update checker, this means you will receive notifications about updates in Fusion. Updating extension is the same as installing it, just override old files.
 
 
