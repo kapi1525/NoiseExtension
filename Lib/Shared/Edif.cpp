@@ -757,8 +757,9 @@ struct ConditionOrActionManager_Windows : ACEParamReader
 	// Inherited via ACEParamReader
 	virtual float GetFloat(int index)
 	{
-		if (isTwoOrLess)
-			return index == 0 ? *(float *)&rdPtr->pExtension->Runtime.param1 : *(float*)&rdPtr->pExtension->Runtime.param2;
+        // FIXME: This causes a bug where float parameter in set noise frequency action is corrupted.
+		// if (isTwoOrLess)
+		// 	return index == 0 ? (*(float *)&rdPtr->pExtension->Runtime.param1) : (*(float*)&rdPtr->pExtension->Runtime.param2);
 		int i = (int)CNC_GetFloatParameter(rdPtr);
 		return *(float*)&i;
 	}
