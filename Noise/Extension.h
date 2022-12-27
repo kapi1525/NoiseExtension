@@ -46,7 +46,7 @@ public:
 	int cellular_return_type;
 
 	// Actions
-		void set_seed(int Seed);
+		void set_seed(int seed_);
 
 		// Sets
 		void set_noise_type(int type);

@@ -1,8 +1,8 @@
 #include "Common.h"
 
 
-void Extension::set_seed(int seed) {
-	this->seed = seed;
+void Extension::set_seed(int seed_) {
+	seed = seed_;
 	noise.SetSeed(seed);
 }
 
