@@ -54,95 +54,33 @@ float Extension::get_looping_noise1D(float x, float xoffset, float xsize) {
 }
 
 
-// Noise Types
-int Extension::open_simplex2() {
-	return FastNoiseLite::NoiseType_OpenSimplex2;
+// Constant returns
+int Extension::always_0() {
+    return 0;
 }
 
-int Extension::open_simplex2s() {
-	return FastNoiseLite::NoiseType_OpenSimplex2S;
+int Extension::always_1() {
+    return 1;
 }
 
-int Extension::cellular() {
-	return FastNoiseLite::NoiseType_Cellular;
+int Extension::always_2() {
+    return 2;
 }
 
-int Extension::perlin() {
-	return FastNoiseLite::NoiseType_Perlin;
+int Extension::always_3() {
+    return 3;
 }
 
-int Extension::value_cubic() {
-	return FastNoiseLite::NoiseType_ValueCubic;
+int Extension::always_4() {
+    return 4;
 }
 
-int Extension::value() {
-	return FastNoiseLite::NoiseType_Value;
+int Extension::always_5() {
+    return 5;
 }
 
-
-// Fractal Types
-int Extension::none() {
-	return FastNoiseLite::FractalType_None;
-}
-
-int Extension::fbm() {
-	return FastNoiseLite::FractalType_FBm;
-}
-
-int Extension::rigid() {
-	return FastNoiseLite::FractalType_Ridged;
-}
-
-int Extension::pingpong() {
-	return FastNoiseLite::FractalType_PingPong;
-}
-
-
-// Cellular Functions
-int Extension::euclidean() {
-	return FastNoiseLite::CellularDistanceFunction_Euclidean;
-}
-
-int Extension::euclidean_sq() {
-	return FastNoiseLite::CellularDistanceFunction_EuclideanSq;
-}
-
-int Extension::manhattan() {
-	return FastNoiseLite::CellularDistanceFunction_Manhattan;
-}
-
-int Extension::hybrid() {
-	return FastNoiseLite::CellularDistanceFunction_Hybrid;
-}
-
-
-// Cellular Return Types
-int Extension::cell_value() {
-	return FastNoiseLite::CellularReturnType_CellValue;
-}
-
-int Extension::distance() {
-	return FastNoiseLite::CellularReturnType_Distance;
-}
-
-int Extension::distance2() {
-	return FastNoiseLite::CellularReturnType_Distance2;
-}
-
-int Extension::distance2_add() {
-	return FastNoiseLite::CellularReturnType_Distance2Add;
-}
-
-int Extension::distance2_sub() {
-	return FastNoiseLite::CellularReturnType_Distance2Sub;
-}
-
-int Extension::distance2_mul() {
-	return FastNoiseLite::CellularReturnType_Distance2Mul;
-}
-
-int Extension::distance2_div() {
-	return FastNoiseLite::CellularReturnType_Distance2Div;
+int Extension::always_6() {
+    return 6;
 }
 
 

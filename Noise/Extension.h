@@ -74,34 +74,14 @@ public:
 		float get_noise1D(float x);
 		float get_looping_noise1D(float x, float xoffset, float xsize);
 
-		// Noise Types
-		int open_simplex2();
-		int open_simplex2s();
-		int cellular();
-		int perlin();
-		int value_cubic();
-		int value();
-
-		// Fractal Types
-		int none();
-		int fbm();
-		int rigid();
-		int pingpong();
-
-		// Cellular Functions
-		int euclidean();
-		int euclidean_sq();
-		int manhattan();
-		int hybrid();
-
-		// Cellular Return Types
-		int cell_value();
-		int distance();
-		int distance2();
-		int distance2_add();
-		int distance2_sub();
-		int distance2_mul();
-		int distance2_div();
+        // Constant values
+        int always_0();
+        int always_1();
+        int always_2();
+        int always_3();
+        int always_4();
+        int always_5();
+        int always_6();
 
 		// Current selections
 		int current_noise_type();

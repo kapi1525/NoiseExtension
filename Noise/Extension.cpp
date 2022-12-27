@@ -49,30 +49,34 @@ Extension::Extension(RuntimeFunctions & runFuncs, EDITDATA * edPtr, void * objCE
 		LinkExpression(4, get_noise1D);
 		LinkExpression(5, get_looping_noise1D);
 
-		LinkExpression(6, open_simplex2);
-		LinkExpression(7, open_simplex2s);
-		LinkExpression(8, cellular);
-		LinkExpression(9, perlin);
-		LinkExpression(10, value_cubic);
-		LinkExpression(11, value);
-		
-		LinkExpression(12, none);
-		LinkExpression(13, fbm);
-		LinkExpression(14, rigid);
-		LinkExpression(15, pingpong);
-		
-		LinkExpression(16, euclidean);
-		LinkExpression(17, euclidean_sq);
-		LinkExpression(18, manhattan);
-		LinkExpression(19, hybrid);
-		
-		LinkExpression(20, cell_value);
-		LinkExpression(21, distance);
-		LinkExpression(22, distance2);
-		LinkExpression(23, distance2_add);
-		LinkExpression(24, distance2_sub);
-		LinkExpression(25, distance2_mul);
-		LinkExpression(26, distance2_div);
+        // Noise types
+		LinkExpression(6, always_0);
+		LinkExpression(7, always_1);
+		LinkExpression(8, always_2);
+		LinkExpression(9, always_3);
+		LinkExpression(10, always_4);
+		LinkExpression(11, always_5);
+
+        // Fractal types
+		LinkExpression(12, always_0);
+		LinkExpression(13, always_1);
+		LinkExpression(14, always_2);
+		LinkExpression(15, always_3);
+
+        // Cellular distance functions
+		LinkExpression(16, always_0);
+		LinkExpression(17, always_1);
+		LinkExpression(18, always_2);
+		LinkExpression(19, always_3);
+
+        // Cellular return types
+		LinkExpression(20, always_0);
+		LinkExpression(21, always_1);
+		LinkExpression(22, always_2);
+		LinkExpression(23, always_3);
+		LinkExpression(24, always_4);
+		LinkExpression(25, always_5);
+		LinkExpression(26, always_6);
 
 		LinkExpression(27, current_noise_type);
 		LinkExpression(28, current_fractal_type);
