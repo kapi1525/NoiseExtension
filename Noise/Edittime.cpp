@@ -1,6 +1,9 @@
 #include "Common.h"
 #include "DarkEdif.h"
 
+// Treat warning C4062 as an error so ill never forget to update switch statements in SetPropValue and GetPropValue ever again
+#pragma warning(error:4062)
+
 
 
 inline float AsFloat(const json_value& json) {
@@ -423,9 +426,8 @@ void FusionAPI SetPropValue(mv * mV, EDITDATA * edPtr, unsigned int PropID, void
 			break;
 
 
-		default:
-			LOGE(_T("SetPropValue tried to set property that dosent exist!"));
-			break;
+		case noise_propid::version:
+            break;
 	}
 }
 

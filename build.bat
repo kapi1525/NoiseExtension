@@ -1,12 +1,12 @@
 @echo off
 
 :: --------------------------------------------------
-::          Noise Object build script v1.7.3         
+::          Noise Object build script v1.7.3
 :: --------------------------------------------------
 :: Run arguments:
 :: --fast               (default) build only windows
 :: --full               build everything
-:: 
+::
 :: --debug              (default)
 :: --release
 ::
@@ -138,7 +138,7 @@ goto :exit
         set verbosity=quiet
     )
 
-    call :run msbuild ./%project%.sln -t:"%~1" -p:Configuration="%~2";Platform="%~3";WarningLevel=all -nologo -m -clp:Summary;ForceNoAlign;verbosity=%verbosity%
+    call :run msbuild ./%project%.sln -t:"%~1" -p:Configuration="%~2";Platform="%~3" -nologo -m -clp:Summary;ForceNoAlign;verbosity=%verbosity% -warnaserror:C4062
 
     exit /B 0
 
@@ -164,7 +164,7 @@ goto :exit
         timeout /T 1 > NUL
         goto :install
     )
-    
+
     call :run mkdir %~dp0MFX\Examples\
     call :run xcopy /s /v /c /y %~dp0Examples\*.* %~dp0MFX\Examples\
 
