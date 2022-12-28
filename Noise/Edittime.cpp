@@ -381,6 +381,9 @@ void FusionAPI SetPropValue(mv * mV, EDITDATA * edPtr, unsigned int PropID, void
 			edPtr->noise_frequency = ((Prop_Float*)Param)->Value;
 			break;
 
+		case noise_propid::rotation_type_3d:
+			edPtr->rotation_type_3d = ((Prop_UInt*)Param)->Value;
+			break;
 
 		case noise_propid::fractal_type:
 			edPtr->fractal_type = ((Prop_UInt*)Param)->Value;
