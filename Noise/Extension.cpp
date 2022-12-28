@@ -85,6 +85,7 @@ Extension::Extension(RuntimeFunctions & runFuncs, EDITDATA * edPtr, void * objCE
 		LinkExpression(26, always_6);
 
 		LinkExpression(27, current_noise_type);
+		LinkExpression(33, current_rotation_type_3d);
 		LinkExpression(28, current_fractal_type);
 		LinkExpression(29, current_cellular_function);
 		LinkExpression(30, current_cellular_return_type);

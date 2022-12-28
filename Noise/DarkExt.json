@@ -82,6 +82,7 @@
 			],
 			"---",
 			[ 27, "Current noise type" ],
+			[ 33, "Current rotation type 3D" ],
 			[ 28, "Current fractal type" ],
 			[ 29, "Current cellular distance function" ],
 			[ 30, "Current cellular return type" ],
@@ -332,6 +333,11 @@
 			{
 				"Title": "ImproveXZ(",
 				"Returns": "Integer"
+			},
+
+			{
+				"Title": "RotationType3D(",
+				"Returns": "Integer"
 			}
 		],
 
@@ -359,7 +365,7 @@
 			},
 			{
 				"Title": "Noise frequency",
-				"Info": "Noise frequency controls how much noise is\"zoomed in\".",
+				"Info": "Noise frequency controls how much noise is \"zoomed in\".",
 				"Type": "Editbox Float",
 				"DefaultState": 0.01
 			},
