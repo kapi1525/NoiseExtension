@@ -36,8 +36,10 @@ public:
 #endif
 	~Extension();
 
-	// TODO: Add DomainWarp in v1.1
-	FastNoiseLite noise;
+
+	FastNoiseLite noise_main;       // Main noise instance for generating noise
+	FastNoiseLite noise_warp;       // Separate noise instance for domain warp
+
 	int seed;
 
 	int noise_type;
@@ -45,6 +47,7 @@ public:
 	int cellular_function;
 	int cellular_return_type;
 	int rotation_type_3d;
+
 
 	// Actions
 		void set_seed(int seed_);
@@ -66,6 +69,7 @@ public:
 		void set_cellular_jitter(float jitter);
 
 	// Conditions
+        // No conditions are here
 
 	// Expressions
 		int get_seed();
@@ -94,11 +98,9 @@ public:
 
 
 	// These are called if there's no function linked to an ID
-
 	void UnlinkedAction(int ID);
 	long UnlinkedCondition(int ID);
 	long UnlinkedExpression(int ID);
-
 
 	REFLAG Handle();
 	REFLAG Display();

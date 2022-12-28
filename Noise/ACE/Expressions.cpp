@@ -6,6 +6,7 @@
 #define PI 3.141592741f
 
 
+
 int Extension::get_seed() {
 	return seed;
 }
@@ -31,16 +32,17 @@ int Extension::string_to_seed(const TCHAR* String) {
 }
 
 
+
 float Extension::get_noise3D(float x, float y, float z) {
-	return noise.GetNoise(x, y, z);
+	return noise_main.GetNoise(x, y, z);
 }
 
 float Extension::get_noise2D(float x, float y) {
-	return noise.GetNoise(x, y);
+	return noise_main.GetNoise(x, y);
 }
 
 float Extension::get_noise1D(float x) {
-	return noise.GetNoise(x, 0.f);
+	return noise_main.GetNoise(x, 0.f);
 }
 
 float Extension::get_looping_noise1D(float x, float xoffset, float xsize) {
@@ -50,8 +52,9 @@ float Extension::get_looping_noise1D(float x, float xoffset, float xsize) {
 	float Angle = XPos * AngleStep;
 	Angle = Angle * PI / 180.f;
 
-	return noise.GetNoise((Radius * cos(Angle)), (Radius * sin(Angle)));
+	return noise_main.GetNoise((Radius * cos(Angle)), (Radius * sin(Angle)));
 }
+
 
 
 // Constant returns
@@ -82,6 +85,7 @@ int Extension::always_5() {
 int Extension::always_6() {
     return 6;
 }
+
 
 
 // Current selections
