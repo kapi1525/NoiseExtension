@@ -138,7 +138,7 @@ goto :exit
         set verbosity=quiet
     )
 
-    call :run msbuild ./%project%.sln -t:"%~1" -p:Configuration="%~2";Platform="%~3" -nologo -m -clp:Summary;ForceNoAlign;verbosity=%verbosity%
+    call :run msbuild ./%project%.sln -t:"%~1" -p:Configuration="%~2";Platform="%~3" -nologo -m -clp:ForceNoAlign;verbosity=%verbosity%
 
     exit /B 0
 
