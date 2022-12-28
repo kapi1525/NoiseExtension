@@ -44,6 +44,7 @@ public:
 	int fractal_type;
 	int cellular_function;
 	int cellular_return_type;
+	int rotation_type_3d;
 
 	// Actions
 		void set_seed(int seed_);
@@ -51,6 +52,7 @@ public:
 		// Sets
 		void set_noise_type(int type);
 		void set_noise_frequency(float frequency);
+        void set_rotation_type_3d(int type);
 
 		void set_fractal_type(int type);
 		void set_fractal_octaves(int octaves);
@@ -85,6 +87,7 @@ public:
 
 		// Current selections
 		int current_noise_type();
+		int current_rotation_type_3d();
 		int current_fractal_type();
 		int current_cellular_function();
 		int current_cellular_return_type();

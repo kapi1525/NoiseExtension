@@ -36,24 +36,25 @@ inline void ResetProps(EDITDATA* edPtr) {
 	// Set default object settings from DefaultState.
 	const json_value& Props = CurLang["Properties"];
 
-	edPtr->editdata_rev = 1;
+	edPtr->editdata_rev = 2;
 
 	// Read defaults from json file.
 	edPtr->noise_seed = AsInt(Props[0]["DefaultState"]);
 
 	edPtr->noise_type = AsUInt(Props[1]["DefaultState"]);
 	edPtr->noise_frequency = AsFloat(Props[2]["DefaultState"]);
+	edPtr->rotation_type_3d = AsUInt(Props[3]["DefaultState"]);
 
-	edPtr->fractal_type = AsUInt(Props[4]["DefaultState"]);
-	edPtr->fractal_octaves = AsInt(Props[5]["DefaultState"]);
-	edPtr->fractal_lacunarity = AsFloat(Props[6]["DefaultState"]);
-	edPtr->fractal_gain = AsFloat(Props[7]["DefaultState"]);
-	edPtr->fractal_weighted_strength = AsFloat(Props[8]["DefaultState"]);
-	edPtr->fractal_pingpong_strength = AsFloat(Props[9]["DefaultState"]);
+	edPtr->fractal_type = AsUInt(Props[5]["DefaultState"]);
+	edPtr->fractal_octaves = AsInt(Props[6]["DefaultState"]);
+	edPtr->fractal_lacunarity = AsFloat(Props[7]["DefaultState"]);
+	edPtr->fractal_gain = AsFloat(Props[8]["DefaultState"]);
+	edPtr->fractal_weighted_strength = AsFloat(Props[9]["DefaultState"]);
+	edPtr->fractal_pingpong_strength = AsFloat(Props[10]["DefaultState"]);
 
-	edPtr->cellular_distance_func = AsUInt(Props[11]["DefaultState"]);
-	edPtr->cellular_ret_type = AsUInt(Props[12]["DefaultState"]);
-	edPtr->cellular_jitter = AsFloat(Props[13]["DefaultState"]);
+	edPtr->cellular_distance_func = AsUInt(Props[12]["DefaultState"]);
+	edPtr->cellular_ret_type = AsUInt(Props[13]["DefaultState"]);
+	edPtr->cellular_jitter = AsFloat(Props[14]["DefaultState"]);
 
 	edPtr->eHeader.extVersion = Extension::Version;
 }
@@ -76,6 +77,31 @@ inline void DebugVersionUpdateLog(const TCHAR* string) {
 }
 
 
+
+// Update EDITDATA from versions v1.0.1 - v0.9.4
+inline EDITDATA* UpdateEDITDATA_r1(EDITDATA_r1* edPtr) {
+	DebugVersionUpdateLog(_T("EDITDATA was updated from v1.0.1 - v0.9.4 EDITDATA layout."));
+
+	EDITDATA* new_edPtr = NewEDITDATA();
+	HeaderCopy(new_edPtr, edPtr);
+	ResetProps(new_edPtr);
+
+	// Move over everything we can
+    new_edPtr->noise_seed = edPtr->noise_seed;
+    new_edPtr->noise_type = edPtr->noise_type;
+    new_edPtr->noise_frequency = edPtr->noise_frequency;
+    new_edPtr->fractal_type = edPtr->fractal_type;
+    new_edPtr->fractal_octaves = edPtr->fractal_octaves;
+    new_edPtr->fractal_lacunarity = edPtr->fractal_lacunarity;
+    new_edPtr->fractal_gain = edPtr->fractal_gain;
+    new_edPtr->fractal_weighted_strength = edPtr->fractal_weighted_strength;
+    new_edPtr->fractal_pingpong_strength = edPtr->fractal_pingpong_strength;
+    new_edPtr->cellular_distance_func = edPtr->cellular_distance_func;
+    new_edPtr->cellular_ret_type = edPtr->cellular_ret_type;
+    new_edPtr->cellular_jitter = edPtr->cellular_jitter;
+
+	return new_edPtr;
+}
 
 // Update EDITDATA from versions v0.9.3 - v0.9.1
 inline EDITDATA* UpdateEDITDATA_prerev(EDITDATA_prerev* edPtr) {
@@ -108,7 +134,7 @@ inline EDITDATA* UpdateEDITDATA_prerev(EDITDATA_prerev* edPtr) {
 
 
 
-// Update EDITDATA from versions v0.9.0 and older.
+// "Update" EDITDATA from versions v0.9.0 and older.
 inline EDITDATA* UpdateEDITDATA_old(EDITDATA_bare* edPtr) {
 	DebugVersionUpdateLog(_T("EDITDATA was updated from v0.9.0 and older EDITDATA layout."));
 
@@ -130,6 +156,12 @@ EDITDATA* FusionAPI UpdateEditStructure(mv* mV, EDITDATA_bare* oldEdPtr) {
 	if(oldEdPtr->eHeader.extVersion < 16) {
 		return UpdateEDITDATA_prerev((EDITDATA_prerev*)oldEdPtr);
 	}
+
+    switch (oldEdPtr->editdata_rev) {
+    case 1:
+        return UpdateEDITDATA_r1((EDITDATA_r1*)oldEdPtr);
+        break;
+    }
 
 	// No update
 	return nullptr;
@@ -165,7 +197,7 @@ int FusionAPI CreateObject(mv * mV, LevelObject * loPtr, EDITDATA * edPtr) {
 		return -1;
 
 	Edif::Init(mV, edPtr);
-	
+
 	if (edPtr->eHeader.extSize < sizeof(EDITDATA)) {
 		void* newEd = mvReAllocEditData(mV, edPtr, sizeof(EDITDATA));
 		if (!newEd)
@@ -203,8 +235,9 @@ enum class noise_propid {
 
 	noise_type,
 	noise_frequency,
+	rotation_type_3d,
 
-	fractal_type = noise_frequency + 2,
+	fractal_type = rotation_type_3d + 2,
 	fractal_octaves,
 	fractal_lacunarity,
 	fractal_gain,
@@ -236,7 +269,7 @@ void FusionAPI ReleaseProperties(mv * mV, EDITDATA * edPtr, BOOL bMasterItem) {
 // Returns the value of properties that have a value.
 // Note: see GetPropCheck for checkbox properties
 Prop* FusionAPI GetPropValue(mv * mV, EDITDATA * edPtr, unsigned int PropID) {
-#pragma DllExportHint	
+#pragma DllExportHint
 	Prop* prop_ptr = nullptr;
 
 	switch(noise_propid(PropID))
@@ -244,7 +277,7 @@ Prop* FusionAPI GetPropValue(mv * mV, EDITDATA * edPtr, unsigned int PropID) {
 		case noise_propid::noise_seed:
 			prop_ptr = new Prop_Str(std::to_tstring(edPtr->noise_seed).c_str());
 			break;
-			
+
 		case noise_propid::noise_type:
 			prop_ptr = new Prop_UInt(edPtr->noise_type);
 			break;
@@ -252,16 +285,20 @@ Prop* FusionAPI GetPropValue(mv * mV, EDITDATA * edPtr, unsigned int PropID) {
 		case noise_propid::noise_frequency:
 			prop_ptr = new Prop_Float(edPtr->noise_frequency);
 			break;
-			
+
+		case noise_propid::rotation_type_3d:
+			prop_ptr = new Prop_UInt(edPtr->rotation_type_3d);
+			break;
+
 
 		case noise_propid::fractal_type:
 			prop_ptr = new Prop_UInt(edPtr->fractal_type);
 			break;
-			
+
 		case noise_propid::fractal_octaves:
 			prop_ptr = new Prop_SInt(edPtr->fractal_octaves);
 			break;
-			
+
 		case noise_propid::fractal_lacunarity:
 			prop_ptr = new Prop_Float(edPtr->fractal_lacunarity);
 			break;
@@ -269,31 +306,31 @@ Prop* FusionAPI GetPropValue(mv * mV, EDITDATA * edPtr, unsigned int PropID) {
 		case noise_propid::fractal_gain:
 			prop_ptr = new Prop_Float(edPtr->fractal_gain);
 			break;
-			
+
 		case noise_propid::fractal_weighted_strength:
 			prop_ptr = new Prop_Float(edPtr->fractal_weighted_strength);
 			break;
-			
+
 		case noise_propid::fractal_pingpong_strength:
 			prop_ptr = new Prop_Float(edPtr->fractal_pingpong_strength);
 			break;
-			
+
 
 		case noise_propid::cellular_distance_func:
 			prop_ptr = new Prop_UInt(edPtr->cellular_distance_func);
 			break;
-			
+
 		case noise_propid::cellular_ret_type:
 			prop_ptr = new Prop_UInt(edPtr->cellular_ret_type);
 			break;
-			
+
 		case noise_propid::cellular_jitter:
 			prop_ptr = new Prop_Float(edPtr->cellular_jitter);
 			break;
 
-			
+
 		case noise_propid::version:
-			prop_ptr = new Prop_Str(DarkEdif::UTF8ToTString(std::string(CurLang["Properties"][15]["DefaultState"])).c_str());
+			prop_ptr = new Prop_Str(DarkEdif::UTF8ToTString(std::string(CurLang["Properties"][16]["DefaultState"])).c_str());
 			break;
 	}
 
@@ -343,45 +380,45 @@ void FusionAPI SetPropValue(mv * mV, EDITDATA * edPtr, unsigned int PropID, void
 		case noise_propid::noise_frequency:
 			edPtr->noise_frequency = ((Prop_Float*)Param)->Value;
 			break;
-			
+
 
 		case noise_propid::fractal_type:
 			edPtr->fractal_type = ((Prop_UInt*)Param)->Value;
 			break;
-			
+
 		case noise_propid::fractal_octaves:
 			edPtr->fractal_octaves = ((Prop_SInt*)Param)->Value;
 			break;
-			
+
 		case noise_propid::fractal_lacunarity:
 			edPtr->fractal_lacunarity = ((Prop_Float*)Param)->Value;
 			break;
-			
+
 		case noise_propid::fractal_gain:
 			edPtr->fractal_gain = ((Prop_Float*)Param)->Value;
 			break;
-			
+
 		case noise_propid::fractal_weighted_strength:
 			edPtr->fractal_weighted_strength = ((Prop_Float*)Param)->Value;
 			break;
-			
+
 		case noise_propid::fractal_pingpong_strength:
 			edPtr->fractal_pingpong_strength = ((Prop_Float*)Param)->Value;
 			break;
-			
+
 
 		case noise_propid::cellular_distance_func:
 			edPtr->cellular_distance_func = ((Prop_UInt*)Param)->Value;
 			break;
-			
+
 		case noise_propid::cellular_ret_type:
 			edPtr->cellular_ret_type = ((Prop_UInt*)Param)->Value;
 			break;
-			
+
 		case noise_propid::cellular_jitter:
 			edPtr->cellular_jitter = ((Prop_Float*)Param)->Value;
 			break;
-		
+
 
 		default:
 			LOGE(_T("SetPropValue tried to set property that dosent exist!"));

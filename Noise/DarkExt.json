@@ -16,6 +16,7 @@
 			"---",
 			[  1, "Set noise type" ],
 			[  2, "Set noise frequency" ],
+			[  12,"Set rotation type 3D" ],
 			"---",
 			[  3, "Set fractal type" ],
 			[  4, "Set fractal octaves" ],
@@ -49,6 +50,12 @@
 				[ 10, "ValueCubic" ],
 				[ 11, "Value" ]
 			],
+            [
+                "Rotation types 3D",
+                [ 12, "None"],
+                [ 31, "Improve XY Planes"],
+                [ 32, "Improve XZ Planes"]
+            ],
 			[
 				"Fractal types",
 				[ 12, "None" ],
@@ -155,6 +162,12 @@
 				"Title": "Set fractal gain to %0",
 				"Parameters": [
 					[ "float", "Gain" ]
+				]
+			},
+			{
+				"Title": "Set rotation type 3D to %0",
+				"Parameters": [
+					[ "Integer", "Rotation type 3D" ]
 				]
 			}
 		],
@@ -310,6 +323,15 @@
 			{
 				"Title": "CellularReturnType(",
 				"Returns": "Integer"
+			},
+
+			{
+				"Title": "ImproveXY(",
+				"Returns": "Integer"
+			},
+			{
+				"Title": "ImproveXZ(",
+				"Returns": "Integer"
 			}
 		],
 
@@ -340,6 +362,17 @@
 				"Info": "Noise frequency controls how much noise is\"zoomed in\".",
 				"Type": "Editbox Float",
 				"DefaultState": 0.01
+			},
+			{
+				"Title": "Rotation type 3D",
+				"Info": "Might improve noise quality when sampling 3D noise as 2D planes.",
+				"Type": "Combo Box",
+				"DefaultState": 0,
+				"Items": [
+					"None",
+					"Improve XY planes",
+					"Improve XZ planes"
+				]
 			},
 
 			{

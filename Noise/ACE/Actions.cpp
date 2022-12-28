@@ -32,6 +32,18 @@ void Extension::set_fractal_type(int type) {
 	fractal_type = type;
 }
 
+
+void Extension::set_rotation_type_3d(int type) {
+	#if EditorBuild
+	if(type < 0 || type > FastNoiseLite::RotationType3D_ImproveXZPlanes) {
+		DarkEdif::MsgBox::WarningOK(_T("Set rotation type 3D"), _T("Set rotation type 3D action expects one of rotation types 3d (see: Rotation type 3D expressions) but got random value.\nNote: This warning only shows up in Fusion editor so you can fix your events."));
+	}
+	#endif
+	noise.SetRotationType3D((FastNoiseLite::RotationType3D)type);
+	rotation_type_3d = type;
+}
+
+
 void Extension::set_fractal_octaves(int octaves) {
 	noise.SetFractalOctaves(octaves);
 }

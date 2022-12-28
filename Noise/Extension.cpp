@@ -22,6 +22,7 @@ Extension::Extension(RuntimeFunctions & runFuncs, EDITDATA * edPtr, void * objCE
 
 		LinkAction(1, set_noise_type);
 		LinkAction(2, set_noise_frequency);
+		LinkAction(12, set_rotation_type_3d);
 
 		LinkAction(3, set_fractal_type);
 		LinkAction(4, set_fractal_octaves);
@@ -57,6 +58,11 @@ Extension::Extension(RuntimeFunctions & runFuncs, EDITDATA * edPtr, void * objCE
 		LinkExpression(10, always_4);
 		LinkExpression(11, always_5);
 
+        // Rotation type 3D
+        // "none" reuses "none" fractal type expression (id 12)
+		LinkExpression(31, always_1);
+		LinkExpression(32, always_2);
+
         // Fractal types
 		LinkExpression(12, always_0);
 		LinkExpression(13, always_1);
@@ -90,6 +96,7 @@ Extension::Extension(RuntimeFunctions & runFuncs, EDITDATA * edPtr, void * objCE
 
 		set_noise_type(edPtr->noise_type);
 		set_noise_frequency(edPtr->noise_frequency);
+		set_rotation_type_3d(edPtr->rotation_type_3d);
 
 		set_fractal_type(edPtr->fractal_type);
 		set_fractal_octaves(edPtr->fractal_octaves);

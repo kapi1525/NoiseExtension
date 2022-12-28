@@ -89,6 +89,10 @@ int Extension::current_noise_type() {
 	return noise_type;
 }
 
+int Extension::current_rotation_type_3d() {
+    return rotation_type_3d;
+}
+
 int Extension::current_fractal_type() {
 	return fractal_type;
 }
