@@ -1,7 +1,7 @@
 @echo off
 
 :: --------------------------------------------------
-::          Noise Object build script v1.7.3
+::             Noise Object build script
 :: --------------------------------------------------
 :: Run arguments:
 :: --fast               (default) build only windows
@@ -190,6 +190,8 @@ goto :exit
             exit 1
         )
     )
+
+    echo.
 
     exit /B 0
 
