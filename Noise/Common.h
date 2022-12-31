@@ -1,10 +1,9 @@
 #pragma once
 
 #define MMFEXT
-
 #define NOPROPS
-#include "DarkEdif.h"
 
+#include "DarkEdif.h"
 #include "FastNoiseLite.h"
 
 
