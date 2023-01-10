@@ -36,6 +36,15 @@ Extension::Extension(RuntimeFunctions & runFuncs, EDITDATA * edPtr, void * objCE
 		LinkAction(10, set_cellular_jitter);
 	}
 
+    // SetDomainWarpType
+    // SetRotationType3D
+    // SetDomainWarpAmp
+    // SetFrequency
+    // SetFractalType
+    // SetFractalOctaves
+    // SetFractalLacunarity
+    // SetFractalGain
+
 	// Conditions
 	{
 	}
@@ -83,6 +92,12 @@ Extension::Extension(RuntimeFunctions & runFuncs, EDITDATA * edPtr, void * objCE
 		LinkExpression(24, always_4);
 		LinkExpression(25, always_5);
 		LinkExpression(26, always_6);
+
+        // Domain warp types
+        // "OpenSimplex2" type reuses OpenSimplex2 noise type expression (id 6)
+		LinkExpression(34, always_1);
+		LinkExpression(35, always_2);
+
 
 		LinkExpression(27, current_noise_type);
 		LinkExpression(33, current_rotation_type_3d);

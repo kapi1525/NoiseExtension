@@ -43,10 +43,16 @@ public:
 	int seed;
 
 	int noise_type;
+	int rotation_type_3d;
 	int fractal_type;
 	int cellular_function;
 	int cellular_return_type;
-	int rotation_type_3d;
+
+    bool domain_warp_enabled;
+
+	// int dw_domain_warp_type;
+	// int dw_rotation_type_3d;
+	// int dw_fractal_type;
 
 
 	// Actions
@@ -67,6 +73,16 @@ public:
 		void set_cellular_distance_function(int function);
 		void set_cellular_return_type(int return_type);
 		void set_cellular_jitter(float jitter);
+
+        // settings for domain warp
+		void set_dw_domain_warp_type(int type);
+		void set_dw_rotation_type_3d(int type);
+		void set_dw_domain_warp_amp(int type);
+		void set_dw_frequency(int type);
+		void set_dw_fractal_type(int type);
+		void set_dw_fractal_octaves(int octaves);
+		void set_dw_fractal_lacunarity(float lacunarity);
+		void set_dw_fractal_gain(float gain);
 
 	// Conditions
         // No conditions are here
@@ -89,12 +105,17 @@ public:
         int always_5();
         int always_6();
 
-		// Current selections
+		// Current settings
 		int current_noise_type();
 		int current_rotation_type_3d();
 		int current_fractal_type();
 		int current_cellular_function();
 		int current_cellular_return_type();
+
+        // domain warp settings
+	    int current_dw_domain_warp_type();
+	    int current_dw_rotation_type_3d();
+	    int current_dw_fractal_type();
 
 
 	// These are called if there's no function linked to an ID

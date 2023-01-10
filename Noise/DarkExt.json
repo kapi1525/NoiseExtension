@@ -28,6 +28,12 @@
 			[  8, "Set cellular distance function" ],
 			[  9, "Set cellular return type" ],
 			[ 10, "Set cellular jitter" ],
+			"---",
+            [
+                "Domain warp",
+                [ 13, "Enable" ],
+                [ 14, "Disable" ]
+            ],
 			"---"
 		],
 		"ConditionMenu": [
@@ -80,12 +86,24 @@
 				[ 25, "Distance2Mul" ],
 				[ 26, "Distance2Div" ]
 			],
+            [
+                "Domain warp types",
+				[  6, "OpenSimplex2" ],
+				[  34, "OpenSimplex2Reduced" ],
+				[  35, "BasicGrid" ]
+            ],
 			"---",
-			[ 27, "Current noise type" ],
-			[ 33, "Current rotation type 3D" ],
-			[ 28, "Current fractal type" ],
-			[ 29, "Current cellular distance function" ],
-			[ 30, "Current cellular return type" ],
+            [
+                "Noise settings",
+                [ 27, "Current noise type" ],
+                [ 33, "Current rotation type 3D" ],
+                [ 28, "Current fractal type" ],
+                [ 29, "Current cellular distance function" ],
+                [ 30, "Current cellular return type" ],
+            ],
+            [
+                "Domain warp settings"
+            ],
 			"---"
 		],
 
@@ -338,6 +356,15 @@
 			{
 				"Title": "RotationType3D(",
 				"Returns": "Integer"
+			},
+
+			{
+				"Title": "Simplex2Reduced(",
+				"Returns": "Integer"
+			},
+			{
+				"Title": "BasicGrid(",
+				"Returns": "Integer"
 			}
 		],
 
@@ -469,6 +496,80 @@
 			},
 
 			{
+				"Title": "Domain warp",
+				"Info": "Domain warp.",
+				"Type": "Group"
+			},
+			{
+				"Title": "Enable domain warp",
+				"Info": "TODO",
+				"Type": "Checkbox",
+				"DefaultState": 0
+			},
+			{
+				"Title": "Domain warp type",
+				"Info": "TODO",
+				"Type": "Combo Box",
+				"DefaultState": 0,
+                "Items": [
+                    "OpenSimplex2",
+                    "OpenSimplex2Reduced",
+                    "BasicGrid"
+                ]
+			},
+			{
+				"Title": "Rotation type 3D",
+				"Info": "TODO",
+				"Type": "Combo Box",
+				"DefaultState": 0,
+                "Items": [
+					"None",
+					"Improve XY planes",
+					"Improve XZ planes"
+                ]
+			},
+			{
+				"Title": "Domain warp amp",
+				"Info": "TODO",
+				"Type": "Editbox Float",
+				"DefaultState": 0
+			},
+			{
+				"Title": "Frequency",
+				"Info": "TODO",
+				"Type": "Editbox Float",
+				"DefaultState": 0.01
+			},
+			{
+				"Title": "Fractal type",
+				"Info": "TODO",
+				"Type": "Combo Box",
+				"DefaultState": 0,
+                "Items": [
+                    "DomainWarpProgressive",
+                    "DomainWarpIndependent"
+                ]
+			},
+			{
+				"Title": "Fractal octaves",
+				"Info": "TODO",
+				"Type": "Editbox Number",
+				"DefaultState": 3
+			},
+			{
+				"Title": "Fractal lacunarity",
+				"Info": "TODO",
+				"Type": "Editbox Float",
+				"DefaultState": 2.0
+			},
+			{
+				"Title": "Fractal gain",
+				"Info": "TODO",
+				"Type": "Editbox Float",
+				"DefaultState": 0.5
+			},
+
+			{
 				"Title": "Other",
 				"Info": "Other.",
 				"Type": "Group"
@@ -477,7 +578,7 @@
 				"Title": "Version",
 				"Info": "Noise object version.",
 				"Type": "Text",
-				"DefaultState": "Noise v1.0.1 (Extension: v20, SDK: DarkEdif v15)"
+				"DefaultState": "Noise v1.0.1 (Extension: v20, SDK: DarkEdif v16)"
 			}
 		]
 	}
