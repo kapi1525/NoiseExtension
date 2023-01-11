@@ -138,7 +138,7 @@ goto :exit
         set verbosity=quiet
     )
 
-    call :run msbuild ./%project%.sln -t:"%~1" -p:Configuration="%~2";Platform="%~3" -nologo -m -clp:ForceNoAlign;verbosity=%verbosity%
+    call :run msbuild "./%project%.sln" -t:"%~1" -p:Configuration="%~2";Platform="%~3" -nologo -m -clp:ForceNoAlign;verbosity=%verbosity%
 
     exit /B 0
 
@@ -165,17 +165,17 @@ goto :exit
         goto :install
     )
 
-    call :run mkdir %~dp0MFX\Examples\
-    call :run xcopy /s /v /c /y %~dp0Examples\*.* %~dp0MFX\Examples\
+    call :run mkdir "%~dp0MFX\Examples\"
+    call :run xcopy /s /v /c /y "%~dp0Examples\*.*" "%~dp0MFX\Examples\"
 
-    call :run xcopy /s /v /c /y %~dp0MFX\*.* %ctf_path%
+    call :run xcopy /s /v /c /y "%~dp0MFX\*.*" %ctf_path%
     exit /B 0
 
 
 :bundle
-    call :run mkdir %~dp0MFX\Examples\
-    call :run xcopy /s /v /c /y %~dp0Examples\*.* %~dp0MFX\Examples\
-    call :run tar -a -cf %project%.zip -C MFX *.*
+    call :run mkdir "%~dp0MFX\Examples\"
+    call :run xcopy /s /v /c /y "%~dp0Examples\*.*" "%~dp0MFX\Examples\"
+    call :run tar -a -cf "%project%.zip" -C MFX *.*
     exit /B 0
 
 
