@@ -7,7 +7,7 @@
             "label": "Build and install",
             "group": "build",
             "type": "shell",
-            "command": "cmd.exe /C build.bat --fast --debug --install"
+            "command": "cmd.exe /C 'cls && build.bat --fast --debug --install'"
         }
     ]
 }
