@@ -20,6 +20,8 @@
 :: --verbose            more logging
 ::
 :: --failonerr          fail with error code if build failed (made for github actions)
+::
+:: --run                start fusion (steam version) after compilation
 :: --------------------------------------------------
 
 setlocal enabledelayedexpansion
@@ -37,6 +39,7 @@ set bundle=0
 set sdkconfig=0
 set verbose=0
 set failonerr=0
+set runfusion=0
 
 
 for %%x in (%*) do (
@@ -60,6 +63,8 @@ for %%x in (%*) do (
         set verbose=1
     ) else if %%~x==--failonerr (
         set failonerr=1
+    ) else if %%~x==--run (
+        set runfusion=1
     ) else (
         echo Argument %%~x is not defined!
         goto :exit
@@ -99,6 +104,10 @@ if %full%==1 (
 
 if %install%==1 (
     call :install
+)
+
+if %runfusion%==1 (
+    call :run-fusion
 )
 
 if %bundle%==1 (
@@ -166,9 +175,9 @@ goto :exit
     )
 
     call :run mkdir "%~dp0MFX\Examples\"
-    call :run xcopy /s /v /c /y "%~dp0Examples\*.*" "%~dp0MFX\Examples\"
+    call :run xcopy /s /v /c /y /q "%~dp0Examples\*.*" "%~dp0MFX\Examples\"
 
-    call :run xcopy /s /v /c /y "%~dp0MFX\*.*" %ctf_path%
+    call :run xcopy /s /v /c /y /q "%~dp0MFX\*.*" %ctf_path%
     exit /B 0
 
 
@@ -193,6 +202,12 @@ goto :exit
 
     echo.
 
+    exit /B 0
+
+
+:run-fusion
+    echo Starting fusion...
+    start steam://run/248170
     exit /B 0
 
 
