@@ -1,5 +1,6 @@
 MFX
 .vs
+.vscode/settings.json
 Temp
 
 *.aps
