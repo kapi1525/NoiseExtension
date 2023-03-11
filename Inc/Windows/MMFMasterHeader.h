@@ -1160,9 +1160,11 @@ struct ParamEffect {
 	TCHAR *	name;
 };
 
-Params ReadActionOrConditionParameterType(const char *, bool &);
-ExpParams ReadExpressionParameterType(const char *, bool &);
-ExpReturnType ReadExpressionReturnType(const char * text);
+namespace Edif {
+	Params ReadActionOrConditionParameterType(const char*, bool&);
+	ExpParams ReadExpressionParameterType(const char*, bool&);
+	ExpReturnType ReadExpressionReturnType(const char* text);
+}
 
 ///////////////////////////////////////////////////////////////
 // STRUCTURE FOR FAST LOOPS
@@ -1711,6 +1713,8 @@ struct RunHeader {
 
 	objectsList *		ObjectList;			// Object list address
 
+	// Reads the EventCount variable from RunHeader4. DarkEdif-added function for cross-platform.
+	int GetEventCount();
 };
 //typedef	RunHeader 	* fprh;
 //typedef	RunHeader 	* RunHeader *;
