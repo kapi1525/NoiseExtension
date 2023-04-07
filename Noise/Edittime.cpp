@@ -1,176 +1,12 @@
+// ============================================================================
+// This file contains routines that are handled only during the Edittime,
+// under the Frame and Event editors.
+//
+// Including creating, display, and setting up your object.
+// ============================================================================
+
 #include "Common.h"
 #include "DarkEdif.h"
-
-// Treat warning C4062 as an error so ill never forget to update switch statements in SetPropValue and GetPropValue ever again
-#pragma warning(error:4062)
-
-
-
-inline float AsFloat(const json_value& json) {
-	if(json.type == json_double) {
-		return (float)double(json);
-	} else {
-		DarkEdif::MsgBox::Error(_T("Incorect type"), _T("Expected type %d but got %d."), json_double, json.type);
-		return 0.f;
-	}
-}
-
-inline int AsInt(const json_value& json) {
-	if(json.type == json_integer) {
-		return (int)long long(json);
-	} else {
-		DarkEdif::MsgBox::Error(_T("Incorect type"), _T("Expected type %d but got %d."), json_integer, json.type);
-		return 0;
-	}
-}
-
-inline unsigned int AsUInt(const json_value& json) {
-	if(json.type == json_integer) {
-		return (unsigned int)long long(json);
-	} else {
-		DarkEdif::MsgBox::Error(_T("Incorect type"), _T("Expected type %d but got %d."), json_integer, json.type);
-		return 0u;
-	}
-}
-
-
-
-inline void ResetProps(EDITDATA* edPtr) {
-	// Set default object settings from DefaultState.
-	const json_value& Props = CurLang["Properties"];
-
-	edPtr->editdata_rev = 2;
-
-	// Read defaults from json file.
-	edPtr->noise_seed = AsInt(Props[0]["DefaultState"]);
-
-	edPtr->noise_type = AsUInt(Props[1]["DefaultState"]);
-	edPtr->noise_frequency = AsFloat(Props[2]["DefaultState"]);
-	edPtr->rotation_type_3d = AsUInt(Props[3]["DefaultState"]);
-
-	edPtr->fractal_type = AsUInt(Props[5]["DefaultState"]);
-	edPtr->fractal_octaves = AsInt(Props[6]["DefaultState"]);
-	edPtr->fractal_lacunarity = AsFloat(Props[7]["DefaultState"]);
-	edPtr->fractal_gain = AsFloat(Props[8]["DefaultState"]);
-	edPtr->fractal_weighted_strength = AsFloat(Props[9]["DefaultState"]);
-	edPtr->fractal_pingpong_strength = AsFloat(Props[10]["DefaultState"]);
-
-	edPtr->cellular_distance_func = AsUInt(Props[12]["DefaultState"]);
-	edPtr->cellular_ret_type = AsUInt(Props[13]["DefaultState"]);
-	edPtr->cellular_jitter = AsFloat(Props[14]["DefaultState"]);
-
-	edPtr->eHeader.extVersion = Extension::Version;
-}
-
-
-
-inline EDITDATA* NewEDITDATA() {
-	return (EDITDATA*)GlobalAlloc(GPTR,sizeof(EDITDATA));
-}
-
-inline void HeaderCopy(EDITDATA* target, void* source) {
-	memcpy(&target->eHeader, &((EDITDATA*)source)->eHeader, sizeof(extHeader));
-	target->eHeader.extSize = sizeof(EDITDATA);
-}
-
-inline void DebugVersionUpdateLog(const TCHAR* string) {
-	#ifdef _DEBUG
-	DarkEdif::MsgBox::Info(_T("Update"), string);
-	#endif
-}
-
-
-
-// Update EDITDATA from versions v1.0.1 - v0.9.4
-inline EDITDATA* UpdateEDITDATA_r1(EDITDATA_r1* edPtr) {
-	DebugVersionUpdateLog(_T("EDITDATA was updated from v1.0.1 - v0.9.4 EDITDATA layout."));
-
-	EDITDATA* new_edPtr = NewEDITDATA();
-	HeaderCopy(new_edPtr, edPtr);
-	ResetProps(new_edPtr);
-
-	// Move over everything we can
-    new_edPtr->noise_seed = edPtr->noise_seed;
-    new_edPtr->noise_type = edPtr->noise_type;
-    new_edPtr->noise_frequency = edPtr->noise_frequency;
-    new_edPtr->fractal_type = edPtr->fractal_type;
-    new_edPtr->fractal_octaves = edPtr->fractal_octaves;
-    new_edPtr->fractal_lacunarity = edPtr->fractal_lacunarity;
-    new_edPtr->fractal_gain = edPtr->fractal_gain;
-    new_edPtr->fractal_weighted_strength = edPtr->fractal_weighted_strength;
-    new_edPtr->fractal_pingpong_strength = edPtr->fractal_pingpong_strength;
-    new_edPtr->cellular_distance_func = edPtr->cellular_distance_func;
-    new_edPtr->cellular_ret_type = edPtr->cellular_ret_type;
-    new_edPtr->cellular_jitter = edPtr->cellular_jitter;
-
-	return new_edPtr;
-}
-
-// Update EDITDATA from versions v0.9.3 - v0.9.1
-inline EDITDATA* UpdateEDITDATA_prerev(EDITDATA_prerev* edPtr) {
-	DebugVersionUpdateLog(_T("EDITDATA was updated from v0.9.3 - v0.9.1 EDITDATA layout."));
-
-	EDITDATA* new_edPtr = NewEDITDATA();
-	HeaderCopy(new_edPtr, edPtr);
-	ResetProps(new_edPtr);
-
-	// Move over everything we can
-	new_edPtr->noise_seed = edPtr->noise_seed;
-	new_edPtr->noise_type = edPtr->noise_type;
-	new_edPtr->noise_frequency = edPtr->noise_frequency;
-	new_edPtr->fractal_type = edPtr->fractal_type;
-	new_edPtr->fractal_octaves = edPtr->fractal_octaves;
-	new_edPtr->fractal_lacunarity = edPtr->fractal_lacunarity;
-	new_edPtr->fractal_weighted_strength = edPtr->fractal_weighted_strength;
-	new_edPtr->fractal_pingpong_strength = edPtr->fractal_pingpong_strength;
-	new_edPtr->cellular_distance_func = edPtr->cellular_distance_func;
-	new_edPtr->cellular_ret_type = edPtr->cellular_ret_type;
-	new_edPtr->cellular_jitter = edPtr->cellular_jitter;
-
-	// There was an aditional fractal type in properties by mistake
-	if(new_edPtr->fractal_type == 4) {
-		new_edPtr->fractal_type = 3;
-	}
-
-	return new_edPtr;
-}
-
-
-
-// "Update" EDITDATA from versions v0.9.0 and older.
-inline EDITDATA* UpdateEDITDATA_old(EDITDATA_bare* edPtr) {
-	DebugVersionUpdateLog(_T("EDITDATA was updated from v0.9.0 and older EDITDATA layout."));
-
-	EDITDATA* new_edPtr = NewEDITDATA();
-	HeaderCopy(new_edPtr, edPtr);
-	ResetProps(new_edPtr);
-
-	return new_edPtr;
-}
-
-
-
-EDITDATA* FusionAPI UpdateEditStructure(mv* mV, EDITDATA_bare* oldEdPtr) {
-#pragma DllExportHint
-	if(oldEdPtr->eHeader.extVersion < 13) {
-		return UpdateEDITDATA_old(oldEdPtr);
-	}
-
-	if(oldEdPtr->eHeader.extVersion < 16) {
-		return UpdateEDITDATA_prerev((EDITDATA_prerev*)oldEdPtr);
-	}
-
-    switch (oldEdPtr->editdata_rev) {
-    case 1:
-        return UpdateEDITDATA_r1((EDITDATA_r1*)oldEdPtr);
-        break;
-    }
-
-	// No update
-	return nullptr;
-}
-
-
 
 // ============================================================================
 // ROUTINES USED UNDER FRAME EDITOR
@@ -178,11 +14,11 @@ EDITDATA* FusionAPI UpdateEditStructure(mv* mV, EDITDATA_bare* oldEdPtr) {
 
 #if EditorBuild
 
-
 // Called once object is created or modified, just after setup.
 // Also called before showing the "Insert an object" dialog if your object
 // has no icon resource
-int FusionAPI MakeIconEx(mv * mV, cSurface * pIconSf, TCHAR * lpName, ObjInfo * oiPtr, EDITDATA * edPtr) {
+int FusionAPI MakeIconEx(mv * mV, cSurface * pIconSf, TCHAR * lpName, ObjInfo * oiPtr, EDITDATA * edPtr)
+{
 #pragma DllExportHint
 	pIconSf->Delete();
 	pIconSf->Clone(*Edif::SDK->Icon);
@@ -191,30 +27,21 @@ int FusionAPI MakeIconEx(mv * mV, cSurface * pIconSf, TCHAR * lpName, ObjInfo * 
 	return 0;
 }
 
-
 // Called when you choose "Create new object". It should display the setup box
 // and initialize everything in the datazone.
-int FusionAPI CreateObject(mv * mV, LevelObject * loPtr, EDITDATA * edPtr) {
+int FusionAPI CreateObject(mv * mV, LevelObject * loPtr, EDITDATA * edPtr)
+{
 #pragma DllExportHint
 	if (!Edif::IS_COMPATIBLE(mV))
 		return -1;
 
 	Edif::Init(mV, edPtr);
-
-	if (edPtr->eHeader.extSize < sizeof(EDITDATA)) {
-		void* newEd = mvReAllocEditData(mV, edPtr, sizeof(EDITDATA));
-		if (!newEd)
-			return DarkEdif::MsgBox::Error(_T("Invalid properties"), _T("Failed to allocate enough size for properties."), sizeof(EDITDATA)), -1;
-		edPtr = (EDITDATA *) newEd;
-	}
-
-	ResetProps(edPtr);
-	return 0;
+	return DarkEdif::DLL::DLL_CreateObject(mV, loPtr, edPtr);
 }
 
-
 // Displays the object under the frame editor
-void FusionAPI EditorDisplay(mv *mV, ObjectInfo * oiPtr, LevelObject * loPtr, EDITDATA * edPtr, RECT * rc) {
+void FusionAPI EditorDisplay(mv *mV, ObjectInfo * oiPtr, LevelObject * loPtr, EDITDATA * edPtr, RECT * rc)
+{
 #pragma DllExportHint
 	cSurface * Surface = WinGetSurface((int) mV->IdEditWin);
 	if (!Surface)
@@ -227,219 +54,108 @@ void FusionAPI EditorDisplay(mv *mV, ObjectInfo * oiPtr, LevelObject * loPtr, ED
 	Edif::SDK->Icon->Blit(*Surface, rc->left, rc->top, BMODE_TRANSP, BOP_COPY, 0);
 }
 
+// This routine tells MMF2 if the mouse pointer is over a transparent zone of the object.
+// If not exported, the entire display is assumed to be opaque.
+/*
+BOOL FusionAPI IsTransparent(mv *mV, LevelObject * loPtr, EDITDATA * edPtr, int dx, int dy)
+{
+#pragma DllExportHint
+	return FALSE;
+}
+*/
+
+// Called when the object has been resized
+/*
+BOOL FusionAPI SetEditSize(mv * mv, EDITDATA * edPtr, int cx, int cy)
+{
+#pragma DllExportHint
+	// Check compatibility
+	if (!IS_COMPATIBLE(mV))
+		return FALSE;
+
+	edPtr->swidth = cx;
+	edPtr->sheight = cy;
+	return TRUE;
+}
+*/
+
+// Returns the size of the rectangle of the object in the frame editor.
+// If this function isn't define, a size of 32x32 is assumed.
+/* void FusionAPI GetObjectRect(mv * mV, RECT * rc, LevelObject * loPtr, EDITDATA * edPtr)
+{
+#pragma DllExportHint
+	if (!mV || !rc || !edPtr)
+		return;
+
+	rc->right = rc->left + SDK->Icon->GetWidth();	// edPtr->swidth;
+	rc->bottom = rc->top + SDK->Icon->GetHeight();	// edPtr->sheight;
+}*/
+
+// Called when the user selects the Edit command in the object's popup menu
+/*
+BOOL FusionAPI EditObject(mv *mV, ObjInfo * oiPtr, LevelObject * loPtr, EDITDATA * edPtr)
+{
+#pragma DllExportHint
+	// Check compatibility
+	if (!IS_COMPATIBLE(mV))
+		return FALSE;
+
+	// do stuff
+	return TRUE;
+}
+*/
 
 
 // ============================================================================
 // PROPERTIES
 // ============================================================================
 
-enum class noise_propid {
-	noise_seed = PROPID_EXTITEM_CUSTOM_FIRST,
-
-	noise_type,
-	noise_frequency,
-	rotation_type_3d,
-
-	fractal_type = rotation_type_3d + 2,
-	fractal_octaves,
-	fractal_lacunarity,
-	fractal_gain,
-	fractal_weighted_strength,
-	fractal_pingpong_strength,
-
-	cellular_distance_func = fractal_pingpong_strength + 2,
-	cellular_ret_type,
-	cellular_jitter,
-
-	version = cellular_jitter + 2
-};
-
-
 // Inserts properties into the properties of the object.
-BOOL FusionAPI GetProperties(mv * mV, EDITDATA * edPtr, BOOL bMasterItem) {
+BOOL FusionAPI GetProperties(mv * mV, EDITDATA * edPtr, BOOL bMasterItem)
+{
 #pragma DllExportHint
-	mvInsertProps(mV, edPtr, Edif::SDK->EdittimeProperties.get(), PROPID_TAB_GENERAL, TRUE);
-	return TRUE;
+	return DarkEdif::DLL::DLL_GetProperties(mV, edPtr, bMasterItem);
 }
-
 
 // Called when the properties are removed from the property window.
-void FusionAPI ReleaseProperties(mv * mV, EDITDATA * edPtr, BOOL bMasterItem) {
+void FusionAPI ReleaseProperties(mv * mV, EDITDATA * edPtr, BOOL bMasterItem)
+{
 #pragma DllExportHint
+	return DarkEdif::DLL::DLL_ReleaseProperties(mV, edPtr, bMasterItem);
 }
-
 
 // Returns the value of properties that have a value.
 // Note: see GetPropCheck for checkbox properties
-Prop* FusionAPI GetPropValue(mv * mV, EDITDATA * edPtr, unsigned int PropID) {
+void * FusionAPI GetPropValue(mv * mV, EDITDATA * edPtr, unsigned int PropID)
+{
 #pragma DllExportHint
-	Prop* prop_ptr = nullptr;
-
-	switch(noise_propid(PropID))
-	{
-		case noise_propid::noise_seed:
-			prop_ptr = new Prop_Str(std::to_tstring(edPtr->noise_seed).c_str());
-			break;
-
-		case noise_propid::noise_type:
-			prop_ptr = new Prop_UInt(edPtr->noise_type);
-			break;
-
-		case noise_propid::noise_frequency:
-			prop_ptr = new Prop_Float(edPtr->noise_frequency);
-			break;
-
-		case noise_propid::rotation_type_3d:
-			prop_ptr = new Prop_UInt(edPtr->rotation_type_3d);
-			break;
-
-
-		case noise_propid::fractal_type:
-			prop_ptr = new Prop_UInt(edPtr->fractal_type);
-			break;
-
-		case noise_propid::fractal_octaves:
-			prop_ptr = new Prop_SInt(edPtr->fractal_octaves);
-			break;
-
-		case noise_propid::fractal_lacunarity:
-			prop_ptr = new Prop_Float(edPtr->fractal_lacunarity);
-			break;
-
-		case noise_propid::fractal_gain:
-			prop_ptr = new Prop_Float(edPtr->fractal_gain);
-			break;
-
-		case noise_propid::fractal_weighted_strength:
-			prop_ptr = new Prop_Float(edPtr->fractal_weighted_strength);
-			break;
-
-		case noise_propid::fractal_pingpong_strength:
-			prop_ptr = new Prop_Float(edPtr->fractal_pingpong_strength);
-			break;
-
-
-		case noise_propid::cellular_distance_func:
-			prop_ptr = new Prop_UInt(edPtr->cellular_distance_func);
-			break;
-
-		case noise_propid::cellular_ret_type:
-			prop_ptr = new Prop_UInt(edPtr->cellular_ret_type);
-			break;
-
-		case noise_propid::cellular_jitter:
-			prop_ptr = new Prop_Float(edPtr->cellular_jitter);
-			break;
-
-
-		case noise_propid::version:
-			prop_ptr = new Prop_Str(DarkEdif::UTF8ToTString(std::string(CurLang["Properties"][16]["DefaultState"])).c_str());
-			break;
-	}
-
-	return prop_ptr;
+	return DarkEdif::DLL::DLL_GetPropValue(mV, edPtr, PropID);
 }
-
 
 // Returns the checked state of properties that have a check box.
-BOOL FusionAPI GetPropCheck(mv * mV, EDITDATA * edPtr, unsigned int PropID_) {
+BOOL FusionAPI GetPropCheck(mv * mV, EDITDATA * edPtr, unsigned int PropID)
+{
 #pragma DllExportHint
-	return FALSE;   // No checkboxes here
+	return DarkEdif::DLL::DLL_GetPropCheck(mV, edPtr, PropID);
 }
-
 
 // Called by Fusion after a property has been modified.
-void FusionAPI SetPropValue(mv * mV, EDITDATA * edPtr, unsigned int PropID, void * Param) {
+void FusionAPI SetPropValue(mv * mV, EDITDATA * edPtr, unsigned int PropID, void * Param)
+{
 #pragma DllExportHint
-
-	switch(noise_propid(PropID))
-	{
-		case noise_propid::noise_seed:
-			{
-				std::string Text = DarkEdif::TStringToANSI(std::tstring(((Prop_Str*)Param)->String));
-
-				unsigned int Seed = 0;
-
-				for (size_t i = 0; i < Text.length(); i++) {
-					if (Text.at(i) >= '0' && Text.at(i) <= '9') {
-						Seed = Seed * 10;
-						Seed = Seed + (Text.at(i) - 48);
-					}
-					else {
-						Seed = Seed * 100;
-						srand((int)Text.at(i) + i);
-						Seed = Seed + rand() % 99;
-					}
-				}
-
-				edPtr->noise_seed = Seed;
-			}
-			break;
-
-		case noise_propid::noise_type:
-			edPtr->noise_type = ((Prop_UInt*)Param)->Value;
-			break;
-
-		case noise_propid::noise_frequency:
-			edPtr->noise_frequency = ((Prop_Float*)Param)->Value;
-			break;
-
-		case noise_propid::rotation_type_3d:
-			edPtr->rotation_type_3d = ((Prop_UInt*)Param)->Value;
-			break;
-
-		case noise_propid::fractal_type:
-			edPtr->fractal_type = ((Prop_UInt*)Param)->Value;
-			break;
-
-		case noise_propid::fractal_octaves:
-			edPtr->fractal_octaves = ((Prop_SInt*)Param)->Value;
-			break;
-
-		case noise_propid::fractal_lacunarity:
-			edPtr->fractal_lacunarity = ((Prop_Float*)Param)->Value;
-			break;
-
-		case noise_propid::fractal_gain:
-			edPtr->fractal_gain = ((Prop_Float*)Param)->Value;
-			break;
-
-		case noise_propid::fractal_weighted_strength:
-			edPtr->fractal_weighted_strength = ((Prop_Float*)Param)->Value;
-			break;
-
-		case noise_propid::fractal_pingpong_strength:
-			edPtr->fractal_pingpong_strength = ((Prop_Float*)Param)->Value;
-			break;
-
-
-		case noise_propid::cellular_distance_func:
-			edPtr->cellular_distance_func = ((Prop_UInt*)Param)->Value;
-			break;
-
-		case noise_propid::cellular_ret_type:
-			edPtr->cellular_ret_type = ((Prop_UInt*)Param)->Value;
-			break;
-
-		case noise_propid::cellular_jitter:
-			edPtr->cellular_jitter = ((Prop_Float*)Param)->Value;
-			break;
-
-
-		case noise_propid::version:
-            break;
-	}
+	DarkEdif::DLL::DLL_SetPropValue(mV, edPtr, PropID, Param);
 }
-
 
 // Called by Fusion when the user modifies a checkbox in the properties.
-void FusionAPI SetPropCheck(mv * mV, EDITDATA * edPtr, unsigned int PropID, BOOL checked) {
+void FusionAPI SetPropCheck(mv * mV, EDITDATA * edPtr, unsigned int PropID, BOOL checked)
+{
 #pragma DllExportHint
+	DarkEdif::DLL::DLL_SetPropCheck(mV, edPtr, PropID, checked);
 }
 
-
 // Called by Fusion when the user clicks the button of a Button or EditButton property.
-/*BOOL FusionAPI EditProp(mv * mV, EDITDATA * edPtr, unsigned int PropID) {
+/*BOOL FusionAPI EditProp(mv * mV, EDITDATA * edPtr, unsigned int PropID)
+{
 #pragma DllExportHint
 	// Example
 	// -------
@@ -454,9 +170,9 @@ void FusionAPI SetPropCheck(mv * mV, EDITDATA * edPtr, unsigned int PropID, BOOL
 	return FALSE;
 }*/
 
-
 // Called by Fusion to request the enabled state of a property.
-/*BOOL FusionAPI IsPropEnabled(mv * mV, EDITDATA * edPtr, unsigned int PropID) {
+BOOL FusionAPI IsPropEnabled(mv * mV, EDITDATA * edPtr, unsigned int PropID)
+{
 #pragma DllExportHint
 	// Example
 	// -------
@@ -466,14 +182,15 @@ void FusionAPI SetPropCheck(mv * mV, EDITDATA * edPtr, unsigned int PropID, BOOL
 	case PROPID_CHECK:
 		return (edPtr->nComboIndex != 0);
 	}
-*\/
-	return TRUE;
-}*/
+*/
+	return DarkEdif::DLL::DLL_IsPropEnabled(mV, edPtr, PropID);
+}
 
 
 // Called when a property is initialized and its creation parameter is NULL (in the PropData).
 // Allows you, for example, to change the content of a combobox property according to specific settings in the EDITDATA structure.
-/*LPARAM FusionAPI GetPropCreateParam(mv *mV, EDITDATA *edPtr, unsigned int PropID) {
+/*LPARAM FusionAPI GetPropCreateParam(mv *mV, EDITDATA *edPtr, unsigned int PropID)
+{
 #pragma DllExportHint
 	// Example
 	// -------
@@ -488,17 +205,78 @@ void FusionAPI SetPropCheck(mv * mV, EDITDATA * edPtr, unsigned int PropID, BOOL
 	//		}
 	//	}
 
-	return NULL;
+	return DarkEdif::DLL::DLL_GetPropCreateParam(mV, edPtr, PropID);
 }*/
-
 
 // Called after a property has been initialized.
 // Allows you, for example, to free memory allocated in GetPropCreateParam.
-/*void FusionAPI ReleasePropCreateParam(mv *mV, EDITDATA *edPtr, unsigned int PropID, LPARAM lParam) {
+/*void FusionAPI ReleasePropCreateParam(mv *mV, EDITDATA *edPtr, unsigned int PropID, LPARAM lParam)
+{
 #pragma DllExportHint
+	return DarkEdif::DLL::DLL_ReleasePropCreateParam(mV, edPtr, PropID, lParam);
 }*/
 
+// ============================================================================
+// TEXT PROPERTIES
+// ============================================================================
 
+// Return the text capabilities of the object under the frame editor.
+/*std::uint32_t FusionAPI GetTextCaps(mv * mV, EDITDATA * edPtr)
+{
+#pragma DllExportHint
+	return 0;	// (TEXT_ALIGN_LEFT|TEXT_ALIGN_HCENTER|TEXT_ALIGN_RIGHT|TEXT_ALIGN_TOP|TEXT_ALIGN_VCENTER|TEXT_ALIGN_BOTTOM|TEXT_FONT|TEXT_COLOR);
+}*/
+
+// Return the font used the object.
+// Note: the pStyle and cbSize parameters are obsolete and passed for compatibility reasons only.
+/*BOOL FusionAPI GetTextFont(mv * mV, EDITDATA * edPtr, LOGFONT * Font, TCHAR * pStyle, unsigned int cbSize)
+{
+#pragma DllExportHint
+	// Example: copy LOGFONT structure from EDITDATA
+	// memcpy(plf, &edPtr->m_lf, sizeof(LOGFONT));
+
+	return TRUE;
+}*/
+
+// Change the font used the object.
+// Note: the pStyle parameter is obsolete and passed for compatibility reasons only.
+//
+/*BOOL FusionAPI SetTextFont(mv * mV, EDITDATA * edPtr, LOGFONT * Font, [[deprecated]] const char * pStyle)
+{
+#pragma DllExportHint
+	// Example: copy LOGFONT structure to EDITDATA
+	// memcpy(&edPtr->m_lf, plf, sizeof(LOGFONT));
+
+	return TRUE;
+}*/
+
+// Get the text color of the object.
+/*COLORREF FusionAPI GetTextClr(mv * mV, EDITDATA * edPtr)
+{
+#pragma DllExportHint
+	return 0; // try RGB()
+}*/
+
+// Called by Fusion to set the text color of the object.
+/*void FusionAPI SetTextClr(mv *mV, EDITDATA * edPtr, COLORREF color)
+{
+#pragma DllExportHint
+	// Example
+	// edPtr->fontColor = color;
+}*/
+
+// Get the text alignment of the object.
+/*std::uint32_t FusionAPI GetTextAlignment(mv *mV, EDITDATA * edPtr)
+{
+#pragma DllExportHint
+	return 0;
+}*/
+
+// Set the text alignment of the object.
+/*void FusionAPI SetTextAlignment(mv *mV, EDITDATA * edPtr, unsigned int AlignFlags)
+{
+#pragma DllExportHint
+}*/
 
 
 // ============================================================================
@@ -509,7 +287,8 @@ void FusionAPI SetPropCheck(mv * mV, EDITDATA * edPtr, unsigned int PropID, BOOL
 // It enables you to modify the Android manifest file to add your own content, or otherwise check the Android build.
 // It is called in the Extensions[\Unicode] MFX, for any extension in the MFA that defines PrepareAndroidBuild,
 // including exts that have no corresponding Data\Runtime\Android file and would create a not-compatible build warning.
-/*void FusionAPI PrepareAndroidBuild(mv* mV, EDITDATA* edPtr, LPCTSTR androidDirectoryPathname) {
+/*void FusionAPI PrepareAndroidBuild(mv* mV, EDITDATA* edPtr, LPCTSTR androidDirectoryPathname)
+{
 #pragma DllExportHint
 	// Erase the manifest file so the build will fail
 	std::tstring manifestPath = androidDirectoryPathname;

@@ -27,7 +27,7 @@ Extension::Extension(RuntimeFunctions & runFuncs, EDITDATA * edPtr, void * objCE
 		LinkAction(3, set_fractal_type);
 		LinkAction(4, set_fractal_octaves);
 		LinkAction(5, set_fractal_lacunarity);
-		LinkAction(11, set_fractal_gain);		// IDs pain...
+		LinkAction(11, set_fractal_gain);
 		LinkAction(6, set_fractal_weighted);
 		LinkAction(7, set_fractal_pingpong);
 
@@ -92,29 +92,71 @@ Extension::Extension(RuntimeFunctions & runFuncs, EDITDATA * edPtr, void * objCE
 	}
 
 	// Properties
-	{
-		set_seed(edPtr->noise_seed);
+	try {
+        const std::map<std::string, FastNoiseLite::NoiseType> noise_type_ids = {
+            {"OpenSimplex2",        FastNoiseLite::NoiseType_OpenSimplex2},
+            {"OpenSimplex2S",       FastNoiseLite::NoiseType_OpenSimplex2S},
+            {"Cellular",            FastNoiseLite::NoiseType_Cellular},
+            {"Perlin",              FastNoiseLite::NoiseType_Perlin},
+            {"ValueCubic",          FastNoiseLite::NoiseType_ValueCubic},
+            {"Value",               FastNoiseLite::NoiseType_Value}
+        };
 
-		set_noise_type(edPtr->noise_type);
-		set_noise_frequency(edPtr->noise_frequency);
-		set_rotation_type_3d(edPtr->rotation_type_3d);
+        const std::map<std::string, FastNoiseLite::RotationType3D> rotation_type_3d_ids = {
+            {"None",                FastNoiseLite::RotationType3D_None},
+            {"Improve XY planes",   FastNoiseLite::RotationType3D_ImproveXYPlanes},
+            {"Improve XZ planes",   FastNoiseLite::RotationType3D_ImproveXZPlanes}
+        };
 
-		set_fractal_type(edPtr->fractal_type);
-		set_fractal_octaves(edPtr->fractal_octaves);
-		set_fractal_lacunarity(edPtr->fractal_lacunarity);
-		set_fractal_gain(edPtr->fractal_gain);
-		set_fractal_weighted(edPtr->fractal_weighted_strength);
-		set_fractal_pingpong(edPtr->fractal_pingpong_strength);
+        const std::map<std::string, FastNoiseLite::FractalType> fractal_type_ids = {
+            {"None",                FastNoiseLite::FractalType_None},
+            {"FBm",                 FastNoiseLite::FractalType_FBm},
+            {"Rigid",               FastNoiseLite::FractalType_Ridged},
+            {"PingPong",            FastNoiseLite::FractalType_PingPong}
+        };
 
-		set_cellular_distance_function(edPtr->cellular_distance_func);
-		set_cellular_return_type(edPtr->cellular_ret_type);
-		set_cellular_jitter(edPtr->cellular_jitter);
+        const std::map<std::string, FastNoiseLite::CellularDistanceFunction> cellular_distance_function_ids = {
+            {"Euclidean",           FastNoiseLite::CellularDistanceFunction_Euclidean},
+            {"EuclideanSq",         FastNoiseLite::CellularDistanceFunction_EuclideanSq},
+            {"Manhattan",           FastNoiseLite::CellularDistanceFunction_Manhattan},
+            {"Hybrid",              FastNoiseLite::CellularDistanceFunction_Hybrid}
+        };
+
+        const std::map<std::string, FastNoiseLite::CellularReturnType> cellular_return_type_ids = {
+            {"CellValue",           FastNoiseLite::CellularReturnType_CellValue},
+            {"Distance",            FastNoiseLite::CellularReturnType_Distance},
+            {"Distance2",           FastNoiseLite::CellularReturnType_Distance2},
+            {"Distance2Add",        FastNoiseLite::CellularReturnType_Distance2Add},
+            {"Distance2Sub",        FastNoiseLite::CellularReturnType_Distance2Sub},
+            {"Distance2Mul",        FastNoiseLite::CellularReturnType_Distance2Mul},
+            {"Distance2Div",        FastNoiseLite::CellularReturnType_Distance2Div}
+        };
+
+
+		set_seed(string_to_seed(edPtr->Props.GetPropertyStr("Seed").c_str()));
+
+		set_noise_type(noise_type_ids.at(DarkEdif::TStringToUTF8(edPtr->Props.GetPropertyStr("Noise type"))));
+		set_noise_frequency(edPtr->Props.GetPropertyNum("Noise frequency"));
+		set_rotation_type_3d(rotation_type_3d_ids.at(DarkEdif::TStringToUTF8(edPtr->Props.GetPropertyStr("Rotation type 3D"))));
+
+		set_fractal_type(fractal_type_ids.at(DarkEdif::TStringToUTF8(edPtr->Props.GetPropertyStr("Fractal type"))));
+		set_fractal_octaves((int)edPtr->Props.GetPropertyNum("Fractal octaves"));
+		set_fractal_lacunarity(edPtr->Props.GetPropertyNum("Fractal lacunarity"));
+		set_fractal_gain(edPtr->Props.GetPropertyNum("Fractal gain"));
+		set_fractal_weighted(edPtr->Props.GetPropertyNum("Fractal weighted strength"));
+		set_fractal_pingpong(edPtr->Props.GetPropertyNum("Fractal PingPong strength"));
+
+		set_cellular_distance_function(cellular_distance_function_ids.at(DarkEdif::TStringToUTF8(edPtr->Props.GetPropertyStr("Cellular distance function"))));
+		set_cellular_return_type(cellular_return_type_ids.at(DarkEdif::TStringToUTF8(edPtr->Props.GetPropertyStr("Cellular return type"))));
+		set_cellular_jitter(edPtr->Props.GetPropertyNum("Cellular jitter"));
 	}
+    catch(std::out_of_range x) {
+        DarkEdif::MsgBox::Error(_T("Corrupted properties"), _T("Noise properties may be corrupted.\n%s."), DarkEdif::UTF8ToTString(x.what()).c_str());
+    }
 }
 
 Extension::~Extension() {
 }
-
 
 
 
