@@ -121,11 +121,16 @@ goto :exit
 
 
 :setupsdkconfig
+    echo [Global] > ..\FusionSDKConfig.ini
     echo UseMultiProcessorCompilationInDebug = true > ..\FusionSDKConfig.ini
     echo FavorSizeOrSpeed = speed >> ..\FusionSDKConfig.ini
     echo UseLinkTimeCodeGeneration = true >> ..\FusionSDKConfig.ini
     echo DarkEdifUpdateCheckerTagging = Noise >> ..\FusionSDKConfig.ini
-    :: echo EchoAllDefinesFromPropsFileDuringBuild = true >> ..\FusionSDKConfig.ini
+
+    if %verbose%==1 (
+        echo EchoAllDefinesFromPropsFileDuringBuild = true >> ..\FusionSDKConfig.ini
+    )
+    
     exit /B 0
 
 
