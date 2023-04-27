@@ -7,11 +7,13 @@
             "cppStandard": "c++17",
             "defines": [
                 "USE_DARKEDIF_UPDATE_CHECKER=1",
-                "USE_DARKEDIF_FUSION_DEBUGGER=0",
-                "EditorBuild=1",
-                "RuntimeBuild=0",
-                "UniBuild=1",
                 "USE_DARKEDIF_UC_TAGGING=1",
+                "USE_DARKEDIF_FUSION_DEBUGGER=0",
+                "CONFIG=Debug Unicode",
+                "EditorBuild=1",
+                "UniBuild=1",
+                "RuntimeBuild=0",
+                "MacBuild=0",
                 "_WIN32",
                 "UNICODE",
                 "_UNICODE"

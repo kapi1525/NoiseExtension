@@ -7,7 +7,11 @@
             "label": "Build and install",
             "group": "build",
             "type": "shell",
-            "command": "cmd.exe /C 'cls && build.bat --fast --debug --install'"
+            "windows": {
+                // NOTE: You have to run build.bat in visual studio developer command prompt or add visual studio to PATH.
+                // You can read about setting up a custom vscode terminal profile here: https://code.visualstudio.com/docs/terminal/profiles
+                "command": "build.bat --install"
+            }
         }
     ]
 }
