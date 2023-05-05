@@ -1,11 +1,10 @@
-#include <variant>
-#include <functional>
-#include "Common.h"
-
-
 // This file handles property updates to smart properties
 
 #if EditorBuild
+
+#include <functional>
+#include <map>
+#include "Common.h"
 
 
 

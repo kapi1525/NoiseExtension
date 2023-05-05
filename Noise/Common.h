@@ -33,6 +33,5 @@ struct RUNDATA {
 	Extension* pExtension;
 };
 
-#include <map>
 #include "FastNoiseLite.h"
 #include "Extension.h"

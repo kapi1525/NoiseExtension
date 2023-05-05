@@ -37,20 +37,19 @@ public:
 	~Extension();
 
 
-	FastNoiseLite noise_main;       // Main noise instance for generating noise
-	FastNoiseLite noise_warp;       // Separate noise instance for domain warp
+	FastNoiseLite fnl_noise;        // Main FastNoiseLite instance for generating noise
+	// FastNoiseLite fnl_warp;      // Separate FastNoiseLite instance for domain warp
 
-	int seed;
-
-	int noise_type;
-	int fractal_type;
-	int cellular_function;
-	int cellular_return_type;
-	int rotation_type_3d;
+	int noise_seed;
+	FastNoiseLite::NoiseType noise_type;
+	FastNoiseLite::RotationType3D rotation_type_3d;
+	FastNoiseLite::FractalType fractal_type;
+	FastNoiseLite::CellularDistanceFunction cellular_function;
+	FastNoiseLite::CellularReturnType cellular_return_type;
 
 
 	// Actions
-		void set_seed(int seed_);
+		void set_seed(int seed);
 
 		// Sets
 		void set_noise_type(int type);
