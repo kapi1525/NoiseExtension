@@ -22,6 +22,7 @@
 :: --failonerr          fail with error code if build failed (made for github actions)
 ::
 :: --run                start fusion (steam version) after compilation
+:: --kill               kill fusion before installing the extension (only works with --install)
 :: --------------------------------------------------
 
 setlocal enabledelayedexpansion
@@ -40,6 +41,7 @@ set sdkconfig=0
 set verbose=0
 set failonerr=0
 set runfusion=0
+set killfusion=0
 
 
 for %%x in (%*) do (
@@ -65,6 +67,8 @@ for %%x in (%*) do (
         set failonerr=1
     ) else if %%~x==--run (
         set runfusion=1
+    ) else if %%~x==--kill (
+        set killfusion=1
     ) else (
         echo Argument %%~x is not defined!
         goto :exit
@@ -130,7 +134,7 @@ goto :exit
     if %verbose%==1 (
         echo EchoAllDefinesFromPropsFileDuringBuild = true >> ..\FusionSDKConfig.ini
     )
-    
+
     exit /B 0
 
 
@@ -174,6 +178,11 @@ goto :exit
 
     TASKLIST | FINDSTR /I "mmf2u.exe" > NUL
     if not %ERRORLEVEL%==1 (
+        if %killfusion%==1 (
+            echo Killing fusion...
+            taskkill /F /IM "mmf2u.exe"
+        )
+
         echo Waiting for Fusion to close...
         timeout /T 1 > NUL
         goto :install

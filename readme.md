@@ -23,7 +23,7 @@ I recently finaly created Noise Object [wiki on github](https://github.com/kapi1
 
 ## Help file
 
-I wanted to automaticaly convert github wiki to help file, but in the end it was too complicated and buggy so i scrapped it. Currently help button Noise object about properties just redirects you to github wiki.
+I wanted to automaticaly convert github wiki to help file, but in the end it was too complicated and buggy so i scrapped it. Currently help button in Noise object about properties just redirects you to the github wiki.
 
 
 ## Installing
@@ -46,6 +46,7 @@ build.bat --install --full --release
 
 Other *usefull* build.bat flags:
 
+- `--run` Launch Fusion (steam version) after compilation has finished.
 - `--full` Build all targets (Windows and Android) (only Windows is built by default).
 - `--release` Build using release configurations (Debug configurations are used by default).
 - `--clean` Clean the build directory before building.
