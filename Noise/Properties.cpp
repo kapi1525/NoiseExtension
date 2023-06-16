@@ -75,21 +75,9 @@ void CustomPropertyReader::Initialise(DarkEdif::Properties::ConverterState& conv
 }
 
 
-
 void CustomPropertyReader::GetProperty(size_t id, DarkEdif::Properties::ConverterReturn* const convRet) {
-    auto freedata = [](const void* d) { delete d; };
-
-    // lambdas are nice
-    auto ret_float = [&](const float f) { float* d = new float(f); convRet->Return_OK(d, sizeof(float), freedata); };
-    auto ret_int = [&](const int i) { int* d = new int(i); convRet->Return_OK(d, sizeof(int), freedata); };
-    auto ret_str = [&](const char* str) { convRet->Return_OK(_strdup(str), strnlen_s(str, 128), freedata); };
-    auto ret_combo = [&](const std::string values[], const unsigned int index) { ret_str(values[index].c_str()); };
-
     auto prop = CurLang["Properties"][id];
-    auto version = convState->oldEdPtr->eHeader.extVersion;
-
-    std::map<const char*, std::function<void()>> prop_map;
-
+    auto version_id = convState->oldEdPtr->eHeader.extVersion;
 
     // Combobox options for properties
     const std::string noise_types[] = {
@@ -127,49 +115,66 @@ void CustomPropertyReader::GetProperty(size_t id, DarkEdif::Properties::Converte
     };
 
 
-    // Versions v0.9.4 --- v1.0.1
-    if(version >= 16) {
-        const EDITDATA_v16& ed = *(EDITDATA_v16*)convState->oldEdPtr;
-
-        prop_map = {
-            {"Seed",                        [&]() { ret_str(std::to_string(ed.noise_seed).c_str()); }},
-            {"Noise type",                  [&]() { ret_combo(noise_types, ed.noise_type); }},
-            {"Noise frequency",             [&]() { ret_float(ed.noise_frequency); }},
-            {"Fractal type",                [&]() { ret_combo(fractal_types, ed.fractal_type); }},
-            {"Fractal octaves",             [&]() { ret_int(ed.fractal_octaves); }},
-            {"Fractal lacunarity",          [&]() { ret_float(ed.fractal_lacunarity); }},
-            {"Fractal gain",                [&]() { ret_float(ed.fractal_gain); }},
-            {"Fractal weighted strength",   [&]() { ret_float(ed.fractal_weighted_strength); }},
-            {"Fractal PingPong strength",   [&]() { ret_float(ed.fractal_pingpong_strength); }},
-            {"Cellular distance function",  [&]() { ret_combo(cellular_distance_functons, ed.cellular_distance_func); }},
-            {"Cellular return type",        [&]() { ret_combo(cellular_ret_types, ed.cellular_ret_type); }},
-            {"Cellular jitter",             [&]() { ret_float(ed.cellular_jitter); }}
-        };
-    }
+    // Assume its EDITDATA_v16, if its v13 it will be changed by an if statement bellow
+    EDITDATA_v16* ed = (EDITDATA_v16*)convState->oldEdPtr;
 
     // Versions v0.9.1 --- v0.9.3
-    else if(version >= 13) {
-        const EDITDATA_v13& ed = *(EDITDATA_v13*)convState->oldEdPtr;
+    // EDITDATA_v13 and v16 are simmilar so convert from v13 to v16
+    if(version_id >= 13 && version_id <= 15) {
+        const EDITDATA_v13* old_ed = (EDITDATA_v13*)convState->oldEdPtr;
 
-        prop_map = {
-            {"Seed",                        [&]() { ret_str(std::to_string(ed.noise_seed).c_str()); }},
-            {"Noise type",                  [&]() { ret_combo(noise_types, ed.noise_type); }},
-            {"Noise frequency",             [&]() { ret_float(ed.noise_frequency); }},
-            {"Fractal type",                [&]() { ret_combo(fractal_types, ed.fractal_type); }},
-            {"Fractal octaves",             [&]() { ret_int(ed.fractal_octaves); }},
-            {"Fractal lacunarity",          [&]() { ret_float(ed.fractal_lacunarity); }},
-            {"Fractal weighted strength",   [&]() { ret_float(ed.fractal_weighted_strength); }},
-            {"Fractal PingPong strength",   [&]() { ret_float(ed.fractal_pingpong_strength); }},
-            {"Cellular distance function",  [&]() { ret_combo(cellular_distance_functons, ed.cellular_distance_func); }},
-            {"Cellular return type",        [&]() { ret_combo(cellular_ret_types, ed.cellular_ret_type); }},
-            {"Cellular jitter",             [&]() { ret_float(ed.cellular_jitter); }}
-        };
+        // TODO: Fix memory leak
+        ed = (EDITDATA_v16*)malloc(sizeof(EDITDATA_v16));
+
+        // Copy everything
+        memcpy(&ed->eHeader, &old_ed->eHeader, sizeof(extHeader));
+        ed->eHeader.extSize = sizeof(EDITDATA_v16);
+
+        ed->noise_seed = old_ed->noise_seed;
+        ed->noise_type = old_ed->noise_type;
+        ed->noise_frequency = old_ed->noise_frequency;
+        ed->fractal_type = old_ed->fractal_type;
+        ed->fractal_octaves = old_ed->fractal_octaves;
+        ed->fractal_lacunarity = old_ed->fractal_lacunarity;
+        ed->fractal_weighted_strength = old_ed->fractal_weighted_strength;
+        ed->fractal_pingpong_strength = old_ed->fractal_pingpong_strength;
+        ed->cellular_distance_func = old_ed->cellular_distance_func;
+        ed->cellular_ret_type = old_ed->cellular_ret_type;
+        ed->cellular_jitter = old_ed->cellular_jitter;
+
+        // Was added in v16
+        ed->editdata_rev = 1;
+        ed->fractal_gain = 0.5;
     }
 
 
+    auto freedata = [](const void* ptr) { delete ptr; };
+    auto ret_float = [&](const float f) { float* d = new float(f); convRet->Return_OK(d, sizeof(float), freedata); };
+    auto ret_int = [&](const int i) { int* d = new int(i); convRet->Return_OK(d, sizeof(int), freedata); };
+    auto ret_str = [&](const char* str) { convRet->Return_OK(_strdup(str), strnlen_s(str, 128), freedata); };
+    auto ret_combo = [&](const std::string values[], const unsigned int index) { ret_str(values[index].c_str()); };
+
+
+    // Versions v0.9.4 --- v1.0.1
+    // Convert from EDITDATA_v16 to smart properties
+    // NOTE: If property titles are changed they need to be updated here as well
+    std::map<std::tstring, std::function<void()>> prop_map = {
+        {_T("Seed"),                       [&]() { ret_str(std::to_string(ed->noise_seed).c_str()); }},
+        {_T("Noise type"),                 [&]() { ret_combo(noise_types, ed->noise_type); }},
+        {_T("Noise frequency"),            [&]() { ret_float(ed->noise_frequency); }},
+        {_T("Fractal type"),               [&]() { ret_combo(fractal_types, ed->fractal_type); }},
+        {_T("Fractal octaves"),            [&]() { ret_int(ed->fractal_octaves); }},
+        {_T("Fractal lacunarity"),         [&]() { ret_float(ed->fractal_lacunarity); }},
+        {_T("Fractal gain"),               [&]() { ret_float(ed->fractal_gain); }},
+        {_T("Fractal weighted strength"),  [&]() { ret_float(ed->fractal_weighted_strength); }},
+        {_T("Fractal PingPong strength"),  [&]() { ret_float(ed->fractal_pingpong_strength); }},
+        {_T("Cellular distance function"), [&]() { ret_combo(cellular_distance_functons, ed->cellular_distance_func); }},
+        {_T("Cellular return type"),       [&]() { ret_combo(cellular_ret_types, ed->cellular_ret_type); }},
+        {_T("Cellular jitter"),            [&]() { ret_float(ed->cellular_jitter); }}
+    };
+
     try {
-        // Try to convert property, if it fails it creates out_of_range exception
-        prop_map.at(prop["Title"])();
+        prop_map.at(DarkEdif::UTF8ToTString(std::string(prop["Title"])))();
     }
     catch(std::out_of_range x) {
         // Load defaults from json so pre smart converter cant break anything
