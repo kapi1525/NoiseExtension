@@ -182,7 +182,7 @@ void CustomPropertyReader::GetProperty(size_t id, DarkEdif::Properties::Converte
 
         switch(state.type) {
         case json_integer:
-            return ret_int(state);
+            return ret_int(static_cast<const int>(state.u.integer));
 
         case json_double:
             return ret_float(static_cast<const float>(state.u.dbl));
