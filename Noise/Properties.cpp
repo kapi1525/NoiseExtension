@@ -159,7 +159,7 @@ void CustomPropertyReader::GetProperty(size_t id, DarkEdif::Properties::Converte
     // Convert from EDITDATA_v16 to smart properties
     // NOTE: If property titles are changed they need to be updated here as well
     std::map<std::tstring, std::function<void()>> prop_map = {
-        {_T("Seed"),                       [&]() { ret_str(std::to_string(ed->noise_seed).c_str()); }},
+        {_T("Noise seed"),                 [&]() { ret_str(std::to_string(ed->noise_seed).c_str()); }},
         {_T("Noise type"),                 [&]() { ret_combo(noise_types, ed->noise_type); }},
         {_T("Noise frequency"),            [&]() { ret_float(ed->noise_frequency); }},
         {_T("Fractal type"),               [&]() { ret_combo(fractal_types, ed->fractal_type); }},

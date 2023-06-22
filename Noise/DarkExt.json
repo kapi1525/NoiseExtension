@@ -1,484 +1,698 @@
 {
-	"Identifier": "KGNO",
-	"Dependencies": "",
-	"UK English": {
-		"About": {
-			"Name": "Noise",
-			"Author": "Kacper Bugla",
-			"Copyright": "Copyright \u00A9 2023 Kacper Bugla",
-			"Comment": "Generates Noise using many different algorithms.",
-			"Help": "https://github.com/kapi1525/NoiseExtension/wiki",
-			"URL": "https://github.com/kapi1525/NoiseExtension"
-		},
+    "Identifier": "KGNO",
+    "Dependencies": "",
+    "UK English": {
+        "About": {
+            "Name": "Noise",
+            "Author": "Kacper Bugla",
+            "Copyright": "Copyright \u00A9 2023 Kacper Bugla",
+            "Comment": "Generates Noise using many different algorithms.",
+            "Help": "https://github.com/kapi1525/NoiseExtension/wiki",
+            "URL": "https://github.com/kapi1525/NoiseExtension"
+        },
 
-		"ActionMenu": [
-			[  0, "Set seed" ],
-			"---",
-			[  1, "Set noise type" ],
-			[  2, "Set noise frequency" ],
-			[  12,"Set rotation type 3D" ],
-			"---",
-			[  3, "Set fractal type" ],
-			[  4, "Set fractal octaves" ],
-			[  5, "Set fractal lacunarity" ],
-			[ 11, "Set fractal gain" ],
-			[  6, "Set fractal weighted strength" ],
-			[  7, "Set fractal PingPong strength" ],
-			"---",
-			[  8, "Set cellular distance function" ],
-			[  9, "Set cellular return type" ],
-			[ 10, "Set cellular jitter" ],
-			"---"
-		],
-		"ConditionMenu": [
-		],
-		"ExpressionMenu": [
-			[  0, "Get current seed" ],
-			[  1, "Convert string to seed" ],
-			"---",
-			[  2, "Get noise 3D" ],
-			[  3, "Get noise 2D" ],
-			[  4, "Get noise 1D" ],
-			[  5, "Get looping noise 1D" ],
-			"---",
-			[
-				"Noise types",
-				[  6, "OpenSimplex2" ],
-				[  7, "OpenSimplex2S" ],
-				[  8, "Cellular" ],
-				[  9, "Perlin" ],
-				[ 10, "ValueCubic" ],
-				[ 11, "Value" ]
-			],
+        "ActionMenu": [
+            [ 1, "Set noise type" ],
+            "---",
+            [ 0, "Set noise seed" ],
+            [ 2, "Set noise frequency" ],
+            [ 12, "Set rotation type 3D" ],
+            "---",
+            [ 3, "Set fractal type" ],
+            [ 4, "Set fractal octaves" ],
+            [ 5, "Set fractal lacunarity" ],
+            [ 11, "Set fractal gain" ],
+            [ 6, "Set fractal weighted strength" ],
+            [ 7, "Set fractal PingPong strength" ],
+            "---",
+            [ 8, "Set cellular distance function" ],
+            [ 9, "Set cellular return type" ],
+            [ 10, "Set cellular jitter" ],
+            "---",
+            [
+                "Domain warp",
+                [ 13, "Enable" ],
+                [ 14, "Disable" ],
+                "---",
+                [ 15, "Set type" ],
+                [ 16, "Set amplitude" ],
+                "---",
+                [ 17, "Set seed" ],
+                [ 18, "Set frequency" ],
+                [ 19, "Set rotation type 3D" ],
+                "---",
+                [ 20, "Set fractal type" ],
+                [ 21, "Set fractal octaves" ],
+                [ 22, "Set fractal lacunarity" ],
+                [ 23, "Set fractal gain" ],
+                [ 24, "Set fractal weighted strength" ]
+            ],
+            "---"
+        ],
+        "ConditionMenu": [
+        ],
+        "ExpressionMenu": [
+            [ 2, "Get noise 3D" ],
+            [ 3, "Get noise 2D" ],
+            [ 4, "Get noise 1D" ],
+            [ 5, "Get looping noise 1D" ],
+            "---",
+            [ 1, "Convert string to seed" ],
+            "---",
+            [
+                "Noise types",
+                [ 6, "OpenSimplex2" ],
+                [ 7, "OpenSimplex2S" ],
+                [ 8, "Cellular" ],
+                [ 9, "Perlin" ],
+                [ 10, "ValueCubic" ],
+                [ 11, "Value" ]
+            ],
             [
                 "Rotation types 3D",
-                [ 12, "None"],
-                [ 31, "Improve XY Planes"],
-                [ 32, "Improve XZ Planes"]
+                [ 12, "None" ],
+                [ 31, "Improve XY Planes" ],
+                [ 32, "Improve XZ Planes" ]
             ],
-			[
-				"Fractal types",
-				[ 12, "None" ],
-				[ 13, "FBm" ],
-				[ 14, "Rigid" ],
-				[ 15, "PingPong" ]
-			],
-			[
-				"Cellular distance functions",
-				[ 16, "Euclidean" ],
-				[ 17, "EuclideanSq" ],
-				[ 18, "Manhattan" ],
-				[ 19, "Hybrid" ]
-			],
-			[
-				"Cellular return types",
-				[ 20, "CellValue" ],
-				[ 21, "Distance" ],
-				[ 22, "Distance2" ],
-				[ 23, "Distance2Add" ],
-				[ 24, "Distance2Sub" ],
-				[ 25, "Distance2Mul" ],
-				[ 26, "Distance2Div" ]
-			],
-			"---",
-			[ 27, "Current noise type" ],
-			[ 33, "Current rotation type 3D" ],
-			[ 28, "Current fractal type" ],
-			[ 29, "Current cellular distance function" ],
-			[ 30, "Current cellular return type" ],
-			"---"
-		],
+            [
+                "Fractal types",
+                [ 12, "None" ],
+                [ 13, "FBm" ],
+                [ 14, "Rigid" ],
+                [ 15, "PingPong" ],
+                "---",
+                [ 36, "Domain warp progressive" ],
+                [ 37, "Domain warp independent" ]
+            ],
+            [
+                "Cellular distance functions",
+                [ 16, "Euclidean" ],
+                [ 17, "EuclideanSq" ],
+                [ 18, "Manhattan" ],
+                [ 19, "Hybrid" ]
+            ],
+            [
+                "Cellular return types",
+                [ 20, "CellValue" ],
+                [ 21, "Distance" ],
+                [ 22, "Distance2" ],
+                [ 23, "Distance2Add" ],
+                [ 24, "Distance2Sub" ],
+                [ 25, "Distance2Mul" ],
+                [ 26, "Distance2Div" ]
+            ],
+            "---",
+            [
+                "Domain warp types",
+                [ 6, "OpenSimplex2" ],
+                [ 34, "OpenSimplex2Reduced" ],
+                [ 35, "BasicGrid" ]
+            ],
+            "---",
+            [
+                "Noise settings",
+                [ 0, "Current seed" ],
+                [ 27, "Current type" ],
+                [ 33, "Current rotation type 3D" ],
+                [ 28, "Current fractal type" ],
+                [ 29, "Current cellular distance function" ],
+                [ 30, "Current cellular return type" ]
+            ],
+            [
+                "Domain warp settings",
+                [ 38, "Is enabled?" ],
+                [ 39, "Current seed" ],
+                [ 40, "Current type" ],
+                [ 41, "Current rotation type 3D" ],
+                [ 42, "Current fractal type" ]
+            ],
+            "---"
+        ],
 
-		"Actions": [
-			{
-				"Title": "Set seed to %0",
-				"Parameters": [
-					[ "Integer", "Seed" ]
-				]
-			},
+        "Actions": [
+            { //0
+                "Title": "Set noise seed to %0",
+                "Parameters": [
+                    [ "Integer", "Noise seed" ]
+                ]
+            },
+            { //1
+                "Title": "Set noise type to %0",
+                "Parameters": [
+                    [ "Integer", "Noise type" ]
+                ]
+            },
+            { //2
+                "Title": "Set noise frequency to %0",
+                "Parameters": [
+                    [ "Float", "Noise frequency" ]
+                ]
+            },
+            { //3
+                "Title": "Set fractal type to %0",
+                "Parameters": [
+                    [ "Integer", "Fractal type" ]
+                ]
+            },
+            { //4
+                "Title": "Set fractal octaves to %0",
+                "Parameters": [
+                    [ "Integer", "Fractal octaves" ]
+                ]
+            },
+            { //5
+                "Title": "Set fractal lacunarity to %0",
+                "Parameters": [
+                    [ "float", "Fractal lacunarity" ]
+                ]
+            },
+            { //6
+                "Title": "Set fractal weighted strength to %0",
+                "Parameters": [
+                    [ "float", "Fractal weighted strength" ]
+                ]
+            },
+            { //7
+                "Title": "Set fractal PingPong strength to %0",
+                "Parameters": [
+                    [ "float", "Fractal PingPong strength" ]
+                ]
+            },
+            { //8
+                "Title": "Set cellular distance function to %0",
+                "Parameters": [
+                    [ "Integer", "Cellular distance function" ]
+                ]
+            },
+            { //9
+                "Title": "Set cellular return type to %0",
+                "Parameters": [
+                    [ "Integer", "Cellular return type" ]
+                ]
+            },
+            { //10
+                "Title": "Set cellular jitter to %0",
+                "Parameters": [
+                    [ "float", "Cellular jitter" ]
+                ]
+            },
+            { //11
+                "Title": "Set fractal gain to %0",
+                "Parameters": [
+                    [ "float", "Fractal gain" ]
+                ]
+            },
+            { //12
+                "Title": "Set noise rotation type 3D to %0",
+                "Parameters": [
+                    [ "Integer", "Noise rotation type 3D" ]
+                ]
+            },
+            { //13
+                "Title": "Enable domain warp"
+            },
+            { //14
+                "Title": "Disable domain warp"
+            },
+            { //15
+                "Title": "Set domain warp type to %0",
+                "Parameters": [
+                    [ "Integer", "Domain warp type" ]
+                ]
+            },
+            { //16
+                "Title": "Set domain warp amplitude to %0",
+                "Parameters": [
+                    [ "Float", "Domain warp amplitude" ]
+                ]
+            },
+            { //17
+                "Title": "Set domain warp seed to %0",
+                "Parameters": [
+                    [ "Integer", "Domain warp seed" ]
+                ]
+            },
+            { //18
+                "Title": "Set domain warp frequency to %0",
+                "Parameters": [
+                    [ "Float", "Domain warp frequency" ]
+                ]
+            },
+            { //19
+                "Title": "Set domain warp rotation type 3D to %0",
+                "Parameters": [
+                    [ "Integer", "Domain warp rotation type 3D" ]
+                ]
+            },
+            { //20
+                "Title": "Set domain warp fractal type to %0",
+                "Parameters": [
+                    [ "Integer", "Domain warp fractal type" ]
+                ]
+            },
+            { //21
+                "Title": "Set domain warp fractal octaves to %0",
+                "Parameters": [
+                    [ "Integer", "Domain warp fractal octaves" ]
+                ]
+            },
+            { //22
+                "Title": "Set domain warp fractal lacunarity to %0",
+                "Parameters": [
+                    [ "Float", "Domain warp fractal lacunarity" ]
+                ]
+            },
+            { //23
+                "Title": "Set domain warp fractal gain to %0",
+                "Parameters": [
+                    [ "Float", "Domain warp fractal gain" ]
+                ]
+            },
+            { //24
+                "Title": "Set domain warp fractal weighted strength to %0",
+                "Parameters": [
+                    [ "Float", "Domain warp fractal weighted strength" ]
+                ]
+            }
+        ],
+        "Conditions": [
+        ],
+        "Expressions": [
+            { //0
+                "Title": "Seed(",
+                "Returns": "Integer"
+            },
+            { //1
+                "Title": "ToSeed(",
+                "Returns": "Integer",
+                "Parameters": [
+                    [ "Text", "Text" ]
+                ]
+            },
+            { //2
+                "Title": "Noise3D(",
+                "Returns": "Float",
+                "Parameters": [
+                    [ "Float", "X" ],
+                    [ "Float", "Y" ],
+                    [ "Float", "Z" ]
+                ]
+            },
+            { //3
+                "Title": "Noise2D(",
+                "Returns": "Float",
+                "Parameters": [
+                    [ "Float", "X" ],
+                    [ "Float", "Y" ]
+                ]
+            },
+            { //4
+                "Title": "Noise1D(",
+                "Returns": "Float",
+                "Parameters": [
+                    [ "Float", "X" ]
+                ]
+            },
+            { //5
+                "Title": "Looping1D(",
+                "Returns": "Float",
+                "Parameters": [
+                    [ "Float", "X" ],
+                    [ "Float", "X offset" ],
+                    [ "Float", "X size" ]
+                ]
+            },
+            { //6
+                "Title": "Simplex2(",
+                "Returns": "Integer"
+            },
+            { //7
+                "Title": "Simplex2S(",
+                "Returns": "Integer"
+            },
+            { //8
+                "Title": "Cellular(",
+                "Returns": "Integer"
+            },
+            { //9
+                "Title": "Perlin(",
+                "Returns": "Integer"
+            },
+            { //10
+                "Title": "ValueCubic(",
+                "Returns": "Integer"
+            },
+            { //11
+                "Title": "Value(",
+                "Returns": "Integer"
+            },
+            { //12
+                "Title": "None(",
+                "Returns": "Integer"
+            },
+            { //13
+                "Title": "FBm(",
+                "Returns": "Integer"
+            },
+            { //14
+                "Title": "Rigid(",
+                "Returns": "Integer"
+            },
+            { //15
+                "Title": "PingPong(",
+                "Returns": "Integer"
+            },
+            { //16
+                "Title": "Euclidean(",
+                "Returns": "Integer"
+            },
+            { //17
+                "Title": "EuclideanSq(",
+                "Returns": "Integer"
+            },
+            { //18
+                "Title": "Manhattan(",
+                "Returns": "Integer"
+            },
+            { //19
+                "Title": "Hybrid(",
+                "Returns": "Integer"
+            },
+            { //20
+                "Title": "CellValue(",
+                "Returns": "Integer"
+            },
+            { //21
+                "Title": "Distance(",
+                "Returns": "Integer"
+            },
+            { //22
+                "Title": "Distance2(",
+                "Returns": "Integer"
+            },
+            { //23
+                "Title": "Distance2Add(",
+                "Returns": "Integer"
+            },
+            { //24
+                "Title": "Distance2Sub(",
+                "Returns": "Integer"
+            },
+            { //25
+                "Title": "Distance2Mul(",
+                "Returns": "Integer"
+            },
+            { //26
+                "Title": "Distance2Div(",
+                "Returns": "Integer"
+            },
+            { //27
+                "Title": "NoiseType(",
+                "Returns": "Integer"
+            },
+            { //28
+                "Title": "FractalType(",
+                "Returns": "Integer"
+            },
+            { //29
+                "Title": "CellularFunction(",
+                "Returns": "Integer"
+            },
+            { //30
+                "Title": "CellularReturnType(",
+                "Returns": "Integer"
+            },
+            { //31
+                "Title": "ImproveXY(",
+                "Returns": "Integer"
+            },
+            { //32
+                "Title": "ImproveXZ(",
+                "Returns": "Integer"
+            },
+            { //33
+                "Title": "RotationType3D(",
+                "Returns": "Integer"
+            },
+            { //34
+                "Title": "Simplex2Reduced",
+                "Returns": "Integer"
+            },
+            { //35
+                "Title": "BasicGrid",
+                "Returns": "Integer"
+            },
+            { //36
+                "Title": "DWProgressive(",
+                "Returns": "Integer"
+            },
+            { //37
+                "Title": "DWIndependent(",
+                "Returns": "Integer"
+            },
+            { //38
+                // NOTE: Fusion doesnt handle question marks well in expressions
+                "Title": "DWIsEnabled(",
+                "Returns": "Integer"
+            },
+            { //39
+                "Title": "DWSeed(",
+                "Returns": "Integer"
+            },
+            { //40
+                "Title": "DWType(",
+                "Returns": "Integer"
+            },
+            { //41
+                "Title": "DWRotationType3D(",
+                "Returns": "Integer"
+            },
+            { //42
+                "Title": "DWFractalType(",
+                "Returns": "Integer"
+            }
+        ],
 
-			{
-				"Title": "Set noise type to %0",
-				"Parameters": [
-					[ "Integer", "Type" ]
-				]
-			},
-			{
-				"Title": "Set noise frequency to %0",
-				"Parameters": [
-					[ "Float", "Frequency" ]
-				]
-			},
-
-			{
-				"Title": "Set fractal type to %0",
-				"Parameters": [
-					[ "Integer", "Type" ]
-				]
-			},
-			{
-				"Title": "Set fractal octaves to %0",
-				"Parameters": [
-					[ "Integer", "Octaves" ]
-				]
-			},
-			{
-				"Title": "Set fractal lacunarity to %0",
-				"Parameters": [
-					[ "float", "Lacunarity" ]
-				]
-			},
-			{
-				"Title": "Set fractal weighted strength to %0",
-				"Parameters": [
-					[ "float", "Weighted strength" ]
-				]
-			},
-			{
-				"Title": "Set fractal PingPong strength to %0",
-				"Parameters": [
-					[ "float", "PingPong strength" ]
-				]
-			},
-
-			{
-				"Title": "Set cellular distance function to %0",
-				"Parameters": [
-					[ "Integer", "Distance function" ]
-				]
-			},
-			{
-				"Title": "Set cellular return type to %0",
-				"Parameters": [
-					[ "Integer", "Return type" ]
-				]
-			},
-			{
-				"Title": "Set cellular jitter to %0",
-				"Parameters": [
-					[ "float", "Jitter" ]
-				]
-			},
-			{
-				"Title": "Set fractal gain to %0",
-				"Parameters": [
-					[ "float", "Gain" ]
-				]
-			},
-			{
-				"Title": "Set rotation type 3D to %0",
-				"Parameters": [
-					[ "Integer", "Rotation type 3D" ]
-				]
-			}
-		],
-		"Conditions": [
-		],
-		"Expressions": [
-			{
-				"Title": "Seed(",
-				"Returns": "Integer"
-			},
-			{
-				"Title": "ToSeed(",
-				"Returns": "Integer",
-				"Parameters": [
-					[ "Text", "Text" ]
-				]
-			},
-
-			{
-				"Title": "Noise3D(",
-				"Returns": "Float",
-				"Parameters": [
-					[ "Float", "X" ],
-					[ "Float", "Y" ],
-					[ "Float", "Z" ]
-				]
-			},
-			{
-				"Title": "Noise2D(",
-				"Returns": "Float",
-				"Parameters": [
-					[ "Float", "X" ],
-					[ "Float", "Y" ]
-				]
-			},
-			{
-				"Title": "Noise1D(",
-				"Returns": "Float",
-				"Parameters": [
-					[ "Float", "X" ]
-				]
-			},
-			{
-				"Title": "Looping1D(",
-				"Returns": "Float",
-				"Parameters": [
-					[ "Float", "X" ],
-					[ "Float", "X offset" ],
-					[ "Float", "X size" ]
-				]
-			},
-
-			{
-				"Title": "Simplex2(",
-				"Returns": "Integer"
-			},
-			{
-				"Title": "Simplex2S(",
-				"Returns": "Integer"
-			},
-			{
-				"Title": "Cellular(",
-				"Returns": "Integer"
-			},
-			{
-				"Title": "Perlin(",
-				"Returns": "Integer"
-			},
-			{
-				"Title": "ValueCubic(",
-				"Returns": "Integer"
-			},
-			{
-				"Title": "Value(",
-				"Returns": "Integer"
-			},
-
-			{
-				"Title": "None(",
-				"Returns": "Integer"
-			},
-			{
-				"Title": "FBm(",
-				"Returns": "Integer"
-			},
-			{
-				"Title": "Rigid(",
-				"Returns": "Integer"
-			},
-			{
-				"Title": "PingPong(",
-				"Returns": "Integer"
-			},
-
-			{
-				"Title": "Euclidean(",
-				"Returns": "Integer"
-			},
-			{
-				"Title": "EuclideanSq(",
-				"Returns": "Integer"
-			},
-			{
-				"Title": "Manhattan(",
-				"Returns": "Integer"
-			},
-			{
-				"Title": "Hybrid(",
-				"Returns": "Integer"
-			},
-
-			{
-				"Title": "CellValue(",
-				"Returns": "Integer"
-			},
-			{
-				"Title": "Distance(",
-				"Returns": "Integer"
-			},
-			{
-				"Title": "Distance2(",
-				"Returns": "Integer"
-			},
-			{
-				"Title": "Distance2Add(",
-				"Returns": "Integer"
-			},
-			{
-				"Title": "Distance2Sub(",
-				"Returns": "Integer"
-			},
-			{
-				"Title": "Distance2Mul(",
-				"Returns": "Integer"
-			},
-			{
-				"Title": "Distance2Div(",
-				"Returns": "Integer"
-			},
-
-			{
-				"Title": "NoiseType(",
-				"Returns": "Integer"
-			},
-			{
-				"Title": "FractalType(",
-				"Returns": "Integer"
-			},
-			{
-				"Title": "CellularFunction(",
-				"Returns": "Integer"
-			},
-			{
-				"Title": "CellularReturnType(",
-				"Returns": "Integer"
-			},
-
-			{
-				"Title": "ImproveXY(",
-				"Returns": "Integer"
-			},
-			{
-				"Title": "ImproveXZ(",
-				"Returns": "Integer"
-			},
-
-			{
-				"Title": "RotationType3D(",
-				"Returns": "Integer"
-			}
-		],
-
-		"Properties": [
-			{
-				"Title": "Seed",
-				"Info": "Noise seed, converted to a number using string to seed expression.",
-				"Type": "Editbox String",
-				"DefaultState": "1337"
-			},
-
-			{
-				"Title": "Noise type",
-				"Info": "Noise algorythm used to generate noise values.",
-				"Type": "Combo Box",
-				"DefaultState": "OpenSimplex2",
-				"Items": [
-					"OpenSimplex2",
-					"OpenSimplex2S",
-					"Cellular",
-					"Perlin",
-					"ValueCubic",
-					"Value"
-				]
-			},
-			{
-				"Title": "Noise frequency",
-				"Info": "Noise frequency controls how much noise is \"zoomed in\".",
-				"Type": "Editbox Float",
-				"DefaultState": 0.01
-			},
-			{
-				"Title": "Rotation type 3D",
-				"Info": "Might improve noise quality when sampling 3D noise as 2D planes.",
-				"Type": "Combo Box",
-				"DefaultState": "None",
-				"Items": [
-					"None",
-					"Improve XY planes",
-					"Improve XZ planes"
-				]
-			},
-
-			{
-				"Title": "Fractals",
-				"Info": "Fractals.",
-				"Type": "Group"
-			},
-			{
-				"Title": "Fractal type",
-				"Info": "Method for combining octaves into a fractal.",
-				"Type": "Combo Box",
-				"DefaultState": "None",
-				"Items": [
-					"None",
-					"FBm",
-					"Rigid",
-					"PingPong"
-				]
-			},
-			{
-				"Title": "Fractal octaves",
-				"Info": "Number of noise layers used to create a fractal.",
-				"Type": "Editbox Number",
-				"DefaultState": 3
-			},
-			{
-				"Title": "Fractal lacunarity",
-				"Info": "Frequency multiplier for octaves.",
-				"Type": "Editbox Float",
-				"DefaultState": 2.0
-			},
-			{
-				"Title": "Fractal gain",
-				"Info": "The relative strength of noise from each layer when compared to the last.",
-				"Type": "Editbox Float",
-				"DefaultState": 0.5
-			},
-			{
-				"Title": "Fractal weighted strength",
-				"Info": "Weight for octaves, higher values decrease impact of higher octaves. Keep input between 0.0 and 1.0 otherwise Noise output may be outside -1.0 and 1.0 range.",
-				"Type": "Editbox Float",
-				"DefaultState": 0.0
-			},
-			{
-				"Title": "Fractal PingPong strength",
-				"Info": "PingPong fractal type strength.",
-				"Type": "Editbox Float",
-				"DefaultState": 2.0
-			},
-
-			{
-				"Title": "Cellular",
-				"Info": "Cellular.",
-				"Type": "Group"
-			},
-			{
-				"Title": "Cellular distance function",
-				"Info": "Function used to create a cell for a given point. Only noise type cellular.",
-				"Type": "Combo Box",
-				"DefaultState": "EuclideanSq",
-				"Items": [
-					"Euclidean",
-					"EuclideanSq",
-					"Manhattan",
-					"Hybrid"
-				]
-			},
-			{
-				"Title": "Cellular return type",
-				"Info": "Controls what cellular function returns.",
-				"Type": "Combo Box",
-				"DefaultState": "Distance",
-				"Items": [
-					"CellValue",
-					"Distance",
-					"Distance2",
-					"Distance2Add",
-					"Distance2Sub",
-					"Distance2Mul",
-					"Distance2Div"
-				]
-			},
-			{
-				"Title": "Cellular jitter",
-				"Info": "Maximum distance cell point can move from grid position.",
-				"Type": "Editbox Float",
-				"DefaultState": 1.0
-			},
-
-			{
-				"Title": "Other",
-				"Info": "Other.",
-				"Type": "Group"
-			},
-			{
-				"Title": "Version",
-				"Info": "Noise object version.",
-				"Type": "Text",
-				"DefaultState": "Noise v1.0.1 (Extension: v21, SDK: DarkEdif v18 from commit b4c83c0186cafea5c7a09e091207e77ce5b6d677)"
-			}
-		]
-	}
+        "Properties": [
+            {
+                "Title": "Noise type",
+                "Info": "Noise algorythm used to generate noise values.",
+                "Type": "Combo Box",
+                "DefaultState": "OpenSimplex2",
+                "Items": [
+                    "OpenSimplex2",
+                    "OpenSimplex2S",
+                    "Cellular",
+                    "Perlin",
+                    "ValueCubic",
+                    "Value"
+                ]
+            },
+            {
+                "Title": "Noise seed",
+                "Info": "Noise seed, converted to a number using string to seed expression.",
+                "Type": "Editbox String",
+                "DefaultState": "1337"
+            },
+            {
+                "Title": "Noise frequency",
+                "Info": "Noise frequency controls how much noise is \"zoomed in\".",
+                "Type": "Editbox Float",
+                "DefaultState": 0.01
+            },
+            {
+                "Title": "Rotation type 3D",
+                "Info": "Might improve noise quality when sampling 3D noise as 2D planes.",
+                "Type": "Combo Box",
+                "DefaultState": "None",
+                "Items": [
+                    "None",
+                    "Improve XY planes",
+                    "Improve XZ planes"
+                ]
+            },
+            {
+                "Title": "Fractals",
+                "Info": "Fractals.",
+                "Type": "Group"
+            },
+            {
+                "Title": "Fractal type",
+                "Info": "Method for combining octaves into a fractal.",
+                "Type": "Combo Box",
+                "DefaultState": "None",
+                "Items": [
+                    "None",
+                    "FBm",
+                    "Rigid",
+                    "PingPong"
+                ]
+            },
+            {
+                "Title": "Fractal octaves",
+                "Info": "Number of noise layers used to create a fractal.",
+                "Type": "Editbox Number",
+                "DefaultState": 3
+            },
+            {
+                "Title": "Fractal lacunarity",
+                "Info": "Frequency multiplier for octaves.",
+                "Type": "Editbox Float",
+                "DefaultState": 2.0
+            },
+            {
+                "Title": "Fractal gain",
+                "Info": "The relative strength of noise from each layer when compared to the last.",
+                "Type": "Editbox Float",
+                "DefaultState": 0.5
+            },
+            {
+                "Title": "Fractal weighted strength",
+                "Info": "Weight for octaves, higher values decrease impact of higher octaves. Keep input between 0.0 and 1.0 otherwise Noise output may be outside -1.0 and 1.0 range.",
+                "Type": "Editbox Float",
+                "DefaultState": 0.0
+            },
+            {
+                "Title": "Fractal PingPong strength",
+                "Info": "PingPong fractal type strength.",
+                "Type": "Editbox Float",
+                "DefaultState": 2.0
+            },
+            {
+                "Title": "Cellular",
+                "Info": "Cellular.",
+                "Type": "Group"
+            },
+            {
+                "Title": "Cellular distance function",
+                "Info": "Function used to create a cell for a given point. Only noise type cellular.",
+                "Type": "Combo Box",
+                "DefaultState": "EuclideanSq",
+                "Items": [
+                    "Euclidean",
+                    "EuclideanSq",
+                    "Manhattan",
+                    "Hybrid"
+                ]
+            },
+            {
+                "Title": "Cellular return type",
+                "Info": "Controls what cellular function returns.",
+                "Type": "Combo Box",
+                "DefaultState": "Distance",
+                "Items": [
+                    "CellValue",
+                    "Distance",
+                    "Distance2",
+                    "Distance2Add",
+                    "Distance2Sub",
+                    "Distance2Mul",
+                    "Distance2Div"
+                ]
+            },
+            {
+                "Title": "Cellular jitter",
+                "Info": "Maximum distance cell point can move from grid position.",
+                "Type": "Editbox Float",
+                "DefaultState": 1.0
+            },
+            {
+                "Title": "Domain warp",
+                "Info": "todo",
+                "Type": "Group"
+            },
+            {
+                "Title": "Domain warp type",
+                "Info": "todo",
+                "Type": "Combo Box",
+                "DefaultState": "Disabled",
+                "Items": [
+                    "Disabled",
+                    "OpenSimplex2",
+                    "OpenSimplex2Reduced",
+                    "BasicGrid"
+                ]
+            },
+            {
+                "Title": "Domain warp amplitude",
+                "Info": "todo",
+                "Type": "Editbox Float",
+                "DefaultState": 1.0
+            },
+            {
+                "Title": "Domain warp seed",
+                "Info": "todo",
+                "Type": "Editbox String",
+                "DefaultState": "1337"
+            },
+            {
+                "Title": "Domain warp frequency",
+                "Info": "todo",
+                "Type": "Editbox Float",
+                "DefaultState": 0.01
+            },
+            {
+                "Title": "Domain warp rotation type 3D",
+                "Info": "Might improve noise quality when sampling 3D noise as 2D planes.",
+                "Type": "Combo Box",
+                "DefaultState": "None",
+                "Items": [
+                    "None",
+                    "Improve XY planes",
+                    "Improve XZ planes"
+                ]
+            },
+            {
+                "Title": "Domain warp fractals",
+                "Info": "Domain warp fractals.",
+                "Type": "Group"
+            },
+            {
+                "Title": "DW fractal type",
+                "Info": "todo",
+                "Type": "Combo Box",
+                "DefaultState": "None",
+                "Items": [
+                    "None",
+                    "Progressive",
+                    "Independent"
+                ]
+            },
+            {
+                "Title": "DW fractal octaves",
+                "Info": "todo",
+                "Type": "Editbox Number",
+                "DefaultState": 3
+            },
+            {
+                "Title": "DW fractal lacunarity",
+                "Info": "todo",
+                "Type": "Editbox Float",
+                "DefaultState": 2.0
+            },
+            {
+                "Title": "DW fractal gain",
+                "Info": "todo",
+                "Type": "Editbox Float",
+                "DefaultState": 0.5
+            },
+            {
+                "Title": "DW fractal weighted strength",
+                "Info": "todo",
+                "Type": "Editbox Float",
+                "DefaultState": 0.0
+            },
+            {
+                "Title": "Other",
+                "Info": "Other.",
+                "Type": "Group"
+            },
+            {
+                "Title": "Version",
+                "Info": "Noise object version.",
+                "Type": "Text",
+                "DefaultState": "Noise v1.0.1 (Extension: v21, SDK: DarkEdif v18 from commit b4c83c0186cafea5c7a09e091207e77ce5b6d677)"
+            }
+        ]
+    }
 }

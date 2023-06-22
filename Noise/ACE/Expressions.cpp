@@ -7,8 +7,8 @@
 
 
 
-int Extension::get_seed() {
-	return noise_seed;
+int Extension::current_noise_seed() {
+	return noise.seed;
 }
 
 int Extension::string_to_seed(const TCHAR* String) {
@@ -34,14 +34,24 @@ int Extension::string_to_seed(const TCHAR* String) {
 
 
 float Extension::get_noise3D(float x, float y, float z) {
+    if(warp.enabled) {
+        fnl_warp.DomainWarp(x, y, z);
+    }
 	return fnl_noise.GetNoise(x, y, z);
 }
 
 float Extension::get_noise2D(float x, float y) {
+    if(warp.enabled) {
+        fnl_warp.DomainWarp(x, y);
+    }
 	return fnl_noise.GetNoise(x, y);
 }
 
 float Extension::get_noise1D(float x) {
+    if(warp.enabled) {
+        float y = 0;
+        fnl_warp.DomainWarp(x, y);
+    }
 	return fnl_noise.GetNoise(x, 0.f);
 }
 
@@ -88,23 +98,45 @@ int Extension::always_6() {
 
 
 
-// Current selections
+// Current settings for noise
 int Extension::current_noise_type() {
-	return noise_type;
+	return noise.type;
 }
 
-int Extension::current_rotation_type_3d() {
-    return rotation_type_3d;
+int Extension::current_noise_rotation_type_3d() {
+    return noise.rotation_type_3d;
 }
 
-int Extension::current_fractal_type() {
-	return fractal_type;
+int Extension::current_noise_fractal_type() {
+	return noise.fractal_type;
 }
 
-int Extension::current_cellular_function() {
-	return cellular_function;
+int Extension::current_noise_cellular_function() {
+	return noise.cellular_function;
 }
 
-int Extension::current_cellular_return_type() {
-	return cellular_return_type;
+int Extension::current_noise_cellular_return_type() {
+	return noise.cellular_return_type;
+}
+
+
+// Current settings for domain warp
+int Extension::is_warp_enabled() {
+    return warp.enabled;
+}
+
+int Extension::current_warp_seed() {
+    return warp.seed;
+}
+
+int Extension::current_warp_type() {
+    return warp.type;
+}
+
+int Extension::current_warp_rotation_type_3d() {
+    return warp.rotation_type_3d;
+}
+
+int Extension::current_warp_fractal_type() {
+    return warp.fractal_type;
 }

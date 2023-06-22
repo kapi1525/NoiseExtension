@@ -38,40 +38,66 @@ public:
 
 
 	FastNoiseLite fnl_noise;        // Main FastNoiseLite instance for generating noise
-	// FastNoiseLite fnl_warp;      // Separate FastNoiseLite instance for domain warp
+	FastNoiseLite fnl_warp;         // Separate FastNoiseLite instance for domain warp
 
-	int noise_seed;
-	FastNoiseLite::NoiseType noise_type;
-	FastNoiseLite::RotationType3D rotation_type_3d;
-	FastNoiseLite::FractalType fractal_type;
-	FastNoiseLite::CellularDistanceFunction cellular_function;
-	FastNoiseLite::CellularReturnType cellular_return_type;
+    struct {
+        int seed;
+        FastNoiseLite::NoiseType type;
+        FastNoiseLite::RotationType3D rotation_type_3d;
+        FastNoiseLite::FractalType fractal_type;
+        FastNoiseLite::CellularDistanceFunction cellular_function;
+        FastNoiseLite::CellularReturnType cellular_return_type;
+    } noise;
+
+    struct {
+        bool enabled;
+        int seed;
+        FastNoiseLite::DomainWarpType type;
+        FastNoiseLite::RotationType3D rotation_type_3d;
+        FastNoiseLite::FractalType fractal_type;
+    } warp;
 
 
 	// Actions
-		void set_seed(int seed);
-
-		// Sets
+		// Noise settings
 		void set_noise_type(int type);
+
+		void set_noise_seed(int seed);
 		void set_noise_frequency(float frequency);
-        void set_rotation_type_3d(int type);
+        void set_noise_rotation_type_3d(int type);
 
-		void set_fractal_type(int type);
-		void set_fractal_octaves(int octaves);
-		void set_fractal_lacunarity(float lacunarity);
-		void set_fractal_gain(float gain);
-		void set_fractal_weighted(float weighted);
-		void set_fractal_pingpong(float pingpong);
+		void set_noise_fractal_type(int type);
+		void set_noise_fractal_octaves(int octaves);
+		void set_noise_fractal_lacunarity(float lacunarity);
+		void set_noise_fractal_gain(float gain);
+		void set_noise_fractal_weighted(float weighted);
+		void set_noise_fractal_pingpong(float pingpong);
 
-		void set_cellular_distance_function(int function);
-		void set_cellular_return_type(int return_type);
-		void set_cellular_jitter(float jitter);
+		void set_noise_cellular_distance_function(int function);
+		void set_noise_cellular_return_type(int return_type);
+		void set_noise_cellular_jitter(float jitter);
+
+        // Warp settings
+        void enable_warp();
+        void disable_warp();
+
+        void set_warp_type(int type);
+        void set_warp_amp(float amp);
+
+        void set_warp_seed(int seed);
+        void set_warp_frequency(float frequency);
+        void set_warp_rotation_type_3d(int type);
+
+		void set_warp_fractal_type(int type);
+		void set_warp_fractal_octaves(int octaves);
+		void set_warp_fractal_lacunarity(float lacunarity);
+		void set_warp_fractal_gain(float gain);
+		void set_warp_fractal_weighted(float weighted);
 
 	// Conditions
         // No conditions are here
 
 	// Expressions
-		int get_seed();
 		int string_to_seed(const TCHAR* string);
 
 		float get_noise3D(float x, float y, float z);
@@ -88,12 +114,21 @@ public:
         int always_5();
         int always_6();
 
-		// Current selections
+		// Current settings for noise
+		int current_noise_seed();
 		int current_noise_type();
-		int current_rotation_type_3d();
-		int current_fractal_type();
-		int current_cellular_function();
-		int current_cellular_return_type();
+		int current_noise_rotation_type_3d();
+		int current_noise_fractal_type();
+		int current_noise_cellular_function();
+		int current_noise_cellular_return_type();
+
+        // Current settings for domain warp
+        int is_warp_enabled();
+		int current_warp_seed();
+        int current_warp_type();
+		int current_warp_rotation_type_3d();
+		int current_warp_fractal_type();
+
 
 
 	// These are called if there's no function linked to an ID
