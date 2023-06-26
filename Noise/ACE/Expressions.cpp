@@ -48,11 +48,7 @@ float Extension::get_noise2D(float x, float y) {
 }
 
 float Extension::get_noise1D(float x) {
-    if(warp.enabled) {
-        float y = 0;
-        fnl_warp.DomainWarp(x, y);
-    }
-	return fnl_noise.GetNoise(x, 0.f);
+    return get_noise2D(x, 0.f);
 }
 
 float Extension::get_looping_noise1D(float x, float xoffset, float xsize) {
@@ -62,7 +58,7 @@ float Extension::get_looping_noise1D(float x, float xoffset, float xsize) {
 	float Angle = XPos * AngleStep;
 	Angle = Angle * PI / 180.f;
 
-	return fnl_noise.GetNoise((Radius * cos(Angle)), (Radius * sin(Angle)));
+    return get_noise2D((Radius * cos(Angle)), (Radius * sin(Angle)));
 }
 
 
