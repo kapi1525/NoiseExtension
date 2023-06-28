@@ -16,7 +16,8 @@
                 "MacBuild=0",
                 "_WIN32",
                 "UNICODE",
-                "_UNICODE"
+                "_UNICODE",
+                "HWABETA"
             ],
             "includePath": [
                 "Inc/**",

@@ -37,14 +37,14 @@ float Extension::get_noise3D(float x, float y, float z) {
     if(warp.enabled) {
         fnl_warp.DomainWarp(x, y, z);
     }
-	return fnl_noise.GetNoise(x, y, z);
+	return map_noise_value(fnl_noise.GetNoise(x, y, z));
 }
 
 float Extension::get_noise2D(float x, float y) {
     if(warp.enabled) {
         fnl_warp.DomainWarp(x, y);
     }
-	return fnl_noise.GetNoise(x, y);
+	return map_noise_value(fnl_noise.GetNoise(x, y));
 }
 
 float Extension::get_noise1D(float x) {

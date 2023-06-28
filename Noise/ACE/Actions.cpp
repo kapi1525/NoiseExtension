@@ -13,6 +13,15 @@ void Extension::set_noise_type(int type) {
 }
 
 
+void Extension::set_noise_upper_range(float range) {
+    noise.upper_range = range;
+}
+
+void Extension::set_noise_lower_range(float range) {
+    noise.lower_range = range;
+}
+
+
 void Extension::set_noise_seed(int seed) {
 	noise.seed = seed;
 	fnl_noise.SetSeed(noise.seed);

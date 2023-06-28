@@ -21,6 +21,8 @@ Extension::Extension(RuntimeFunctions & runFuncs, EDITDATA * edPtr, void * objCE
 	{
         // Noise settings
 		LinkAction(1, set_noise_type);
+		LinkAction(25, set_noise_upper_range);
+		LinkAction(26, set_noise_lower_range);
 
 		LinkAction(0, set_noise_seed);
 		LinkAction(2, set_noise_frequency);
@@ -181,6 +183,8 @@ Extension::Extension(RuntimeFunctions & runFuncs, EDITDATA * edPtr, void * objCE
 
 		set_noise_type(noise_type_ids.at(edPtr->Props.GetPropertyStr("Noise type")));
 
+        set_noise_upper_range(edPtr->Props.GetPropertyNum("Noise value upper range"));
+        set_noise_lower_range(edPtr->Props.GetPropertyNum("Noise value lower range"));
 
         set_noise_seed(string_to_seed(edPtr->Props.GetPropertyStr("Noise seed").c_str()));
 		set_noise_frequency(edPtr->Props.GetPropertyNum("Noise frequency"));
@@ -230,6 +234,11 @@ Extension::Extension(RuntimeFunctions & runFuncs, EDITDATA * edPtr, void * objCE
 Extension::~Extension() {
 }
 
+
+// Map noise value to range specified by user
+float Extension::map_noise_value(float value) {
+    return noise.lower_range + (noise.upper_range - noise.lower_range) * ((value - -1.f) / (1.f - -1.f));
+}
 
 
 REFLAG Extension::Handle() {

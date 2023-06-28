@@ -13,6 +13,8 @@
 
         "ActionMenu": [
             [ 1, "Set noise type" ],
+            [ 25, "Set noise upper range" ],
+            [ 26, "Set noise lower range" ],
             "---",
             [ 0, "Set noise seed" ],
             [ 2, "Set noise frequency" ],
@@ -273,6 +275,18 @@
                 "Parameters": [
                     [ "Float", "Domain warp fractal weighted strength" ]
                 ]
+            },
+            { //25
+                "Title": "Set noise upper range to %0",
+                "Parameters": [
+                    [ "Float", "uppper range" ]
+                ]
+            },
+            { //26
+                "Title": "Set noise lower range to %0",
+                "Parameters": [
+                    [ "Float", "lower range" ]
+                ]
             }
         ],
         "Conditions": [
@@ -475,6 +489,11 @@
 
         "Properties": [
             {
+                "Title": "Noise",
+                "Info": "TODO",
+                "Type": "Group"
+            },
+            {
                 "Title": "Noise type",
                 "Info": "Noise algorythm used to generate noise values.",
                 "Type": "Combo Box",
@@ -487,6 +506,18 @@
                     "ValueCubic",
                     "Value"
                 ]
+            },
+            {
+                "Title": "Noise value upper range",
+                "Info": "TODO",
+                "Type": "Editbox Float",
+                "DefaultState": 1.0
+            },
+            {
+                "Title": "Noise value lower range",
+                "Info": "TODO",
+                "Type": "Editbox Float",
+                "DefaultState": -1.0
             },
             {
                 "Title": "Noise seed",

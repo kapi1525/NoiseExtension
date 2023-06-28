@@ -40,8 +40,11 @@ public:
 	FastNoiseLite fnl_noise;        // Main FastNoiseLite instance for generating noise
 	FastNoiseLite fnl_warp;         // Separate FastNoiseLite instance for domain warp
 
+    // TODO: Add support for exporting and importing settings at runtime?
     struct {
         int seed;
+        float upper_range;
+        float lower_range;
         FastNoiseLite::NoiseType type;
         FastNoiseLite::RotationType3D rotation_type_3d;
         FastNoiseLite::FractalType fractal_type;
@@ -62,7 +65,10 @@ public:
 		// Noise settings
 		void set_noise_type(int type);
 
-		void set_noise_seed(int seed);
+        void set_noise_upper_range(float range);
+        void set_noise_lower_range(float range);
+
+        void set_noise_seed(int seed);
 		void set_noise_frequency(float frequency);
         void set_noise_rotation_type_3d(int type);
 
@@ -129,6 +135,8 @@ public:
 		int current_warp_rotation_type_3d();
 		int current_warp_fractal_type();
 
+
+    float map_noise_value(float value);
 
 
 	// These are called if there's no function linked to an ID
