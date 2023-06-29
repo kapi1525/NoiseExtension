@@ -181,6 +181,10 @@ goto :exit
         if %killfusion%==1 (
             echo Killing fusion...
             taskkill /F /IM "mmf2u.exe"
+            TASKLIST | FINDSTR /I "edrt.exe" > NUL
+            if not %ERRORLEVEL%==1 (
+                taskkill /F /IM "edrt.exe"
+            )
         )
 
         echo Waiting for Fusion to close...
