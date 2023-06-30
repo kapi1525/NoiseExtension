@@ -55,6 +55,8 @@ Extension::Extension(RuntimeFunctions & runFuncs, EDITDATA * edPtr, void * objCE
         LinkAction(22, set_warp_fractal_lacunarity);
         LinkAction(23, set_warp_fractal_gain);
         LinkAction(24, set_warp_fractal_weighted);
+
+		LinkAction(27, fill_surface_obj_with_noise);
 	}
 
 	// Conditions
@@ -124,6 +126,12 @@ Extension::Extension(RuntimeFunctions & runFuncs, EDITDATA * edPtr, void * objCE
         LinkExpression(40, current_warp_type);
         LinkExpression(41, current_warp_rotation_type_3d);
         LinkExpression(42, current_warp_fractal_type);
+
+        // Fill surface with noise flags
+        LinkExpression(43, default_flags);
+        LinkExpression(44, fill_red);
+        LinkExpression(45, fill_green);
+        LinkExpression(46, fill_blue);
 	}
 
 	// Properties

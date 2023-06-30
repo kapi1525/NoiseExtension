@@ -136,3 +136,21 @@ int Extension::current_warp_rotation_type_3d() {
 int Extension::current_warp_fractal_type() {
     return warp.fractal_type;
 }
+
+
+// Fill surface with noise flags
+int Extension::default_flags() {
+    return FillSurfaceFlags::DefaultFlags;
+}
+
+int Extension::fill_red() {
+    return FillSurfaceFlags::FillRed;
+}
+
+int Extension::fill_green() {
+    return FillSurfaceFlags::FillGreen;
+}
+
+int Extension::fill_blue() {
+    return FillSurfaceFlags::FillBlue;
+}

@@ -60,6 +60,8 @@ public:
         FastNoiseLite::FractalType fractal_type;
     } warp;
 
+    bool multithreading_enabled = true;
+
 
 	// Actions
 		// Noise settings
@@ -100,6 +102,10 @@ public:
 		void set_warp_fractal_gain(float gain);
 		void set_warp_fractal_weighted(float weighted);
 
+
+        void fill_surface_obj_with_noise(SURFACE* surface_obj, float xoffset, float yoffset, float zoffset, int flags);
+        void fill_buffer_with_noise(uint8_t* buf, int depth, int width, int height, float xoffset, float yoffset, float zoffset, int flags);
+
 	// Conditions
         // No conditions are here
 
@@ -134,6 +140,12 @@ public:
         int current_warp_type();
 		int current_warp_rotation_type_3d();
 		int current_warp_fractal_type();
+
+        // Fill surface with noise flags
+        int default_flags();
+        int fill_red();
+        int fill_green();
+        int fill_blue();
 
 
     float map_noise_value(float value);

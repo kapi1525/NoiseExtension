@@ -49,6 +49,8 @@
                 [ 23, "Set fractal gain" ],
                 [ 24, "Set fractal weighted strength" ]
             ],
+            "---",
+            [ 27, "Fill surface object image with noise" ],
             "---"
         ],
         "ConditionMenu": [
@@ -127,6 +129,15 @@
                 [ 40, "Current type" ],
                 [ 41, "Current rotation type 3D" ],
                 [ 42, "Current fractal type" ]
+            ],
+            "---",
+            [
+                "Fill surface object image flags",
+                [ 43, "Default flags" ],
+                [ 44, "Fill red" ],
+                [ 45, "Fill green" ],
+                [ 46, "Fill blue" ]
+                // [ 47, "Fill alpha" ]
             ],
             "---"
         ],
@@ -286,6 +297,16 @@
                 "Title": "Set noise lower range to %0",
                 "Parameters": [
                     [ "Float", "lower range" ]
+                ]
+            },
+            { //27
+                "Title": "Fill %0 selected image with noise, with xoffset %1, y %2, z %3 and %4 flags",
+                "Parameters": [
+                    [ "Object", "Surface object" ],
+                    [ "Float", "X offset (noise value)" ],
+                    [ "Float", "Y offset (noise value)" ],
+                    [ "Float", "Z offset (noise value)" ],
+                    [ "Integer", "Fill flags" ]
                 ]
             }
         ],
@@ -484,7 +505,27 @@
             { //42
                 "Title": "DWFractalType(",
                 "Returns": "Integer"
-            }
+            },
+            { //43
+                "Title": "DefaultFlags(",
+                "Returns": "Integer"
+            },
+            { //44
+                "Title": "FillRed(",
+                "Returns": "Integer"
+            },
+            { //45
+                "Title": "FillGreen(",
+                "Returns": "Integer"
+            },
+            { //46
+                "Title": "FillBlue(",
+                "Returns": "Integer"
+            },
+            // { //47
+            //     "Title": "FillAlpha(",
+            //     "Returns": "Integer"
+            // }
         ],
 
         "Properties": [

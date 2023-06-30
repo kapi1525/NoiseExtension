@@ -34,4 +34,5 @@ struct RUNDATA {
 };
 
 #include "FastNoiseLite.h"
+#include "SurfaceObject.hpp"
 #include "Extension.h"
