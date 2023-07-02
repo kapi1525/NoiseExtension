@@ -203,29 +203,8 @@ void Extension::fill_surface_obj_with_noise(SURFACE* surface_obj, float xoffset,
 
     // size_t bufsize = target_w * target_h * 3;      // In bytes, BGR layout, 1 pixel = 3bytes
     uint8_t* buf = temp->LockBuffer();
-    size_t threads = std::thread::hardware_concurrency();
 
-    // hardware_concurrency() can return 0
-    if(threads && multithreading_enabled) {
-        size_t lines_per_thread = (size_t)std::floor(target_h / threads);
-        std::vector<std::thread> thread_pool;
-
-        for (unsigned int i = 0; i < threads; i++) {
-            thread_pool.push_back(std::thread(&Extension::fill_buffer_with_noise, this, buf + (lines_per_thread * i * target_w * 3), 24, target_w, lines_per_thread, xoffset, yoffset + (lines_per_thread * i), zoffset, flags));
-        }
-
-        // If height is not even there can be some space left to fill
-        if(lines_per_thread * threads != target_h) {
-            fill_buffer_with_noise(buf + (lines_per_thread * threads * target_w * 3), 24, target_w, target_h - (lines_per_thread * threads), xoffset, yoffset + (lines_per_thread * threads), zoffset, flags);
-        }
-
-        for (auto &&thread : thread_pool) {
-            thread.join();
-        }
-
-    } else {
-        fill_buffer_with_noise(buf, 24, target_w, target_h, xoffset, yoffset, zoffset, flags);
-    }
+    fill_buffer_with_noise_multithreaded(buf, temp->GetDepth(), target_w, target_h, xoffset, yoffset, zoffset, flags);
 
     temp->UnlockBuffer(buf);    // you can pass a nullptr here and it will work!
     temp->Blit(*target);
@@ -236,9 +215,34 @@ void Extension::fill_surface_obj_with_noise(SURFACE* surface_obj, float xoffset,
     #endif
 }
 
+// Wraps fill_buffer_with_noise and handles multithreading
+void Extension::fill_buffer_with_noise_multithreaded(uint8_t* buf, int depth, int width, int height, float xoffset, float yoffset, float zoffset, int flags) {
+    size_t threads = std::thread::hardware_concurrency();
+
+    // hardware_concurrency() can return 0
+    if(threads && multithreading_enabled) {
+        size_t lines_per_thread = (size_t)std::floor(height / threads);
+        std::vector<std::thread> thread_pool;
+
+        for (unsigned int i = 0; i < threads; i++) {
+            thread_pool.push_back(std::thread(&Extension::fill_buffer_with_noise, this, buf + (lines_per_thread * i * width * 3), depth, width, lines_per_thread, xoffset, yoffset + (lines_per_thread * i), zoffset, flags));
+        }
+
+        // If height is not even there can be some space left to fill
+        if(lines_per_thread * threads != height) {
+            fill_buffer_with_noise(buf + (lines_per_thread * threads * width * 3), depth, width, height - (lines_per_thread * threads), xoffset, yoffset + (lines_per_thread * threads), zoffset, flags);
+        }
+
+        for (auto &&thread : thread_pool) {
+            thread.join();
+        }
+
+    } else {
+        fill_buffer_with_noise(buf, depth, width, height, xoffset, yoffset, zoffset, flags);
+    }
+}
 
 // Fill raw buffer with noise
-// TODO: fill_buffer_with_noise_multithreaded?
 // TODO: handle lower depths?
 void Extension::fill_buffer_with_noise(uint8_t* buf, int depth, int width, int height, float xoffset, float yoffset, float zoffset, int flags) {
     float noise_val;
