@@ -4,6 +4,12 @@
 
 #include "DarkEdif.h"
 
+#ifdef _DEBUG
+#define JSON_COMMENT_MACRO "(Debug) "
+#else
+#define JSON_COMMENT_MACRO ""
+#endif
+
 
 
 // EDITDATA with smart properties

@@ -6,7 +6,7 @@
             "Name": "Noise",
             "Author": "Kacper Bugla",
             "Copyright": "Copyright \u00A9 2023 Kacper Bugla",
-            "Comment": "Generates Noise using many different algorithms.",
+            "Comment": "%sGenerates Noise using many different algorithms.",
             "Help": "https://github.com/kapi1525/NoiseExtension/wiki",
             "URL": "https://github.com/kapi1525/NoiseExtension"
         },
