@@ -196,15 +196,13 @@ void Extension::fill_surface_obj_with_noise(SURFACE* surface_obj, float xoffset,
     int target_w, target_h, target_d;
     target->GetInfo(target_w, target_h, target_d);
 
-    // Force 24bit depth, less memory to copy == faster
-    // TODO: Handle lower depths?
+    // Surface object images always have 24bit depth so theres no need to handle anything else
     cSurface* temp = create_surface(target_w, target_h, 24, SurfaceType::Memory, (SurfaceDriver)target->GetDriver());
-    assert(temp->GetDepth() == 24 && "Depth should be 24");
 
     // size_t bufsize = target_w * target_h * 3;      // In bytes, BGR layout, 1 pixel = 3bytes
     uint8_t* buf = temp->LockBuffer();
 
-    fill_buffer_with_noise_multithreaded(buf, temp->GetDepth(), target_w, target_h, xoffset, yoffset, zoffset, flags);
+    fill_buffer_with_noise_multithreaded(buf, target_w, target_h, temp->GetDepth(), xoffset, yoffset, zoffset, flags);
 
     temp->UnlockBuffer(buf);    // you can pass a nullptr here and it will work!
     temp->Blit(*target);
@@ -215,22 +213,25 @@ void Extension::fill_surface_obj_with_noise(SURFACE* surface_obj, float xoffset,
     #endif
 }
 
+
 // Wraps fill_buffer_with_noise and handles multithreading
-void Extension::fill_buffer_with_noise_multithreaded(uint8_t* buf, int depth, int width, int height, float xoffset, float yoffset, float zoffset, int flags) {
+void Extension::fill_buffer_with_noise_multithreaded(uint8_t* buf, int width, int height, int depth, float xoffset, float yoffset, float zoffset, int flags) {
     size_t threads = std::thread::hardware_concurrency();
 
     // hardware_concurrency() can return 0
     if(threads && multithreading_enabled) {
         size_t lines_per_thread = (size_t)std::floor(height / threads);
         std::vector<std::thread> thread_pool;
+        thread_pool.reserve(threads);
 
+        // FIXME: Theres a memory leak somewhere here
         for (unsigned int i = 0; i < threads; i++) {
-            thread_pool.push_back(std::thread(&Extension::fill_buffer_with_noise, this, buf + (lines_per_thread * i * width * 3), depth, width, lines_per_thread, xoffset, yoffset + (lines_per_thread * i), zoffset, flags));
+            thread_pool.push_back(std::thread(&Extension::fill_buffer_with_noise, this, buf + (lines_per_thread * i * width * 3), width, lines_per_thread, depth, xoffset, yoffset + (lines_per_thread * i), zoffset, flags));
         }
 
         // If height is not even there can be some space left to fill
         if(lines_per_thread * threads != height) {
-            fill_buffer_with_noise(buf + (lines_per_thread * threads * width * 3), depth, width, height - (lines_per_thread * threads), xoffset, yoffset + (lines_per_thread * threads), zoffset, flags);
+            fill_buffer_with_noise(buf + (lines_per_thread * threads * width * 3), width, height - (lines_per_thread * threads), depth, xoffset, yoffset + (lines_per_thread * threads), zoffset, flags);
         }
 
         for (auto &&thread : thread_pool) {
@@ -238,42 +239,39 @@ void Extension::fill_buffer_with_noise_multithreaded(uint8_t* buf, int depth, in
         }
 
     } else {
-        fill_buffer_with_noise(buf, depth, width, height, xoffset, yoffset, zoffset, flags);
+        fill_buffer_with_noise(buf, width, height, depth, xoffset, yoffset, zoffset, flags);
     }
 }
 
+
+
 // Fill raw buffer with noise
-// TODO: handle lower depths?
-void Extension::fill_buffer_with_noise(uint8_t* buf, int depth, int width, int height, float xoffset, float yoffset, float zoffset, int flags) {
-    float noise_val;
+// surface object always uses 24bit depth so other depths are not supported now
+void Extension::fill_buffer_with_noise(uint8_t* buf, int width, int height, int depth, float xoffset, float yoffset, float zoffset, int flags) {
+    uint8_t noise_val;
     uint8_t r = 0;
     uint8_t g = 0;
     uint8_t b = 0;
     size_t buf_index;
 
-    // x + (y * (width + stride))
-    auto get_pixel_pos = [](int x, int y, int width, int depth) {
-        return (x + (y * (width))) * (depth / 8);
-    };
 
     for (int y = 0; y < height; y++) {
         for (int x = 0; x < width; x++) {
-            noise_val = get_noise3D(x + xoffset, y + yoffset, zoffset);
+            noise_val = (uint8_t)get_noise3D(x + xoffset, y + yoffset, zoffset);
 
-            // TODO: Constexpr?
             if(flags & FillRed) {
-                r = (int)noise_val;
+                r = noise_val;
             }
 
             if(flags & FillGreen) {
-                g = (int)noise_val;
+                g = noise_val;
             }
 
             if(flags & FillBlue) {
-                b = (int)noise_val;
+                b = noise_val;
             }
 
-            buf_index = get_pixel_pos(x, y, width, depth);
+            buf_index = (x + (y * width)) * 3;
 
             // BGR layout
             buf[buf_index + 0] = b;

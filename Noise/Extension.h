@@ -60,7 +60,7 @@ public:
         FastNoiseLite::FractalType fractal_type;
     } warp;
 
-    bool multithreading_enabled = true;
+    bool multithreading_enabled = false;
 
 
 	// Actions
@@ -102,10 +102,12 @@ public:
 		void set_warp_fractal_gain(float gain);
 		void set_warp_fractal_weighted(float weighted);
 
-
+        // Windows specific
         void fill_surface_obj_with_noise(SURFACE* surface_obj, float xoffset, float yoffset, float zoffset, int flags);
-        void fill_buffer_with_noise(uint8_t* buf, int depth, int width, int height, float xoffset, float yoffset, float zoffset, int flags);
-        void fill_buffer_with_noise_multithreaded(uint8_t* buf, int depth, int width, int height, float xoffset, float yoffset, float zoffset, int flags);
+
+        // Crossplatform but only used on windows
+        void fill_buffer_with_noise(uint8_t* buf, int width, int height, int depth, float xoffset, float yoffset, float zoffset, int flags);
+        void fill_buffer_with_noise_multithreaded(uint8_t* buf, int width, int height, int depth, float xoffset, float yoffset, float zoffset, int flags);
 
 	// Conditions
         // No conditions are here
