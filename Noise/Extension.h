@@ -60,7 +60,6 @@ public:
         FastNoiseLite::FractalType fractal_type;
     } warp;
 
-    bool multithreading_enabled = false;
 
 
 	// Actions
@@ -107,8 +106,7 @@ public:
 
         // Crossplatform but only used on windows
         void fill_buffer_with_noise(uint8_t* buf, int width, int height, int depth, float xoffset, float yoffset, float zoffset, int flags);
-        void fill_buffer_with_noise_multithreaded(uint8_t* buf, int width, int height, int depth, float xoffset, float yoffset, float zoffset, int flags);
-
+        
 	// Conditions
         // No conditions are here
 

@@ -202,7 +202,7 @@ void Extension::fill_surface_obj_with_noise(SURFACE* surface_obj, float xoffset,
     // size_t bufsize = target_w * target_h * 3;      // In bytes, BGR layout, 1 pixel = 3bytes
     uint8_t* buf = temp->LockBuffer();
 
-    fill_buffer_with_noise_multithreaded(buf, target_w, target_h, temp->GetDepth(), xoffset, yoffset, zoffset, flags);
+    fill_buffer_with_noise(buf, target_w, target_h, temp->GetDepth(), xoffset, yoffset, zoffset, flags);
 
     temp->UnlockBuffer(buf);    // you can pass a nullptr here and it will work!
     temp->Blit(*target);
@@ -214,34 +214,6 @@ void Extension::fill_surface_obj_with_noise(SURFACE* surface_obj, float xoffset,
 }
 
 
-// Wraps fill_buffer_with_noise and handles multithreading
-void Extension::fill_buffer_with_noise_multithreaded(uint8_t* buf, int width, int height, int depth, float xoffset, float yoffset, float zoffset, int flags) {
-    size_t threads = std::thread::hardware_concurrency();
-
-    // hardware_concurrency() can return 0
-    if(threads && multithreading_enabled) {
-        size_t lines_per_thread = (size_t)std::floor(height / threads);
-        std::vector<std::thread> thread_pool;
-        thread_pool.reserve(threads);
-
-        // FIXME: Theres a memory leak somewhere here
-        for (unsigned int i = 0; i < threads; i++) {
-            thread_pool.push_back(std::thread(&Extension::fill_buffer_with_noise, this, buf + (lines_per_thread * i * width * 3), width, lines_per_thread, depth, xoffset, yoffset + (lines_per_thread * i), zoffset, flags));
-        }
-
-        // If height is not even there can be some space left to fill
-        if(lines_per_thread * threads != height) {
-            fill_buffer_with_noise(buf + (lines_per_thread * threads * width * 3), width, height - (lines_per_thread * threads), depth, xoffset, yoffset + (lines_per_thread * threads), zoffset, flags);
-        }
-
-        for (auto &&thread : thread_pool) {
-            thread.join();
-        }
-
-    } else {
-        fill_buffer_with_noise(buf, width, height, depth, xoffset, yoffset, zoffset, flags);
-    }
-}
 
 
 
