@@ -154,3 +154,7 @@ int Extension::fill_green() {
 int Extension::fill_blue() {
     return FillSurfaceFlags::FillBlue;
 }
+
+int Extension::fill_alpha() {
+    return FillSurfaceFlags::FillAlpha;
+}

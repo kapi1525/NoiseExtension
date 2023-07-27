@@ -199,14 +199,27 @@ void Extension::fill_surface_obj_with_noise(SURFACE* surface_obj, float xoffset,
     // Surface object images always have 24bit depth so theres no need to handle anything else
     cSurface* temp = create_surface(target_w, target_h, 24, SurfaceType::Memory, (SurfaceDriver)target->GetDriver());
 
-    // size_t bufsize = target_w * target_h * 3;      // In bytes, BGR layout, 1 pixel = 3bytes
-    uint8_t* buf = temp->LockBuffer();
+    temp->CreateAlpha();
 
-    fill_buffer_with_noise(buf, target_w, target_h, temp->GetDepth(), xoffset, yoffset, zoffset, flags);
+    if(flags & FillRed || flags & FillGreen || flags & FillBlue) {
+        // size_t bufsize = target_w * target_h * 3;      // In bytes, BGR layout, 1 pixel = 3bytes
+        uint8_t* buf = temp->LockBuffer();
 
-    temp->UnlockBuffer(buf);    // you can pass a nullptr here and it will work!
+        fill_buffer_with_noise(buf, target_w, target_h, temp->GetDepth(), xoffset, yoffset, zoffset, flags);
+        temp->UnlockBuffer(buf);    // you can pass a nullptr here and it will work!
+    }
+
+    if(flags & FillAlpha) {
+        if(!temp->HasAlpha()) {
+            temp->CreateAlpha();
+        }
+
+        uint8_t* buf = temp->LockAlpha();
+        fill_alpha_buffer_with_noise(buf, target_w, target_h, xoffset, yoffset, zoffset, flags);
+        temp->UnlockAlpha();
+    }
+
     temp->Blit(*target);
-
     delete temp;
     surface_obj->rc.rcChanged = true;
 
@@ -220,12 +233,13 @@ void Extension::fill_surface_obj_with_noise(SURFACE* surface_obj, float xoffset,
 // Fill raw buffer with noise
 // surface object always uses 24bit depth so other depths are not supported now
 void Extension::fill_buffer_with_noise(uint8_t* buf, int width, int height, int depth, float xoffset, float yoffset, float zoffset, int flags) {
+    size_t buf_index;
     uint8_t noise_val;
     uint8_t r = 0;
     uint8_t g = 0;
     uint8_t b = 0;
-    size_t buf_index;
 
+    assert(depth == 24);
 
     for (int y = 0; y < height; y++) {
         for (int x = 0; x < width; x++) {
@@ -249,6 +263,27 @@ void Extension::fill_buffer_with_noise(uint8_t* buf, int width, int height, int 
             buf[buf_index + 0] = b;
             buf[buf_index + 1] = g;
             buf[buf_index + 2] = r;
+        }
+    }
+}
+
+void Extension::fill_alpha_buffer_with_noise(uint8_t* buf, int width, int height, float xoffset, float yoffset, float zoffset, int flags) {
+    size_t buf_index;
+    uint8_t noise_val;
+    uint8_t alpha = 0;
+
+    assert(flags & FillAlpha);
+
+    for (int y = 0; y < height; y++) {
+        for (int x = 0; x < width; x++) {
+            noise_val = (uint8_t)get_noise3D(x + xoffset, y + yoffset, zoffset);
+
+            alpha = noise_val;
+
+            // 1 byte = 1 pixel
+            buf_index = (x + (y * width));
+
+            buf[buf_index] = alpha;
         }
     }
 }

@@ -106,7 +106,8 @@ public:
 
         // Crossplatform but only used on windows
         void fill_buffer_with_noise(uint8_t* buf, int width, int height, int depth, float xoffset, float yoffset, float zoffset, int flags);
-        
+        void fill_alpha_buffer_with_noise(uint8_t* buf, int width, int height, float xoffset, float yoffset, float zoffset, int flags);
+
 	// Conditions
         // No conditions are here
 
@@ -147,6 +148,7 @@ public:
         int fill_red();
         int fill_green();
         int fill_blue();
+        int fill_alpha();
 
 
     float map_noise_value(float value);

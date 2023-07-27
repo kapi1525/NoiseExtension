@@ -8,7 +8,7 @@ enum FillSurfaceFlags {
     FillRed = 1<<0,
     FillGreen = 1<<1,
     FillBlue = 1<<2,
-    // FillAlpha = 1<<3,
+    FillAlpha = 1<<3,
     DefaultFlags = (FillRed | FillGreen | FillBlue),
 };
 

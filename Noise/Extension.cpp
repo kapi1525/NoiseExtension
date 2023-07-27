@@ -132,6 +132,7 @@ Extension::Extension(RuntimeFunctions & runFuncs, EDITDATA * edPtr, void * objCE
         LinkExpression(44, fill_red);
         LinkExpression(45, fill_green);
         LinkExpression(46, fill_blue);
+        LinkExpression(47, fill_alpha);
 	}
 
 	// Properties

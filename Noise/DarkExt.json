@@ -136,8 +136,8 @@
                 [ 43, "Default flags" ],
                 [ 44, "Fill red" ],
                 [ 45, "Fill green" ],
-                [ 46, "Fill blue" ]
-                // [ 47, "Fill alpha" ]
+                [ 46, "Fill blue" ],
+                [ 47, "Fill alpha" ]
             ],
             "---"
         ],
@@ -522,10 +522,10 @@
                 "Title": "FillBlue(",
                 "Returns": "Integer"
             },
-            // { //47
-            //     "Title": "FillAlpha(",
-            //     "Returns": "Integer"
-            // }
+            { //47
+                "Title": "FillAlpha(",
+                "Returns": "Integer"
+            }
         ],
 
         "Properties": [
