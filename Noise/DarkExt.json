@@ -281,24 +281,18 @@
                 ]
             },
             { //24
-                "Title": "Set domain warp fractal weighted strength to %0",
-                "Parameters": [
-                    [ "Float", "Domain warp fractal weighted strength" ]
-                ]
-            },
-            { //25
                 "Title": "Set noise upper range to %0",
                 "Parameters": [
                     [ "Float", "uppper range" ]
                 ]
             },
-            { //26
+            { //25
                 "Title": "Set noise lower range to %0",
                 "Parameters": [
                     [ "Float", "lower range" ]
                 ]
             },
-            { //27
+            { //26
                 "Title": "Fill %0 selected image with noise, with xoffset %1, y %2, z %3 and %4 flags",
                 "Parameters": [
                     [ "Object", "Surface object" ],
