@@ -13,8 +13,8 @@
 
         "ActionMenu": [
             [ 1, "Set noise type" ],
-            [ 25, "Set noise upper range" ],
-            [ 26, "Set noise lower range" ],
+            [ 24, "Set noise upper range" ],
+            [ 25, "Set noise lower range" ],
             "---",
             [ 0, "Set noise seed" ],
             [ 2, "Set noise frequency" ],
@@ -46,11 +46,10 @@
                 [ 20, "Set fractal type" ],
                 [ 21, "Set fractal octaves" ],
                 [ 22, "Set fractal lacunarity" ],
-                [ 23, "Set fractal gain" ],
-                [ 24, "Set fractal weighted strength" ]
+                [ 23, "Set fractal gain" ]
             ],
             "---",
-            [ 27, "Fill surface object image with noise" ],
+            [ 26, "Fill surface object image with noise" ],
             "---"
         ],
         "ConditionMenu": [
@@ -747,12 +746,6 @@
                 "Info": "todo",
                 "Type": "Editbox Float",
                 "DefaultState": 0.5
-            },
-            {
-                "Title": "DW fractal weighted strength",
-                "Info": "todo",
-                "Type": "Editbox Float",
-                "DefaultState": 0.0
             },
             {
                 "Title": "Other",
