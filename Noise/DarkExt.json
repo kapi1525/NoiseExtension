@@ -283,22 +283,22 @@
             { //24
                 "Title": "Set noise upper range to %0",
                 "Parameters": [
-                    [ "Float", "uppper range" ]
+                    [ "Float", "Uppper range" ]
                 ]
             },
             { //25
                 "Title": "Set noise lower range to %0",
                 "Parameters": [
-                    [ "Float", "lower range" ]
+                    [ "Float", "Lower range" ]
                 ]
             },
             { //26
                 "Title": "Fill %0 selected image with noise, with xoffset %1, y %2, z %3 and %4 flags",
                 "Parameters": [
                     [ "Object", "Surface object" ],
-                    [ "Float", "X offset (noise value)" ],
-                    [ "Float", "Y offset (noise value)" ],
-                    [ "Float", "Z offset (noise value)" ],
+                    [ "Float", "X offset (for generated noise)" ],
+                    [ "Float", "Y offset (for generated noise)" ],
+                    [ "Float", "Z offset (for generated noise)" ],
                     [ "Integer", "Fill flags" ]
                 ]
             }
@@ -524,7 +524,7 @@
         "Properties": [
             {
                 "Title": "Noise",
-                "Info": "TODO",
+                "Info": "Noise.",
                 "Type": "Group"
             },
             {
@@ -543,31 +543,31 @@
             },
             {
                 "Title": "Noise value upper range",
-                "Info": "TODO",
+                "Info": "Upper range for noise values.\n(Default: 1.0)",
                 "Type": "Editbox Float",
                 "DefaultState": 1.0
             },
             {
                 "Title": "Noise value lower range",
-                "Info": "TODO",
+                "Info": "Lower range for noise values.\n(Default: -1.0)",
                 "Type": "Editbox Float",
                 "DefaultState": -1.0
             },
             {
                 "Title": "Noise seed",
-                "Info": "Noise seed, converted to a number using string to seed expression.",
+                "Info": "Random generator seed used to generate noise, text will be converted to a number.\n(Default: \"1337\")",
                 "Type": "Editbox String",
                 "DefaultState": "1337"
             },
             {
                 "Title": "Noise frequency",
-                "Info": "Noise frequency controls how much noise is \"zoomed in\".",
+                "Info": "Noise frequency controls how much noise is \"zoomed in\".\n(Default: 0.01)",
                 "Type": "Editbox Float",
                 "DefaultState": 0.01
             },
             {
                 "Title": "Rotation type 3D",
-                "Info": "Might improve noise quality when sampling 3D noise as 2D planes.",
+                "Info": "Might improve noise quality when sampling 3D noise as 2D planes.\n(Default: \"None\")",
                 "Type": "Combo Box",
                 "DefaultState": "None",
                 "Items": [
@@ -583,7 +583,7 @@
             },
             {
                 "Title": "Fractal type",
-                "Info": "Method for combining octaves into a fractal.",
+                "Info": "Contols how diffrent noise layers (octaves) are combined into one, when \"None\" is selected theres only one octave.\n(Default: \"None\")",
                 "Type": "Combo Box",
                 "DefaultState": "None",
                 "Items": [
@@ -595,31 +595,31 @@
             },
             {
                 "Title": "Fractal octaves",
-                "Info": "Number of noise layers used to create a fractal.",
+                "Info": "Number of noise layers (ocataves) used to create a fractal.\n(Default: 3)",
                 "Type": "Editbox Number",
                 "DefaultState": 3
             },
             {
                 "Title": "Fractal lacunarity",
-                "Info": "Frequency multiplier for octaves.",
+                "Info": "Frequency multiplier between noise layers (octaves)\n(Default: 2.0).",
                 "Type": "Editbox Float",
                 "DefaultState": 2.0
             },
             {
                 "Title": "Fractal gain",
-                "Info": "The relative strength of noise from each layer when compared to the last.",
+                "Info": "The relative strength of noise from each layer when compared to the last.\n(Default: 0.5)",
                 "Type": "Editbox Float",
                 "DefaultState": 0.5
             },
             {
                 "Title": "Fractal weighted strength",
-                "Info": "Weight for octaves, higher values decrease impact of higher octaves. Keep input between 0.0 and 1.0 otherwise Noise output may be outside -1.0 and 1.0 range.",
+                "Info": "Weight for octaves, higher values decrease impact of higher octaves. Keep between 0.0 and 1.0 otherwise Noise output may be outside specified range.\n(Default: 0.0)",
                 "Type": "Editbox Float",
                 "DefaultState": 0.0
             },
             {
                 "Title": "Fractal PingPong strength",
-                "Info": "PingPong fractal type strength.",
+                "Info": "PingPong fractal type strength.\n(Default: 2.0)",
                 "Type": "Editbox Float",
                 "DefaultState": 2.0
             },
@@ -630,7 +630,7 @@
             },
             {
                 "Title": "Cellular distance function",
-                "Info": "Function used to create a cell for a given point. Only noise type cellular.",
+                "Info": "Function used to create a cell for a given point. Only noise type cellular.\n(Default: \"EuclideanSq\")",
                 "Type": "Combo Box",
                 "DefaultState": "EuclideanSq",
                 "Items": [
@@ -642,7 +642,7 @@
             },
             {
                 "Title": "Cellular return type",
-                "Info": "Controls what cellular function returns.",
+                "Info": "What value should cellular function return.\n(Default: \"Distance\")",
                 "Type": "Combo Box",
                 "DefaultState": "Distance",
                 "Items": [
@@ -657,18 +657,18 @@
             },
             {
                 "Title": "Cellular jitter",
-                "Info": "Maximum distance cell point can move from grid position.",
+                "Info": "Maximum distance cell point can move from grid position.\n(Default: 1.0)",
                 "Type": "Editbox Float",
                 "DefaultState": 1.0
             },
             {
                 "Title": "Domain warp",
-                "Info": "todo",
+                "Info": "Domain warp.",
                 "Type": "Group"
             },
             {
                 "Title": "Domain warp type",
-                "Info": "todo",
+                "Info": "Algorythm for generating noise thats used to warp returned noise values.\n(Default: \"Disabled\")",
                 "Type": "Combo Box",
                 "DefaultState": "Disabled",
                 "Items": [
@@ -680,25 +680,25 @@
             },
             {
                 "Title": "Domain warp amplitude",
-                "Info": "todo",
+                "Info": "Maximum warp distance.\n(Default: 1.0)",
                 "Type": "Editbox Float",
                 "DefaultState": 1.0
             },
             {
                 "Title": "Domain warp seed",
-                "Info": "todo",
+                "Info": "Random generator seed used to warp noise, text will be converted to a number.\n(Default: \"1337\")",
                 "Type": "Editbox String",
                 "DefaultState": "1337"
             },
             {
                 "Title": "Domain warp frequency",
-                "Info": "todo",
+                "Info": "Frequency for domain warp.\n(Default: 0.01)",
                 "Type": "Editbox Float",
                 "DefaultState": 0.01
             },
             {
                 "Title": "Domain warp rotation type 3D",
-                "Info": "Might improve noise quality when sampling 3D noise as 2D planes.",
+                "Info": "Might improve noise quality when sampling 3D noise as 2D planes.\n(Default: \"None\")",
                 "Type": "Combo Box",
                 "DefaultState": "None",
                 "Items": [
@@ -714,7 +714,7 @@
             },
             {
                 "Title": "DW fractal type",
-                "Info": "todo",
+                "Info": "Contols how diffrent noise layers (octaves) are combined into one, when \"None\" is selected theres only one octave.\n(Default: \"None\")",
                 "Type": "Combo Box",
                 "DefaultState": "None",
                 "Items": [
@@ -725,19 +725,19 @@
             },
             {
                 "Title": "DW fractal octaves",
-                "Info": "todo",
+                "Info": "Number of noise layers (ocataves) used to create a fractal.\n(Default: 3)",
                 "Type": "Editbox Number",
                 "DefaultState": 3
             },
             {
                 "Title": "DW fractal lacunarity",
-                "Info": "todo",
+                "Info": "Frequency multiplier between noise layers (octaves)\n(Default: 2.0).",
                 "Type": "Editbox Float",
                 "DefaultState": 2.0
             },
             {
                 "Title": "DW fractal gain",
-                "Info": "todo",
+                "Info": "The relative strength of noise from each layer when compared to the last.\n(Default: 0.5)",
                 "Type": "Editbox Float",
                 "DefaultState": 0.5
             },
