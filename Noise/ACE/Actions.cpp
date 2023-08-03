@@ -163,10 +163,6 @@ void Extension::set_warp_fractal_gain(float gain) {
     fnl_warp.SetFractalGain(gain);
 }
 
-void Extension::set_warp_fractal_weighted(float weighted) {
-    fnl_warp.SetFractalWeightedStrength(weighted);
-}
-
 
 #ifdef _WIN32
 

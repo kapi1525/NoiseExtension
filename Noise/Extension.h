@@ -99,7 +99,6 @@ public:
 		void set_warp_fractal_octaves(int octaves);
 		void set_warp_fractal_lacunarity(float lacunarity);
 		void set_warp_fractal_gain(float gain);
-		void set_warp_fractal_weighted(float weighted);
 
         // Windows specific
         void fill_surface_obj_with_noise(SURFACE* surface_obj, float xoffset, float yoffset, float zoffset, int flags);

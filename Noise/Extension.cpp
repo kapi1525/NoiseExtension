@@ -21,8 +21,8 @@ Extension::Extension(RuntimeFunctions & runFuncs, EDITDATA * edPtr, void * objCE
 	{
         // Noise settings
 		LinkAction(1, set_noise_type);
-		LinkAction(25, set_noise_upper_range);
-		LinkAction(26, set_noise_lower_range);
+		LinkAction(24, set_noise_upper_range);
+		LinkAction(25, set_noise_lower_range);
 
 		LinkAction(0, set_noise_seed);
 		LinkAction(2, set_noise_frequency);
@@ -54,9 +54,8 @@ Extension::Extension(RuntimeFunctions & runFuncs, EDITDATA * edPtr, void * objCE
         LinkAction(21, set_warp_fractal_octaves);
         LinkAction(22, set_warp_fractal_lacunarity);
         LinkAction(23, set_warp_fractal_gain);
-        LinkAction(24, set_warp_fractal_weighted);
 
-		LinkAction(27, fill_surface_obj_with_noise);
+		LinkAction(26, fill_surface_obj_with_noise);
 	}
 
 	// Conditions
@@ -233,7 +232,6 @@ Extension::Extension(RuntimeFunctions & runFuncs, EDITDATA * edPtr, void * objCE
 		set_warp_fractal_octaves((int)edPtr->Props.GetPropertyNum("DW fractal octaves"));
 		set_warp_fractal_lacunarity(edPtr->Props.GetPropertyNum("DW fractal lacunarity"));
 		set_warp_fractal_gain(edPtr->Props.GetPropertyNum("DW fractal gain"));
-		set_warp_fractal_weighted(edPtr->Props.GetPropertyNum("DW fractal weighted strength"));
     }
     catch(std::out_of_range x) {
         DarkEdif::MsgBox::Error(_T("Corrupted properties"), _T("Noise properties may be corrupted.\n%s."), DarkEdif::UTF8ToTString(x.what()).c_str());
