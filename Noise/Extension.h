@@ -148,6 +148,7 @@ public:
         int fill_green();
         int fill_blue();
         int fill_alpha();
+        int only_2d();
 
 
     float map_noise_value(float value);

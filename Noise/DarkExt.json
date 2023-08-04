@@ -136,7 +136,8 @@
                 [ 44, "Fill red" ],
                 [ 45, "Fill green" ],
                 [ 46, "Fill blue" ],
-                [ 47, "Fill alpha" ]
+                [ 47, "Fill alpha" ],
+                [ 48, "Only 2D" ]
             ],
             "---"
         ],
@@ -517,6 +518,10 @@
             },
             { //47
                 "Title": "FillAlpha(",
+                "Returns": "Integer"
+            },
+            { //48
+                "Title": "Only2D(",
                 "Returns": "Integer"
             }
         ],

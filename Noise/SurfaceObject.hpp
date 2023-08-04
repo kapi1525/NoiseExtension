@@ -9,12 +9,14 @@ enum FillSurfaceFlags {
     FillGreen = 1<<1,
     FillBlue = 1<<2,
     FillAlpha = 1<<3,
+    // Use GetNoise2D instead of GetNoise3D, z offset will be ignored
+    Only2D = 1<<4,
     DefaultFlags = (FillRed | FillGreen | FillBlue),
 };
 
 
 // Surface object Identifier
-static const int SurfaceID (('S'<<24)|('U'<<16)|('R'<<8)|('F'));
+static const uint32_t SurfaceID (('S'<<24)|('U'<<16)|('R'<<8)|('F'));
 
 
 // Surface object was never ported to other platforms (except paid html5 port)

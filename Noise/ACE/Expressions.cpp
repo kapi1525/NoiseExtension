@@ -158,3 +158,7 @@ int Extension::fill_blue() {
 int Extension::fill_alpha() {
     return FillSurfaceFlags::FillAlpha;
 }
+
+int Extension::only_2d() {
+    return FillSurfaceFlags::Only2D;
+}

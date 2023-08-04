@@ -239,7 +239,11 @@ void Extension::fill_buffer_with_noise(uint8_t* buf, int width, int height, int 
 
     for (int y = 0; y < height; y++) {
         for (int x = 0; x < width; x++) {
-            noise_val = (uint8_t)get_noise3D(x + xoffset, y + yoffset, zoffset);
+            if(flags & Only2D) {
+                noise_val = (uint8_t)get_noise2D(x + xoffset, y + yoffset);
+            } else {
+                noise_val = (uint8_t)get_noise3D(x + xoffset, y + yoffset, zoffset);
+            }
 
             if(flags & FillRed) {
                 r = noise_val;
