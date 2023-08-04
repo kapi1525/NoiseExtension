@@ -195,8 +195,6 @@ void Extension::fill_surface_obj_with_noise(SURFACE* surface_obj, float xoffset,
     // Surface object images always have 24bit depth so theres no need to handle anything else
     cSurface* temp = create_surface(target_w, target_h, 24, SurfaceType::Memory, (SurfaceDriver)target->GetDriver());
 
-    temp->CreateAlpha();
-
     if(flags & FillRed || flags & FillGreen || flags & FillBlue) {
         // size_t bufsize = target_w * target_h * 3;      // In bytes, BGR layout, 1 pixel = 3bytes
         uint8_t* buf = temp->LockBuffer();
