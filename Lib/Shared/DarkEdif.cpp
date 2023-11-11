@@ -510,6 +510,12 @@ void DarkEdif::Properties::Internal_PropChange(mv* mV, EDITDATA*& edPtr, unsigne
 {
 	const char* curTypeStr = CurLang["Properties"][PropID]["Type"];
 	Data* oldPropValue = edPtr->Props.Internal_DataAt(PropID);
+	if (!oldPropValue)
+	{
+		MsgBox::Error(_T("DarkEdif property error"), _T("Couldn't find property %s (type %hs), failed to edit it."),
+			UTF8ToTString((const char*)CurLang["Properties"][PropID]["Title"]).c_str(), curTypeStr);
+		return;
+	}
 	bool rearrangementRequired = false;
 	const size_t oldPropValueSize = oldPropValue->ReadPropValueSize();
 
@@ -655,7 +661,28 @@ int DarkEdif::DLL::DLL_CreateObject(mv * mV, LevelObject * loPtr, EDITDATA * edP
 			err = ENOMEM;
 	}
 	else
-		err = memcpy_s(fusionEdPtr, fusionEdPtr->eHeader.extSize, gblEdPtr, numBytes);
+	{
+		// Copy out any extra EDITDATA variables between eHeader and Props
+		size_t extraDataSize = ((char*)&edPtr->Props) - (((char*)&edPtr->eHeader) + sizeof(edPtr->eHeader));
+		char* extraData = NULL;
+		if (extraDataSize > 0)
+		{
+			extraData = (char*)malloc(extraDataSize);
+			err = extraData ? memcpy_s(extraData, extraDataSize, ((char*)&edPtr->eHeader) + sizeof(edPtr->eHeader), extraDataSize) : ENOMEM;
+		}
+
+		if (err == 0)
+			err = memcpy_s(fusionEdPtr, fusionEdPtr->eHeader.extSize, gblEdPtr, numBytes);
+
+		// Copy back extra EDITDATA variables
+		if (err == 0 && extraData)
+		{
+			err = memcpy_s(((char *)fusionEdPtr)+sizeof(fusionEdPtr->eHeader),
+				fusionEdPtr->eHeader.extSize - sizeof(fusionEdPtr->eHeader),
+				extraData, extraDataSize);
+			free(extraData);
+		}
+	}
 	GlobalUnlock(gblPtr);
 	GlobalFree(gblPtr);
 
@@ -738,11 +765,11 @@ Prop * DarkEdif::Properties::GetProperty(size_t IDParam)
 				"Characters will be replaced with filler."), std::string((const char*)Current->ReadPropValue(), Current->ReadPropValueSize()).c_str());
 		}
 	}
-	else if (!_stricmp(curStr, "Editbox Number") || !_stricmp(curStr, "Edit Spin") || !_stricmp(curStr, "Edit Slider"))
+	else if (!_stricmp(curStr, "Editbox Number") || !_stricmp(curStr, "Edit Spin") || !_stricmp(curStr, "Edit Slider") || !_stricmp(curStr, "Color") || !_stricmp(curStr, "Edit direction"))
 		ret = new Prop_SInt(*(const int *)Current->ReadPropValue());
 	else if (!_stricmp(curStr, "Editbox Float") || !_stricmp(curStr, "Edit spin float")) {
 		ret = new Prop_Float(*(const float *)Current->ReadPropValue());
-    }
+	}
 	else if (!_strnicmp(curStr, "Combo Box", sizeof("Combo Box") - 1))
 	{
 		// Combo box is stored as its item text, so items can be altered between versions.
@@ -1478,8 +1505,8 @@ struct Properties::JSONPropertyReader : Properties::PropertyReader
 		case IDs::PROPTYPE_GROUP:
 		{
 			// No data for these. We store just metadata so getting property by index has consistent indexes
-			DebugProp_OutputString(_T("JSDNPropertyReader: Got static type %i (%hs) for property title %hs, ID %zu. Storing just metadata.\n"),
-				propTypeID, Edif::Properties::Names[propTypeID], title.c_str(), id);
+			DebugProp_OutputString(_T("JSDNPropertyReader: Got static type %i (%hs) for property title %s, ID %zu. Storing just metadata.\n"),
+				propTypeID, Edif::Properties::Names[propTypeID], UTF8ToTString(title).c_str(), id);
 			return convRet->Return_OK(nullptr, 0U);
 		}
 		case IDs::PROPTYPE_EDIT_STRING:
@@ -1493,8 +1520,8 @@ struct Properties::JSONPropertyReader : Properties::PropertyReader
 			if (sizeOfStr == maxSize)
 			{
 				// string went past end of properties.
-				DebugProp_OutputString(_T("JSONPropertyReader: Couldn't find end of string for property %hs, ID %zu (language %s). Will "
-					"delegate this property and any further properties."), title.c_str(), id, DarkEdif::JSON::LanguageName());
+				DebugProp_OutputString(_T("JSONPropertyReader: Couldn't find end of string for property %s, ID %zu (language %s). Will "
+					"delegate this property and any further properties."), UTF8ToTString(title).c_str(), id, DarkEdif::JSON::LanguageName());
 				return Abort(convRet);
 			}
 
@@ -1516,7 +1543,7 @@ struct Properties::JSONPropertyReader : Properties::PropertyReader
 			const json_value& itemsJSON = prop["Items"];
 			if (itemsJSON.type != json_array)
 			{
-				DebugProp_OutputString(_T("JSONPropertyReader: Can't find Items for JSON Item %s, ID %zu, language %s. Passing onto next converter."),
+				DebugProp_OutputString(_T("JSONPropertyReader: Can't find Items for JSON item %s, ID %zu, language %s. Passing onto next converter."),
 					UTF8ToTString(title).c_str(), id, DarkEdif::JSON::LanguageName());
 				return convRet->Return_Pass(); // Item ID no longer exists.
 			}
@@ -1526,8 +1553,8 @@ struct Properties::JSONPropertyReader : Properties::PropertyReader
 			if (sizeOfStr == maxSize)
 			{
 				// string went past end of properties.
-				DebugProp_OutputString(_T("JSONPropertyReader: Couldn't find end of string for JSON item %hs, ID %zu, language %s. Will "
-					"pass on this property and any further properties."), title.c_str(), id, DarkEdif::JSON::LanguageName());
+				DebugProp_OutputString(_T("JSONPropertyReader: Couldn't find end of string for JSON item %s, ID %zu, language %s. Will "
+					"pass on this property and any further properties."), UTF8ToTString(title).c_str(), id, DarkEdif::JSON::LanguageName());
 				return Abort(convRet);
 			}
 
@@ -1541,8 +1568,8 @@ struct Properties::JSONPropertyReader : Properties::PropertyReader
 		{
 			if (prop["DefaultState"].type != json_array || prop["DefaultState"].u.array.length != 2)
 			{
-				DebugProp_OutputString(_T("JSONPropertyReader: Couldn't read default state for JSON item %hs, ID %zu, language %s. Erroring."),
-					title, id, DarkEdif::JSON::LanguageName());
+				DebugProp_OutputString(_T("JSONPropertyReader: Couldn't read default state for JSON item %s, ID %zu, language %s. Erroring."),
+					UTF8ToTString(title).c_str(), id, DarkEdif::JSON::LanguageName());
 				return Abort(convRet);
 			}
 
@@ -1565,23 +1592,26 @@ struct Properties::JSONPropertyReader : Properties::PropertyReader
 			if (prop["DefaultState"].type != json_integer)
 			{
 				// Wrong data type for this property.
-				return convRet->Return_Error(_T("JSONPropertyReader: JSON item %hs, ID %zu, language %s has no default value."),
-					title, id, DarkEdif::JSON::LanguageName());
+				return convRet->Return_Error(_T("JSONPropertyReader: JSON item %s, ID %zu, language %s has no default value."),
+					UTF8ToTString(title).c_str(), id, DarkEdif::JSON::LanguageName());
 			}
 
 			// JSON stores integers as long long (64-bit signed), but Fusion only allows 32-bit (signed).
 			std::int64_t intDataAsLong = prop["DefaultState"].u.integer;
 			if (intDataAsLong > INT32_MAX || intDataAsLong < INT32_MIN)
 			{
-				return convRet->Return_Error(_T("JSONPropertyReader: JSON item %hs, ID %zu, language %s has default value that can't be stored in 32-bit int (value is %lld)."),
-					title, id, DarkEdif::JSON::LanguageName(), intDataAsLong);
+				return convRet->Return_Error(_T("JSONPropertyReader: JSON item %s, ID %zu, language %s has default value that can't be stored in 32-bit int (value is %lld)."),
+					UTF8ToTString(title).c_str(), id, DarkEdif::JSON::LanguageName(), intDataAsLong);
 			}
 
 			// convState->resetPropertiesStream << title << " = " << intDataAsLong << "\n";
 			convState->resetPropertiesStream << title << '\n';
 			++convState->numPropsReset;
 
-			static int intData2 = (int)intDataAsLong;
+			static int intData2;
+            intData2 = (int)intDataAsLong;
+            
+            DarkEdif::MsgBox::Info(_T("."), _T("%i - %s"), intData2, DarkEdif::UTF8ToTString(title).c_str());
 			return convRet->Return_OK(&intData2, sizeof(int));
 		}
 		case IDs::PROPTYPE_EDIT_FLOAT:
@@ -1590,12 +1620,12 @@ struct Properties::JSONPropertyReader : Properties::PropertyReader
 			if (prop["DefaultState"].type != json_double)
 			{
 				// Wrong data type for this property.
-				return convRet->Return_Error(_T("JSONPropertyReader: JSON item %hs, ID %zu, language %s has no default value."),
-					title, id, DarkEdif::JSON::LanguageName());
+				return convRet->Return_Error(_T("JSONPropertyReader: JSON item %s, ID %zu, language %s has no default value."),
+					UTF8ToTString(title).c_str(), id, DarkEdif::JSON::LanguageName());
 			}
 
 			static float f;
-            f = (float)prop["DefaultState"].u.dbl;
+			f = (float)prop["DefaultState"].u.dbl;
 
 			// convState->resetPropertiesStream << title << " = " << std::setprecision(3) << f << "\n";
 			convState->resetPropertiesStream << title << "\n";
@@ -1609,13 +1639,13 @@ struct Properties::JSONPropertyReader : Properties::PropertyReader
 		{
 			if (propTypeID >= IDs::PROPTYPE_CUSTOM && propTypeID <= IDs::PROPTYPE_CUSTOM + 9)
 			{
-				DebugProp_OutputString(_T("JSONPropertyReader: Custom property name %hs, ID %zu, language %s, type ID %d. Passing on, hopefully to user converter.\n"),
-					title.c_str(), id, DarkEdif::JSON::LanguageName(), propTypeID);
+				DebugProp_OutputString(_T("JSONPropertyReader: Custom property name %s, ID %zu, language %s, type ID %d. Passing on, hopefully to user converter.\n"),
+					UTF8ToTString(title).c_str(), id, DarkEdif::JSON::LanguageName(), propTypeID);
 				return convRet->Return_Pass();
 			}
 
-			DebugProp_OutputString(_T("JSONPropertyReader: Property ID %zu, name %hs, language %s, type ID %u. Delegating.\n"),
-				id, title.c_str(), DarkEdif::JSON::LanguageName(), propTypeID);
+			DebugProp_OutputString(_T("JSONPropertyReader: Property ID %zu, name %s, language %s, type ID %u. Delegating.\n"),
+				id, UTF8ToTString(title).c_str(), DarkEdif::JSON::LanguageName(), propTypeID);
 			return convRet->Return_Pass();
 		}
 		}

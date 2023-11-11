@@ -1,7 +1,7 @@
 // MIT License
 //
-// Copyright(c) 2020 Jordan Peck (jordan.me2@gmail.com)
-// Copyright(c) 2020 Contributors
+// Copyright(c) 2023 Jordan Peck (jordan.me2@gmail.com)
+// Copyright(c) 2023 Contributors
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
@@ -44,8 +44,8 @@
 //       ....',;:codxkO000OOxdoc:;,''',,,;;;;,''.......',,;:clodkO00000Okxolc::;,,''..',;:ldxOKXNWWWNNK0OkkkkkkkkkkkxxddooooodxxkOOOOO000
 //       ....',;;clodxkkOOOkkdolc:;,,,,,,,,'..........,;:clodxkO0KKXKK0Okxdolcc::;;,,,;;:codkO0XXNNNNXKK0OOOOOkkkkxxdoollloodxkO0KKKXXXXX
 //
-// VERSION: 1.0.1
-// https://github.com/Auburn/FastNoise
+// VERSION: 1.1.0
+// https://github.com/Auburn/FastNoiseLite
 
 #ifndef FASTNOISELITE_H
 #define FASTNOISELITE_H
@@ -189,7 +189,7 @@ public:
     void SetFractalType(FractalType fractalType) { mFractalType = fractalType; }
 
     /// <summary>
-    /// Sets octave count for all fractal noise types 
+    /// Sets octave count for all fractal noise types
     /// </summary>
     /// <remarks>
     /// Default: 3
@@ -260,7 +260,7 @@ public:
     /// <remarks>
     /// Default: 1.0
     /// Note: Setting this higher than 1 will cause artifacts
-    /// </remarks> 
+    /// </remarks>
     void SetCellularJitter(float cellularJitter) { mCellularJitterModifier = cellularJitter; }
 
 
@@ -931,7 +931,7 @@ private:
     }
 
 
-    // Fractal PingPong 
+    // Fractal PingPong
 
     template <typename FNfloat>
     float GenFractalPingPong(FNfloat x, FNfloat y) const

@@ -297,4 +297,33 @@ BOOL FusionAPI IsPropEnabled(mv * mV, EDITDATA * edPtr, unsigned int PropID)
 	// _tfopen(manifestPath.c_str(), _T("ab"))
 	// and you're free to edit the manifest
 }*/
+
+
+// BUILDTYPE enum from standard sdk
+// enum class BuildType {
+// 	Html5 = 23,         // Not used?
+// 	Html5Devel = 27,
+// 	Html5Final
+// };
+
+// // :)
+// // Reverse engineered
+// // times - how many times was this function called during the build process
+// void FusionAPI PrepareHtml5Build(EDITDATA* editdata, mv* mV, int times, BuildType build_type, void* unused/*?*/, LPCTSTR index_page, LPCTSTR src_dir, LPCTSTR media_dir, LPCTSTR runtime_dir, LPCTSTR src_name, LPCTSTR media_name, LPCTSTR project_name) {
+// #pragma DllExportHint
+//     if(times > 0) {
+//         return;
+//     }
+
+//     std::tstring file = runtime_dir;
+//     file += _T("FastNoiseLite.js");
+
+//     std::tstring target = src_dir;
+//     target += _T("FastNoiseLite.js");
+
+//     if(FAILED(CopyFile(file.c_str(), target.c_str(), false))) {
+//         DarkEdif::MsgBox::Error(_T(""), _T("Something went wrong!"));
+//     }
+// }
+
 #endif // EditorBuild
