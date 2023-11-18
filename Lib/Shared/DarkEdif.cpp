@@ -1611,7 +1611,6 @@ struct Properties::JSONPropertyReader : Properties::PropertyReader
 			static int intData2;
             intData2 = (int)intDataAsLong;
             
-            DarkEdif::MsgBox::Info(_T("."), _T("%i - %s"), intData2, DarkEdif::UTF8ToTString(title).c_str());
 			return convRet->Return_OK(&intData2, sizeof(int));
 		}
 		case IDs::PROPTYPE_EDIT_FLOAT:
