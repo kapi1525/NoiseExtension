@@ -16,3 +16,6 @@ nextbuild.bat
 
 Examples/Noise/*.exe
 Examples/Noise/*.apk
+
+# npm
+node_modules
