@@ -104,8 +104,8 @@ public:
         void fill_surface_obj_with_noise(SURFACE* surface_obj, float xoffset, float yoffset, float zoffset, int flags);
 
         // Crossplatform but only used on windows
-        void fill_buffer_with_noise(uint8_t* buf, int width, int height, int depth, float xoffset, float yoffset, float zoffset, int flags);
-        void fill_alpha_buffer_with_noise(uint8_t* buf, int width, int height, float xoffset, float yoffset, float zoffset, int flags);
+        void fill_buffer_with_noise(uint8_t* buf, int width, int height, int pitch, int depth, float xoffset, float yoffset, float zoffset, int flags);
+        void fill_alpha_buffer_with_noise(uint8_t* buf, int width, int height, int pitch, float xoffset, float yoffset, float zoffset, int flags);
 
 	// Conditions
         // No conditions are here
