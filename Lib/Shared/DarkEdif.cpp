@@ -1609,8 +1609,8 @@ struct Properties::JSONPropertyReader : Properties::PropertyReader
 			++convState->numPropsReset;
 
 			static int intData2;
-            intData2 = (int)intDataAsLong;
-            
+			intData2 = (int)intDataAsLong;
+			
 			return convRet->Return_OK(&intData2, sizeof(int));
 		}
 		case IDs::PROPTYPE_EDIT_FLOAT:
