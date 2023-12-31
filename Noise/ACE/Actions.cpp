@@ -113,6 +113,11 @@ void Extension::disable_warp() {
 
 
 void Extension::set_warp_type(int type) {
+	#if EditorBuild
+	if(type < 0 || type > FastNoiseLite::DomainWarpType_BasicGrid) {
+		DarkEdif::MsgBox::WarningOK(_T("Domain warp > Set type"), _T("Set domain warp action expects one of domain warp types (see: Domain warp types expressions) but got random value.\nNote: This warning only shows up in Fusion editor so you can fix your events."));
+	}
+	#endif
     warp.type = static_cast<FastNoiseLite::DomainWarpType>(type);
     fnl_warp.SetDomainWarpType(warp.type);
 }
@@ -133,7 +138,7 @@ void Extension::set_warp_frequency(float frequency) {
 void Extension::set_warp_rotation_type_3d(int type) {
 	#if EditorBuild
 	if(type < 0 || type > FastNoiseLite::RotationType3D_ImproveXZPlanes) {
-		DarkEdif::MsgBox::WarningOK(_T("Set rotation type 3D"), _T("Set rotation type 3D action expects one of rotation types 3d (see: Rotation type 3D expressions) but got random value.\nNote: This warning only shows up in Fusion editor so you can fix your events."));
+		DarkEdif::MsgBox::WarningOK(_T("Domain warp > Set rotation type 3D"), _T("Set rotation type 3D action expects one of rotation types 3d (see: Rotation type 3D expressions) but got random value.\nNote: This warning only shows up in Fusion editor so you can fix your events."));
 	}
 	#endif
 	warp.rotation_type_3d = static_cast<FastNoiseLite::RotationType3D>(type);
@@ -143,8 +148,8 @@ void Extension::set_warp_rotation_type_3d(int type) {
 
 void Extension::set_warp_fractal_type(int type) {
 	#if EditorBuild
-	if(0) { //TODO
-		DarkEdif::MsgBox::WarningOK(_T("Set fractal type"), _T("Set fractal type action expects one of fractal types (see: Fractal type expressions) but got random value.\nNote: This warning only shows up in Fusion editor so you can fix your events."));
+	if(type != FastNoiseLite::FractalType_None && (type < FastNoiseLite::FractalType_DomainWarpProgressive || type > FastNoiseLite::FractalType_DomainWarpIndependent)) {
+		DarkEdif::MsgBox::WarningOK(_T("Domain warp > Set fractal type"), _T("Set fractal type action expects one of fractal types (see: Fractal type expressions) but got random value.\nNote: This warning only shows up in Fusion editor so you can fix your events."));
 	}
 	#endif
 	warp.fractal_type = static_cast<FastNoiseLite::FractalType>(type);
