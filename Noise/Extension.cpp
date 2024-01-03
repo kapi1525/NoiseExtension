@@ -111,6 +111,10 @@ Extension::Extension(RuntimeFunctions & runFuncs, EDITDATA * edPtr, void * objCE
         LinkExpression(34, always_1);
         LinkExpression(35, always_2);
 
+        // Warp fractal types
+        LinkExpression(36, always_4);
+        LinkExpression(37, always_5);
+
         // Current noise settings
 		LinkExpression(0, current_noise_seed);
 		LinkExpression(27, current_noise_type);
