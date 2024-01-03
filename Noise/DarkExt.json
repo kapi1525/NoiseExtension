@@ -464,11 +464,11 @@
                 "Returns": "Integer"
             },
             { //34
-                "Title": "Simplex2Reduced",
+                "Title": "Simplex2Reduced(",
                 "Returns": "Integer"
             },
             { //35
-                "Title": "BasicGrid",
+                "Title": "BasicGrid(",
                 "Returns": "Integer"
             },
             { //36
