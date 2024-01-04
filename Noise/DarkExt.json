@@ -5,7 +5,7 @@
         "About": {
             "Name": "Noise",
             "Author": "Kacper Bugla",
-            "Copyright": "Copyright \u00A9 2023 Kacper Bugla",
+            "Copyright": "Copyright \u00A9 2024 Kacper Bugla",
             "Comment": "%sGenerates Noise using many different algorithms.",
             "Help": "https://github.com/kapi1525/NoiseExtension/wiki",
             "URL": "https://github.com/kapi1525/NoiseExtension"
@@ -755,7 +755,7 @@
                 "Title": "Version",
                 "Info": "Noise object version.",
                 "Type": "Text",
-                "DefaultState": "Noise v1.1.0 (Extension: v21, SDK: DarkEdif v18 from commit 82b7eaa936de45ce28abe7ea179c05649fc5476c)"
+                "DefaultState": "Noise v1.1.1 (Extension: v22, SDK: DarkEdif v18 from commit 82b7eaa936de45ce28abe7ea179c05649fc5476c)"
             }
         ]
     }
