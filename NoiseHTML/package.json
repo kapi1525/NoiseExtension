@@ -1,0 +1,28 @@
+{
+    "name": "noise",
+    "version": "1.1.1",
+    "description": "Generates Noise using many different algorithms.",
+    "main": "Noise.js",
+    "scripts": {
+        "postinstall": "patch-package",
+        "build": "webpack --config webpack.config.js"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/kapi1525/NoiseExtension.git"
+    },
+    "author": "Kacper Bugla",
+    "license": "MIT",
+    "bugs": {
+        "url": "https://github.com/kapi1525/NoiseExtension/issues"
+    },
+    "homepage": "https://github.com/kapi1525/NoiseExtension#readme",
+    "dependencies": {
+        "fastnoise-lite": "1.1.0",
+        "patch-package": "^8.0.0"
+    },
+    "devDependencies": {
+        "webpack": "^5.90.1",
+        "webpack-cli": "^5.1.4"
+    }
+}

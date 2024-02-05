@@ -18,4 +18,5 @@ Examples/Noise/*.exe
 Examples/Noise/*.apk
 
 # npm
-node_modules
+NoiseHTML/node_modules
+NoiseHTML/dist
