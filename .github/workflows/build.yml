@@ -18,7 +18,7 @@ jobs:
       uses: microsoft/setup-msbuild@v2
 
     - name: Setup npm
-      working-directory: ${{env.GITHUB_WORKSPACE}}/NoiseHTML
+      working-directory: ./NoiseHTML/
       run: npm i
 
     - name: Build
