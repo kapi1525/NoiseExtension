@@ -42,6 +42,7 @@ set verbose=0
 set failonerr=0
 set runfusion=0
 set killfusion=0
+set buildhtml=0
 
 
 for %%x in (%*) do (
@@ -69,6 +70,8 @@ for %%x in (%*) do (
         set runfusion=1
     ) else if %%~x==--kill (
         set killfusion=1
+    ) else if %%~x==--buildhtml (
+        set buildhtml=1
     ) else (
         echo Argument %%~x is not defined!
         goto :exit
@@ -105,6 +108,9 @@ if %full%==1 (
     call :build "%project%_Android" , "%conf%" , "x64"
 )
 
+if %buildhtml%==1 (
+    call :buildhtml
+)
 
 if %install%==1 (
     call :install
@@ -158,6 +164,14 @@ goto :exit
 
     call :run msbuild "./%project%.sln" -t:"%~1" -p:Configuration="%~2";Platform="%~3" -nologo -m -clp:ForceNoAlign;verbosity=%verbosity%
 
+    exit /B 0
+
+
+:buildhtml
+    cd .\NoiseHTML
+    call :run call npm run build
+    cd ..
+    call :run xcopy /s /v /c /y /q ".\NoiseHTML\dist\Noise.js" ".\MFX\Data\Runtime\Html5\"
     exit /B 0
 
 
