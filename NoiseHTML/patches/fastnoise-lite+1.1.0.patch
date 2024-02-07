@@ -1,27 +1,16 @@
 diff --git a/node_modules/fastnoise-lite/FastNoiseLite.js b/node_modules/fastnoise-lite/FastNoiseLite.js
-index e901f35..1bb6557 100644
+index e901f35..9b1cade 100644
 --- a/node_modules/fastnoise-lite/FastNoiseLite.js
 +++ b/node_modules/fastnoise-lite/FastNoiseLite.js
-@@ -68,7 +68,7 @@ import FastNoiseLite from "fastnoise-lite";
- // Create and configure FastNoiseLite object
- 
- let noise = new FastNoiseLite();
--noise.SetNoiseType(FastNoiseLite.NoiseType.OpenSimplex2);
-+noise.SetNoiseType(this.NoiseType.OpenSimplex2);
- 
- // Gather noise data
- let noiseData = [];
-@@ -85,124 +85,257 @@ for (let x = 0; x < 128; x++) {
+@@ -84,125 +84,168 @@ for (let x = 0; x < 128; x++) {
+ // Do something with this data...
   */
  export default class FastNoiseLite {
-     /**
+-    /**
 -     * @static
 -     * @enum {string}
 -     * @type {Readonly<{Cellular: string, OpenSimplex2: string, Value: string, ValueCubic: string, Perlin: string, OpenSimplex2S: string}>}
-+     * @description Create new FastNoiseLite object with optional seed
-+     * @param {number} [seed]
-+     * @constructor
-      */
+-     */
 -    static NoiseType = Object.freeze({
 -        OpenSimplex2: "OpenSimplex2",
 -        OpenSimplex2S: "OpenSimplex2S",
@@ -30,21 +19,7 @@ index e901f35..1bb6557 100644
 -        ValueCubic: "ValueCubic",
 -        Value: "Value",
 -    });
-+    constructor(seed) {
-+        /**
-+         * @static
-+         * @enum {string}
-+         * @type {Readonly<{Cellular: string, OpenSimplex2: string, Value: string, ValueCubic: string, Perlin: string, OpenSimplex2S: string}>}
-+         */
-+        this.NoiseType = Object.freeze({
-+            OpenSimplex2: "OpenSimplex2",
-+            OpenSimplex2S: "OpenSimplex2S",
-+            Cellular: "Cellular",
-+            Perlin: "Perlin",
-+            ValueCubic: "ValueCubic",
-+            Value: "Value",
-+        });
- 
+-
 -    /**
 -     * @static
 -     * @enum {string}
@@ -55,17 +30,7 @@ index e901f35..1bb6557 100644
 -        ImproveXYPlanes: "ImproveXYPlanes",
 -        ImproveXZPlanes: "ImproveXZPlanes",
 -    });
-+        /**
-+         * @static
-+         * @enum {string}
-+         * @type {Readonly<{ImproveXYPlanes: string, ImproveXZPlanes: string, None: string}>}
-+         */
-+        this.RotationType3D = Object.freeze({
-+            None: "None",
-+            ImproveXYPlanes: "ImproveXYPlanes",
-+            ImproveXZPlanes: "ImproveXZPlanes",
-+        });
- 
+-
 -    /**
 -     * @static
 -     * @enum {string}
@@ -79,20 +44,7 @@ index e901f35..1bb6557 100644
 -        DomainWarpProgressive: "DomainWarpProgressive",
 -        DomainWarpIndependent: "DomainWarpIndependent",
 -    });
-+        /**
-+         * @static
-+         * @enum {string}
-+         * @type {Readonly<{FBm: string, DomainWarpIndependent: string, PingPong: string, None: string, Ridged: string, DomainWarpProgressive: string}>}
-+         */
-+        this.FractalType = Object.freeze({
-+            None: "None",
-+            FBm: "FBm",
-+            Ridged: "Ridged",
-+            PingPong: "PingPong",
-+            DomainWarpProgressive: "DomainWarpProgressive",
-+            DomainWarpIndependent: "DomainWarpIndependent",
-+        });
- 
+-
 -    /**
 -     * @static
 -     * @enum {string}
@@ -104,18 +56,7 @@ index e901f35..1bb6557 100644
 -        Manhattan: "Manhattan",
 -        Hybrid: "Hybrid",
 -    });
-+        /**
-+         * @static
-+         * @enum {string}
-+         * @type {Readonly<{EuclideanSq: string, Euclidean: string, Hybrid: string, Manhattan: string}>}
-+         */
-+        this.CellularDistanceFunction = Object.freeze({
-+            Euclidean: "Euclidean",
-+            EuclideanSq: "EuclideanSq",
-+            Manhattan: "Manhattan",
-+            Hybrid: "Hybrid",
-+        });
- 
+-
 -    /**
 -     * @static
 -     * @enum {string}
@@ -130,21 +71,7 @@ index e901f35..1bb6557 100644
 -        Distance2Mul: "Distance2Mul",
 -        Distance2Div: "Distance2Div",
 -    });
-+        /**
-+         * @static
-+         * @enum {string}
-+         * @type {Readonly<{Distance2Sub: string, Distance2Mul: string, Distance2Add: string, Distance2Div: string, CellValue: string, Distance: string, Distance2: string}>}
-+         */
-+        this.CellularReturnType = Object.freeze({
-+            CellValue: "CellValue",
-+            Distance: "Distance",
-+            Distance2: "Distance2",
-+            Distance2Add: "Distance2Add",
-+            Distance2Sub: "Distance2Sub",
-+            Distance2Mul: "Distance2Mul",
-+            Distance2Div: "Distance2Div",
-+        });
- 
+-
 -    /**
 -     * @static
 -     * @enum {string}
@@ -155,38 +82,58 @@ index e901f35..1bb6557 100644
 -        OpenSimplex2Reduced: "OpenSimplex2Reduced",
 -        BasicGrid: "BasicGrid",
 -    });
-+        /**
-+         * @static
-+         * @enum {string}
-+         * @type {Readonly<{BasicGrid: string, OpenSimplex2Reduced: string, OpenSimplex2: string}>}
-+         */
-+        this.DomainWarpType = Object.freeze({
-+            OpenSimplex2: "OpenSimplex2",
-+            OpenSimplex2Reduced: "OpenSimplex2Reduced",
-+            BasicGrid: "BasicGrid",
-+        });
-+
-+        /**
-+         * @static
-+         * @enum {string}
-+         * @type {Readonly<{ImproveXYPlanes: string, ImproveXZPlanes: string, None: string, DefaultOpenSimplex2: string}>}
-+         */
-+        this.TransformType3D = Object.freeze({
-+            None: "None",
-+            ImproveXYPlanes: "ImproveXYPlanes",
-+            ImproveXZPlanes: "ImproveXZPlanes",
-+            DefaultOpenSimplex2: "DefaultOpenSimplex2",
-+        });
-+
+-
+-    /**
+-     * @static
+-     * @enum {string}
+-     * @type {Readonly<{ImproveXYPlanes: string, ImproveXZPlanes: string, None: string, DefaultOpenSimplex2: string}>}
+-     */
+-    static TransformType3D = Object.freeze({
+-        None: "None",
+-        ImproveXYPlanes: "ImproveXYPlanes",
+-        ImproveXZPlanes: "ImproveXZPlanes",
+-        DefaultOpenSimplex2: "DefaultOpenSimplex2",
+-    });
+-
+-    /* Private */
+-    _Seed = 1337;
+-    _Frequency = 0.01;
+-    _NoiseType = FastNoiseLite.NoiseType.OpenSimplex2;
+-    _RotationType3D = FastNoiseLite.RotationType3D.None;
+-    _TransformType3D = FastNoiseLite.TransformType3D.DefaultOpenSimplex2;
+-    _DomainWarpAmp = 1.0;
+-
+-    _FractalType = FastNoiseLite.FractalType.None;
+-    _Octaves = 3;
+-    _Lacunarity = 2.0;
+-    _Gain = 0.5;
+-    _WeightedStrength = 0.0;
+-    _PingPongStrength = 2.0;
+-
+-    _FractalBounding = 1 / 1.75;
+-
+-    _CellularDistanceFunction = FastNoiseLite.CellularDistanceFunction.EuclideanSq;
+-    _CellularReturnType = FastNoiseLite.CellularReturnType.Distance;
+-    _CellularJitterModifier = 1.0;
+-
+-    _DomainWarpType = FastNoiseLite.DomainWarpType.OpenSimplex2;
+-    _WarpTransformType3D = FastNoiseLite.TransformType3D.DefaultOpenSimplex2;
+-
+     /**
+      * @description Create new FastNoiseLite object with optional seed
+      * @param {number} [seed]
+      * @constructor
+      */
+     constructor(seed) {
 +        /* Private */
 +        this._Seed = 1337;
 +        this._Frequency = 0.01;
-+        this._NoiseType = this.NoiseType.OpenSimplex2;
-+        this._RotationType3D = this.RotationType3D.None;
-+        this._TransformType3D = this.TransformType3D.DefaultOpenSimplex2;
++        this._NoiseType = FastNoiseLite.NoiseType.OpenSimplex2;
++        this._RotationType3D = FastNoiseLite.RotationType3D.None;
++        this._TransformType3D = FastNoiseLite.TransformType3D.DefaultOpenSimplex2;
 +        this._DomainWarpAmp = 1.0;
 +
-+        this._FractalType = this.FractalType.None;
++        this._FractalType = FastNoiseLite.FractalType.None;
 +        this._Octaves = 3;
 +        this._Lacunarity = 2.0;
 +        this._Gain = 0.5;
@@ -195,12 +142,12 @@ index e901f35..1bb6557 100644
 +
 +        this._FractalBounding = 1 / 1.75;
 +
-+        this._CellularDistanceFunction = this.CellularDistanceFunction.EuclideanSq;
-+        this._CellularReturnType = this.CellularReturnType.Distance;
++        this._CellularDistanceFunction = FastNoiseLite.CellularDistanceFunction.EuclideanSq;
++        this._CellularReturnType = FastNoiseLite.CellularReturnType.Distance;
 +        this._CellularJitterModifier = 1.0;
 +
-+        this._DomainWarpType = this.DomainWarpType.OpenSimplex2;
-+        this._WarpTransformType3D = this.TransformType3D.DefaultOpenSimplex2;
++        this._DomainWarpType = FastNoiseLite.DomainWarpType.OpenSimplex2;
++        this._WarpTransformType3D = FastNoiseLite.TransformType3D.DefaultOpenSimplex2;
 +
 +        // prettier-ignore
 +        this._Gradients2D = [
@@ -333,198 +280,11 @@ index e901f35..1bb6557 100644
 +        this._PrimeX = 501125321;
 +        this._PrimeY = 1136930381;
 +        this._PrimeZ = 1720413743;
- 
--    /**
--     * @static
--     * @enum {string}
--     * @type {Readonly<{ImproveXYPlanes: string, ImproveXZPlanes: string, None: string, DefaultOpenSimplex2: string}>}
--     */
--    static TransformType3D = Object.freeze({
--        None: "None",
--        ImproveXYPlanes: "ImproveXYPlanes",
--        ImproveXZPlanes: "ImproveXZPlanes",
--        DefaultOpenSimplex2: "DefaultOpenSimplex2",
--    });
--
--    /* Private */
--    _Seed = 1337;
--    _Frequency = 0.01;
--    _NoiseType = FastNoiseLite.NoiseType.OpenSimplex2;
--    _RotationType3D = FastNoiseLite.RotationType3D.None;
--    _TransformType3D = FastNoiseLite.TransformType3D.DefaultOpenSimplex2;
--    _DomainWarpAmp = 1.0;
--
--    _FractalType = FastNoiseLite.FractalType.None;
--    _Octaves = 3;
--    _Lacunarity = 2.0;
--    _Gain = 0.5;
--    _WeightedStrength = 0.0;
--    _PingPongStrength = 2.0;
--
--    _FractalBounding = 1 / 1.75;
--
--    _CellularDistanceFunction = FastNoiseLite.CellularDistanceFunction.EuclideanSq;
--    _CellularReturnType = FastNoiseLite.CellularReturnType.Distance;
--    _CellularJitterModifier = 1.0;
--
--    _DomainWarpType = FastNoiseLite.DomainWarpType.OpenSimplex2;
--    _WarpTransformType3D = FastNoiseLite.TransformType3D.DefaultOpenSimplex2;
- 
--    /**
--     * @description Create new FastNoiseLite object with optional seed
--     * @param {number} [seed]
--     * @constructor
--     */
--    constructor(seed) {
++
          if (seed !== undefined) {
              this._Seed = seed;
          }
-@@ -231,8 +364,8 @@ export default class FastNoiseLite {
-     /**
-      * @description Sets noise algorithm used for GetNoise(...)
-      * @remarks Default: OpenSimplex2
--     * @default FastNoiseLite.NoiseType.OpenSimplex2
--     * @param {FastNoiseLite.NoiseType} noiseType
-+     * @default this.NoiseType.OpenSimplex2
-+     * @param {this.NoiseType} noiseType
-      */
-     SetNoiseType(noiseType) {
-         this._NoiseType = noiseType;
-@@ -243,8 +376,8 @@ export default class FastNoiseLite {
-      * @description Sets domain rotation type for 3D Noise and 3D DomainWarp.
-      * @description Can aid in reducing directional artifacts when sampling a 2D plane in 3D
-      * @remarks Default: None
--     * @default FastNoiseLite.RotationType3D.None
--     * @param {FastNoiseLite.RotationType3D} rotationType3D
-+     * @default this.RotationType3D.None
-+     * @param {this.RotationType3D} rotationType3D
-      */
-     SetRotationType3D(rotationType3D) {
-         this._RotationType3D = rotationType3D;
-@@ -255,8 +388,8 @@ export default class FastNoiseLite {
-     /**
-      * @description Sets method for combining octaves in all fractal noise types
-      * @remarks Default: None
--     * @default FastNoiseLite.FractalType.None
--     * @param {FastNoiseLite.FractalType} fractalType
-+     * @default this.FractalType.None
-+     * @param {this.FractalType} fractalType
-      */
-     SetFractalType(fractalType) {
-         this._FractalType = fractalType;
-@@ -317,8 +450,8 @@ export default class FastNoiseLite {
-     /**
-      * @description Sets distance function used in cellular noise calculations
-      * @remarks Default: EuclideanSq
--     * @default FastNoiseLite.CellularDistanceFunction.EuclideanSq
--     * @param {FastNoiseLite.CellularDistanceFunction} cellularDistanceFunction
-+     * @default this.CellularDistanceFunction.EuclideanSq
-+     * @param {this.CellularDistanceFunction} cellularDistanceFunction
-      */
-     SetCellularDistanceFunction(cellularDistanceFunction) {
-         this._CellularDistanceFunction = cellularDistanceFunction;
-@@ -327,8 +460,8 @@ export default class FastNoiseLite {
-     /**
-      * @description Sets return type from cellular noise calculations
-      * @remarks Default: Distance
--     * @default FastNoiseLite.CellularReturnType.Distance
--     * @param {FastNoiseLite.CellularReturnType} cellularReturnType
-+     * @default this.CellularReturnType.Distance
-+     * @param {this.CellularReturnType} cellularReturnType
-      */
-     SetCellularReturnType(cellularReturnType) {
-         this._CellularReturnType = cellularReturnType;
-@@ -347,8 +480,8 @@ export default class FastNoiseLite {
-     /**
-      * @description Sets the warp algorithm when using DomainWarp(...)
-      * @remarks Default: OpenSimplex2
--     * @default FastNoiseLite.DomainWarpType.OpenSimplex2
--     * @param {FastNoiseLite.DomainWarpType} domainWarpType
-+     * @default this.DomainWarpType.OpenSimplex2
-+     * @param {this.DomainWarpType} domainWarpType
-      */
-     SetDomainWarpType(domainWarpType) {
-         this._DomainWarpType = domainWarpType;
-@@ -384,8 +517,8 @@ export default class FastNoiseLite {
-             y *= this._Frequency;
- 
-             switch (this._NoiseType) {
--                case FastNoiseLite.NoiseType.OpenSimplex2:
--                case FastNoiseLite.NoiseType.OpenSimplex2S:
-+                case this.NoiseType.OpenSimplex2:
-+                case this.NoiseType.OpenSimplex2S:
-                     const SQRT3 = 1.7320508075688772935274463415059;
-                     const F2 = 0.5 * (SQRT3 - 1);
-                     let t = (x + y) * F2;
-@@ -399,11 +532,11 @@ export default class FastNoiseLite {
-             switch (this._FractalType) {
-                 default:
-                     return this._GenNoiseSingleR2(this._Seed, x, y);
--                case FastNoiseLite.FractalType.FBm:
-+                case this.FractalType.FBm:
-                     return this._GenFractalFBmR2(x, y);
--                case FastNoiseLite.FractalType.Ridged:
-+                case this.FractalType.Ridged:
-                     return this._GenFractalRidgedR2(x, y);
--                case FastNoiseLite.FractalType.PingPong:
-+                case this.FractalType.PingPong:
-                     return this._GenFractalPingPongR2(x, y);
-             }
-         };
-@@ -421,7 +554,7 @@ export default class FastNoiseLite {
-             z *= this._Frequency;
- 
-             switch (this._TransformType3D) {
--                case FastNoiseLite.TransformType3D.ImproveXYPlanes: {
-+                case this.TransformType3D.ImproveXYPlanes: {
-                     let xy = x + y;
-                     let s2 = xy * -0.211324865405187;
-                     z *= 0.577350269189626;
-@@ -430,7 +563,7 @@ export default class FastNoiseLite {
-                     z += xy * 0.577350269189626;
-                     break;
-                 }
--                case FastNoiseLite.TransformType3D.ImproveXZPlanes: {
-+                case this.TransformType3D.ImproveXZPlanes: {
-                     let xz = x + z;
-                     let s2 = xz * -0.211324865405187;
-                     y *= 0.577350269189626;
-@@ -439,7 +572,7 @@ export default class FastNoiseLite {
-                     y += xz * 0.577350269189626;
-                     break;
-                 }
--                case FastNoiseLite.TransformType3D.DefaultOpenSimplex2:
-+                case this.TransformType3D.DefaultOpenSimplex2:
-                     const R3 = 2.0 / 3.0;
-                     let r = (x + y + z) * R3;
-                     x = r - x;
-@@ -453,11 +586,11 @@ export default class FastNoiseLite {
-             switch (this._FractalType) {
-                 default:
-                     return this._GenNoiseSingleR3(this._Seed, x, y, z);
--                case FastNoiseLite.FractalType.FBm:
-+                case this.FractalType.FBm:
-                     return this._GenFractalFBmR3(x, y, z);
--                case FastNoiseLite.FractalType.Ridged:
-+                case this.FractalType.Ridged:
-                     return this._GenFractalRidgedR3(x, y, z);
--                case FastNoiseLite.FractalType.PingPong:
-+                case this.FractalType.PingPong:
-                     return this._GenFractalPingPongR3(x, y, z);
-             }
-         };
-@@ -480,147 +613,15 @@ export default class FastNoiseLite {
-             default:
-                 this._DomainWarpSingle(coord);
-                 break;
--            case FastNoiseLite.FractalType.DomainWarpProgressive:
-+            case this.FractalType.DomainWarpProgressive:
-                 this._DomainWarpFractalProgressive(coord);
-                 break;
--            case FastNoiseLite.FractalType.DomainWarpIndependent:
-+            case this.FractalType.DomainWarpIndependent:
-                 this._DomainWarpFractalIndependent(coord);
-                 break;
+@@ -489,191 +532,6 @@ export default class FastNoiseLite {
          }
      }
  
@@ -660,926 +420,208 @@ index e901f35..1bb6557 100644
 -    _PrimeY = 1136930381;
 -    _PrimeZ = 1720413743;
 -
+-    /**
+-     * @private
+-     * @param {number} a
+-     * @param {number} b
+-     * @param {number} t
+-     * @returns {number}
+-     */
+-    static _Lerp(a, b, t) {
+-        return a + t * (b - a);
+-    }
+-
+-    /**
+-     * @private
+-     * @param {number} t
+-     * @returns {number}
+-     */
+-    static _InterpHermite(t) {
+-        return t * t * (3 - 2 * t);
+-    }
+-
+-    /**
+-     * @private
+-     * @param t
+-     * @returns {number}
+-     */
+-    static _InterpQuintic(t) {
+-        return t * t * t * (t * (t * 6 - 15) + 10);
+-    }
+-
+-    /**
+-     * @private
+-     * @param {number} a
+-     * @param {number} b
+-     * @param {number} c
+-     * @param {number} d
+-     * @param {number} t
+-     * @returns {number}
+-     */
+-    static _CubicLerp(a, b, c, d, t) {
+-        let p = d - c - (a - b);
+-        return t * t * t * p + t * t * (a - b - p) + t * (c - a) + b;
+-    }
+-
+-    /**
+-     * @private
+-     * @param {number} t
+-     * @returns {number}
+-     */
+-    static _PingPong(t) {
+-        t -= Math.trunc(t * 0.5) * 2;
+-        return t < 1 ? t : 2 - t;
+-    }
+-
      /**
       * @private
-      * @param {number} a
-@@ -798,17 +799,17 @@ export default class FastNoiseLite {
       */
-     _GenNoiseSingleR2(seed, x, y) {
-         switch (this._NoiseType) {
--            case FastNoiseLite.NoiseType.OpenSimplex2:
-+            case this.NoiseType.OpenSimplex2:
-                 return this._SingleOpenSimplex2R2(seed, x, y);
--            case FastNoiseLite.NoiseType.OpenSimplex2S:
-+            case this.NoiseType.OpenSimplex2S:
-                 return this._SingleOpenSimplex2SR2(seed, x, y);
--            case FastNoiseLite.NoiseType.Cellular:
-+            case this.NoiseType.Cellular:
-                 return this._SingleCellularR2(seed, x, y);
--            case FastNoiseLite.NoiseType.Perlin:
-+            case this.NoiseType.Perlin:
-                 return this._SinglePerlinR2(seed, x, y);
--            case FastNoiseLite.NoiseType.ValueCubic:
-+            case this.NoiseType.ValueCubic:
-                 return this._SingleValueCubicR2(seed, x, y);
--            case FastNoiseLite.NoiseType.Value:
-+            case this.NoiseType.Value:
-                 return this._SingleValueR2(seed, x, y);
-             default:
-                 return 0;
-@@ -825,17 +826,17 @@ export default class FastNoiseLite {
-      */
-     _GenNoiseSingleR3(seed, x, y, z){
-         switch (this._NoiseType) {
--            case FastNoiseLite.NoiseType.OpenSimplex2:
-+            case this.NoiseType.OpenSimplex2:
-                 return this._SingleOpenSimplex2R3(seed, x, y, z);
--            case FastNoiseLite.NoiseType.OpenSimplex2S:
-+            case this.NoiseType.OpenSimplex2S:
-                 return this._SingleOpenSimplex2SR3(seed, x, y, z);
--            case FastNoiseLite.NoiseType.Cellular:
-+            case this.NoiseType.Cellular:
-                 return this._SingleCellularR3(seed, x, y, z);
--            case FastNoiseLite.NoiseType.Perlin:
-+            case this.NoiseType.Perlin:
-                 return this._SinglePerlinR3(seed, x, y, z);
--            case FastNoiseLite.NoiseType.ValueCubic:
-+            case this.NoiseType.ValueCubic:
-                 return this._SingleValueCubicR3(seed, x, y, z);
--            case FastNoiseLite.NoiseType.Value:
-+            case this.NoiseType.Value:
-                 return this._SingleValueR3(seed, x, y, z);
-             default:
-                 return 0;
-@@ -847,20 +848,20 @@ export default class FastNoiseLite {
-      */
-     _UpdateTransformType3D() {
-         switch (this._RotationType3D) {
--            case FastNoiseLite.RotationType3D.ImproveXYPlanes:
--                this._TransformType3D = FastNoiseLite.TransformType3D.ImproveXYPlanes;
-+            case this.RotationType3D.ImproveXYPlanes:
-+                this._TransformType3D = this.TransformType3D.ImproveXYPlanes;
-                 break;
--            case FastNoiseLite.RotationType3D.ImproveXZPlanes:
--                this._TransformType3D = FastNoiseLite.TransformType3D.ImproveXZPlanes;
-+            case this.RotationType3D.ImproveXZPlanes:
-+                this._TransformType3D = this.TransformType3D.ImproveXZPlanes;
-                 break;
-             default:
-                 switch (this._NoiseType) {
--                    case FastNoiseLite.NoiseType.OpenSimplex2:
--                    case FastNoiseLite.NoiseType.OpenSimplex2S:
--                        this._TransformType3D = FastNoiseLite.TransformType3D.DefaultOpenSimplex2;
-+                    case this.NoiseType.OpenSimplex2:
-+                    case this.NoiseType.OpenSimplex2S:
-+                        this._TransformType3D = this.TransformType3D.DefaultOpenSimplex2;
-                         break;
-                     default:
--                        this._TransformType3D = FastNoiseLite.TransformType3D.None;
-+                        this._TransformType3D = this.TransformType3D.None;
-                         break;
-                 }
-                 break;
-@@ -872,20 +873,20 @@ export default class FastNoiseLite {
-      */
-     _UpdateWarpTransformType3D() {
-         switch (this._RotationType3D) {
--            case FastNoiseLite.RotationType3D.ImproveXYPlanes:
--                this._WarpTransformType3D = FastNoiseLite.TransformType3D.ImproveXYPlanes;
-+            case this.RotationType3D.ImproveXYPlanes:
-+                this._WarpTransformType3D = this.TransformType3D.ImproveXYPlanes;
-                 break;
--            case FastNoiseLite.RotationType3D.ImproveXZPlanes:
--                this._WarpTransformType3D = FastNoiseLite.TransformType3D.ImproveXZPlanes;
-+            case this.RotationType3D.ImproveXZPlanes:
-+                this._WarpTransformType3D = this.TransformType3D.ImproveXZPlanes;
-                 break;
-             default:
-                 switch (this._DomainWarpType) {
--                    case FastNoiseLite.DomainWarpType.OpenSimplex2:
--                    case FastNoiseLite.DomainWarpType.OpenSimplex2Reduced:
--                        this._WarpTransformType3D = FastNoiseLite.TransformType3D.DefaultOpenSimplex2;
-+                    case this.DomainWarpType.OpenSimplex2:
-+                    case this.DomainWarpType.OpenSimplex2Reduced:
-+                        this._WarpTransformType3D = this.TransformType3D.DefaultOpenSimplex2;
-                         break;
-                     default:
--                        this._WarpTransformType3D = FastNoiseLite.TransformType3D.None;
-+                        this._WarpTransformType3D = this.TransformType3D.None;
-                         break;
-                 }
-                 break;
-@@ -906,7 +907,7 @@ export default class FastNoiseLite {
-         for (let i = 0; i < this._Octaves; i++) {
-             let noise = this._GenNoiseSingleR2(seed++, x, y);
-             sum += noise * amp;
--            amp *= FastNoiseLite._Lerp(1.0, Math.min(noise + 1, 2) * 0.5, this._WeightedStrength);
-+            amp *= this._Lerp(1.0, Math.min(noise + 1, 2) * 0.5, this._WeightedStrength);
- 
-             x *= this._Lacunarity;
-             y *= this._Lacunarity;
-@@ -930,7 +931,7 @@ export default class FastNoiseLite {
-         for (let i = 0; i < this._Octaves; i++) {
-             let noise = this._GenNoiseSingleR3(seed++, x, y, z);
-             sum += noise * amp;
--            amp *= FastNoiseLite._Lerp(1.0, (noise + 1) * 0.5, this._WeightedStrength);
-+            amp *= this._Lerp(1.0, (noise + 1) * 0.5, this._WeightedStrength);
- 
-             x *= this._Lacunarity;
-             y *= this._Lacunarity;
-@@ -954,7 +955,7 @@ export default class FastNoiseLite {
-         for (let i = 0; i < this._Octaves; i++) {
-             let noise = Math.abs(this._GenNoiseSingleR2(seed++, x, y));
-             sum += (noise * -2 + 1) * amp;
--            amp *= FastNoiseLite._Lerp(1.0, 1 - noise, this._WeightedStrength);
-+            amp *= this._Lerp(1.0, 1 - noise, this._WeightedStrength);
- 
-             x *= this._Lacunarity;
-             y *= this._Lacunarity;
-@@ -978,7 +979,7 @@ export default class FastNoiseLite {
-         for (let i = 0; i < this._Octaves; i++) {
-             let noise = Math.abs(this._GenNoiseSingleR3(seed++, x, y, z));
-             sum += (noise * -2 + 1) * amp;
--            amp *= FastNoiseLite._Lerp(1.0, 1 - noise, this._WeightedStrength);
-+            amp *= this._Lerp(1.0, 1 - noise, this._WeightedStrength);
- 
-             x *= this._Lacunarity;
-             y *= this._Lacunarity;
-@@ -1000,11 +1001,11 @@ export default class FastNoiseLite {
-         let amp = this._FractalBounding;
- 
-         for (let i = 0; i < this._Octaves; i++) {
--            let noise = FastNoiseLite._PingPong(
-+            let noise = this._PingPong(
-                 (this._GenNoiseSingleR2(seed++, x, y) + 1) * this._PingPongStrength
-             );
-             sum += (noise - 0.5) * 2 * amp;
--            amp *= FastNoiseLite._Lerp(1.0, noise, this._WeightedStrength);
-+            amp *= this._Lerp(1.0, noise, this._WeightedStrength);
- 
-             x *= this._Lacunarity;
-             y *= this._Lacunarity;
-@@ -1026,11 +1027,11 @@ export default class FastNoiseLite {
-         let amp = this._FractalBounding;
- 
-         for (let i = 0; i < this._Octaves; i++) {
--            let noise = FastNoiseLite._PingPong(
-+            let noise = this._PingPong(
-                 (this._GenNoiseSingleR3(seed++, x, y, z) + 1) * this._PingPongStrength
-             );
-             sum += (noise - 0.5) * 2 * amp;
--            amp *= FastNoiseLite._Lerp(1.0, noise, this._WeightedStrength);
-+            amp *= this._Lerp(1.0, noise, this._WeightedStrength);
- 
-             x *= this._Lacunarity;
-             y *= this._Lacunarity;
-@@ -1696,8 +1697,8 @@ export default class FastNoiseLite {
- 
-         switch (this._CellularDistanceFunction) {
-             default:
--            case FastNoiseLite.CellularDistanceFunction.Euclidean:
--            case FastNoiseLite.CellularDistanceFunction.EuclideanSq:
-+            case this.CellularDistanceFunction.Euclidean:
-+            case this.CellularDistanceFunction.EuclideanSq:
-                 for (let xi = xr - 1; xi <= xr + 1; xi++) {
-                     let yPrimed = yPrimedBase;
- 
-@@ -1720,7 +1721,7 @@ export default class FastNoiseLite {
-                     xPrimed += this._PrimeX;
-                 }
-                 break;
--            case FastNoiseLite.CellularDistanceFunction.Manhattan:
-+            case this.CellularDistanceFunction.Manhattan:
-                 for (let xi = xr - 1; xi <= xr + 1; xi++) {
-                     let yPrimed = yPrimedBase;
- 
-@@ -1743,7 +1744,7 @@ export default class FastNoiseLite {
-                     xPrimed += this._PrimeX;
-                 }
-                 break;
--            case FastNoiseLite.CellularDistanceFunction.Hybrid:
-+            case this.CellularDistanceFunction.Hybrid:
-                 for (let xi = xr - 1; xi <= xr + 1; xi++) {
-                     let yPrimed = yPrimedBase;
- 
-@@ -1770,30 +1771,30 @@ export default class FastNoiseLite {
-         }
- 
-         if (
--            this._CellularDistanceFunction === FastNoiseLite.CellularDistanceFunction.Euclidean &&
--            this._CellularReturnType !== FastNoiseLite.CellularReturnType.CellValue
-+            this._CellularDistanceFunction === this.CellularDistanceFunction.Euclidean &&
-+            this._CellularReturnType !== this.CellularReturnType.CellValue
-         ) {
-             distance0 = Math.sqrt(distance0);
- 
--            if (this._CellularReturnType !== FastNoiseLite.CellularReturnType.CellValue) {
-+            if (this._CellularReturnType !== this.CellularReturnType.CellValue) {
-                 distance1 = Math.sqrt(distance1);
-             }
-         }
- 
-         switch (this._CellularReturnType) {
--            case FastNoiseLite.CellularReturnType.CellValue:
-+            case this.CellularReturnType.CellValue:
-                 return closestHash * (1 / 2147483648.0);
--            case FastNoiseLite.CellularReturnType.Distance:
-+            case this.CellularReturnType.Distance:
-                 return distance0 - 1;
--            case FastNoiseLite.CellularReturnType.Distance2:
-+            case this.CellularReturnType.Distance2:
-                 return distance1 - 1;
--            case FastNoiseLite.CellularReturnType.Distance2Add:
-+            case this.CellularReturnType.Distance2Add:
-                 return (distance1 + distance0) * 0.5 - 1;
--            case FastNoiseLite.CellularReturnType.Distance2Sub:
-+            case this.CellularReturnType.Distance2Sub:
-                 return distance1 - distance0 - 1;
--            case FastNoiseLite.CellularReturnType.Distance2Mul:
-+            case this.CellularReturnType.Distance2Mul:
-                 return distance1 * distance0 * 0.5 - 1;
--            case FastNoiseLite.CellularReturnType.Distance2Div:
-+            case this.CellularReturnType.Distance2Div:
-                 return distance0 / distance1 - 1;
-             default:
-                 return 0;
-@@ -1825,8 +1826,8 @@ export default class FastNoiseLite {
-         let zPrimedBase = (zr - 1) * this._PrimeZ;
- 
-         switch (this._CellularDistanceFunction) {
--            case FastNoiseLite.CellularDistanceFunction.Euclidean:
--            case FastNoiseLite.CellularDistanceFunction.EuclideanSq:
-+            case this.CellularDistanceFunction.Euclidean:
-+            case this.CellularDistanceFunction.EuclideanSq:
-                 for (let xi = xr - 1; xi <= xr + 1; xi++) {
-                     let yPrimed = yPrimedBase;
- 
-@@ -1855,7 +1856,7 @@ export default class FastNoiseLite {
-                     xPrimed += this._PrimeX;
-                 }
-                 break;
--            case FastNoiseLite.CellularDistanceFunction.Manhattan:
-+            case this.CellularDistanceFunction.Manhattan:
-                 for (let xi = xr - 1; xi <= xr + 1; xi++) {
-                     let yPrimed = yPrimedBase;
- 
-@@ -1884,7 +1885,7 @@ export default class FastNoiseLite {
-                     xPrimed += this._PrimeX;
-                 }
-                 break;
--            case FastNoiseLite.CellularDistanceFunction.Hybrid:
-+            case this.CellularDistanceFunction.Hybrid:
-                 for (let xi = xr - 1; xi <= xr + 1; xi++) {
-                     let yPrimed = yPrimedBase;
- 
-@@ -1922,30 +1923,30 @@ export default class FastNoiseLite {
-         }
- 
-         if (
--            this._CellularDistanceFunction === FastNoiseLite.CellularDistanceFunction.Euclidean &&
--            this._CellularReturnType !== FastNoiseLite.CellularReturnType.CellValue
-+            this._CellularDistanceFunction === this.CellularDistanceFunction.Euclidean &&
-+            this._CellularReturnType !== this.CellularReturnType.CellValue
-         ) {
-             distance0 = Math.sqrt(distance0);
- 
--            if (this._CellularReturnType !== FastNoiseLite.CellularReturnType.CellValue) {
-+            if (this._CellularReturnType !== this.CellularReturnType.CellValue) {
-                 distance1 = Math.sqrt(distance1);
-             }
-         }
- 
-         switch (this._CellularReturnType) {
--            case FastNoiseLite.CellularReturnType.CellValue:
-+            case this.CellularReturnType.CellValue:
-                 return closestHash * (1 / 2147483648.0);
--            case FastNoiseLite.CellularReturnType.Distance:
-+            case this.CellularReturnType.Distance:
-                 return distance0 - 1;
--            case FastNoiseLite.CellularReturnType.Distance2:
-+            case this.CellularReturnType.Distance2:
-                 return distance1 - 1;
--            case FastNoiseLite.CellularReturnType.Distance2Add:
-+            case this.CellularReturnType.Distance2Add:
-                 return (distance1 + distance0) * 0.5 - 1;
--            case FastNoiseLite.CellularReturnType.Distance2Sub:
-+            case this.CellularReturnType.Distance2Sub:
-                 return distance1 - distance0 - 1;
--            case FastNoiseLite.CellularReturnType.Distance2Mul:
-+            case this.CellularReturnType.Distance2Mul:
-                 return distance1 * distance0 * 0.5 - 1;
--            case FastNoiseLite.CellularReturnType.Distance2Div:
-+            case this.CellularReturnType.Distance2Div:
-                 return distance0 / distance1 - 1;
-             default:
-                 return 0;
-@@ -1968,26 +1969,26 @@ export default class FastNoiseLite {
-         let xd1 = xd0 - 1;
-         let yd1 = yd0 - 1;
- 
--        let xs = FastNoiseLite._InterpQuintic(xd0);
--        let ys = FastNoiseLite._InterpQuintic(yd0);
-+        let xs = this._InterpQuintic(xd0);
-+        let ys = this._InterpQuintic(yd0);
- 
-         x0 = Math.imul(x0, this._PrimeX);
-         y0 = Math.imul(y0, this._PrimeY);
-         let x1 = x0 + this._PrimeX;
-         let y1 = y0 + this._PrimeY;
- 
--        let xf0 = FastNoiseLite._Lerp(
-+        let xf0 = this._Lerp(
-             this._GradCoordR2(seed, x0, y0, xd0, yd0),
-             this._GradCoordR2(seed, x1, y0, xd1, yd0),
-             xs
-         );
--        let xf1 = FastNoiseLite._Lerp(
-+        let xf1 = this._Lerp(
-             this._GradCoordR2(seed, x0, y1, xd0, yd1),
-             this._GradCoordR2(seed, x1, y1, xd1, yd1),
-             xs
-         );
- 
--        return FastNoiseLite._Lerp(xf0, xf1, ys) * 1.4247691104677813;
-+        return this._Lerp(xf0, xf1, ys) * 1.4247691104677813;
+@@ -3180,6 +3038,148 @@ export default class FastNoiseLite {
      }
+ }
  
++/**
++ * @static
++ * @enum {string}
++ * @type {Readonly<{Cellular: string, OpenSimplex2: string, Value: string, ValueCubic: string, Perlin: string, OpenSimplex2S: string}>}
++ */
++FastNoiseLite.NoiseType = Object.freeze({
++    OpenSimplex2: "OpenSimplex2",
++    OpenSimplex2S: "OpenSimplex2S",
++    Cellular: "Cellular",
++    Perlin: "Perlin",
++    ValueCubic: "ValueCubic",
++    Value: "Value",
++});
++
++/**
++ * @static
++ * @enum {string}
++ * @type {Readonly<{ImproveXYPlanes: string, ImproveXZPlanes: string, None: string}>}
++ */
++FastNoiseLite.RotationType3D = Object.freeze({
++    None: "None",
++    ImproveXYPlanes: "ImproveXYPlanes",
++    ImproveXZPlanes: "ImproveXZPlanes",
++});
++
++/**
++ * @static
++ * @enum {string}
++ * @type {Readonly<{FBm: string, DomainWarpIndependent: string, PingPong: string, None: string, Ridged: string, DomainWarpProgressive: string}>}
++ */
++FastNoiseLite.FractalType = Object.freeze({
++    None: "None",
++    FBm: "FBm",
++    Ridged: "Ridged",
++    PingPong: "PingPong",
++    DomainWarpProgressive: "DomainWarpProgressive",
++    DomainWarpIndependent: "DomainWarpIndependent",
++});
++
++/**
++ * @static
++ * @enum {string}
++ * @type {Readonly<{EuclideanSq: string, Euclidean: string, Hybrid: string, Manhattan: string}>}
++ */
++FastNoiseLite.CellularDistanceFunction = Object.freeze({
++    Euclidean: "Euclidean",
++    EuclideanSq: "EuclideanSq",
++    Manhattan: "Manhattan",
++    Hybrid: "Hybrid",
++});
++
++/**
++ * @static
++ * @enum {string}
++ * @type {Readonly<{Distance2Sub: string, Distance2Mul: string, Distance2Add: string, Distance2Div: string, CellValue: string, Distance: string, Distance2: string}>}
++ */
++FastNoiseLite.CellularReturnType = Object.freeze({
++    CellValue: "CellValue",
++    Distance: "Distance",
++    Distance2: "Distance2",
++    Distance2Add: "Distance2Add",
++    Distance2Sub: "Distance2Sub",
++    Distance2Mul: "Distance2Mul",
++    Distance2Div: "Distance2Div",
++});
++
++/**
++ * @static
++ * @enum {string}
++ * @type {Readonly<{BasicGrid: string, OpenSimplex2Reduced: string, OpenSimplex2: string}>}
++ */
++FastNoiseLite.DomainWarpType = Object.freeze({
++    OpenSimplex2: "OpenSimplex2",
++    OpenSimplex2Reduced: "OpenSimplex2Reduced",
++    BasicGrid: "BasicGrid",
++});
++
++/**
++ * @static
++ * @enum {string}
++ * @type {Readonly<{ImproveXYPlanes: string, ImproveXZPlanes: string, None: string, DefaultOpenSimplex2: string}>}
++ */
++FastNoiseLite.TransformType3D = Object.freeze({
++    None: "None",
++    ImproveXYPlanes: "ImproveXYPlanes",
++    ImproveXZPlanes: "ImproveXZPlanes",
++    DefaultOpenSimplex2: "DefaultOpenSimplex2",
++});
++
++/**
++ * @private
++ * @param {number} a
++ * @param {number} b
++ * @param {number} t
++ * @returns {number}
++ */
++FastNoiseLite._Lerp = (a, b, t) => {
++    return a + t * (b - a);
++};
++
++/**
++ * @private
++ * @param {number} t
++ * @returns {number}
++ */
++FastNoiseLite._InterpHermite = (t) => {
++    return t * t * (3 - 2 * t);
++};
++
++/**
++ * @private
++ * @param t
++ * @returns {number}
++ */
++FastNoiseLite._InterpQuintic = (t) => {
++    return t * t * t * (t * (t * 6 - 15) + 10);
++};
++
++/**
++ * @private
++ * @param {number} a
++ * @param {number} b
++ * @param {number} c
++ * @param {number} d
++ * @param {number} t
++ * @returns {number}
++ */
++FastNoiseLite._CubicLerp = (a, b, c, d, t) => {
++    let p = d - c - (a - b);
++    return t * t * t * p + t * t * (a - b - p) + t * (c - a) + b;
++};
++
++/**
++ * @private
++ * @param {number} t
++ * @returns {number}
++ */
++FastNoiseLite._PingPong = (t) => {
++    t -= Math.trunc(t * 0.5) * 2;
++    return t < 1 ? t : 2 - t;
++};
++
+ class Vector2 {
      /**
-@@ -2010,9 +2011,9 @@ export default class FastNoiseLite {
-         let yd1 = yd0 - 1;
-         let zd1 = zd0 - 1;
- 
--        let xs = FastNoiseLite._InterpQuintic(xd0);
--        let ys = FastNoiseLite._InterpQuintic(yd0);
--        let zs = FastNoiseLite._InterpQuintic(zd0);
-+        let xs = this._InterpQuintic(xd0);
-+        let ys = this._InterpQuintic(yd0);
-+        let zs = this._InterpQuintic(zd0);
- 
-         x0 = Math.imul(x0, this._PrimeX);
-         y0 = Math.imul(y0, this._PrimeY);
-@@ -2021,31 +2022,31 @@ export default class FastNoiseLite {
-         let y1 = y0 + this._PrimeY;
-         let z1 = z0 + this._PrimeZ;
- 
--        let xf00 = FastNoiseLite._Lerp(
-+        let xf00 = this._Lerp(
-             this._GradCoordR3(seed, x0, y0, z0, xd0, yd0, zd0),
-             this._GradCoordR3(seed, x1, y0, z0, xd1, yd0, zd0),
-             xs
-         );
--        let xf10 = FastNoiseLite._Lerp(
-+        let xf10 = this._Lerp(
-             this._GradCoordR3(seed, x0, y1, z0, xd0, yd1, zd0),
-             this._GradCoordR3(seed, x1, y1, z0, xd1, yd1, zd0),
-             xs
-         );
--        let xf01 = FastNoiseLite._Lerp(
-+        let xf01 = this._Lerp(
-             this._GradCoordR3(seed, x0, y0, z1, xd0, yd0, zd1),
-             this._GradCoordR3(seed, x1, y0, z1, xd1, yd0, zd1),
-             xs
-         );
--        let xf11 = FastNoiseLite._Lerp(
-+        let xf11 = this._Lerp(
-             this._GradCoordR3(seed, x0, y1, z1, xd0, yd1, zd1),
-             this._GradCoordR3(seed, x1, y1, z1, xd1, yd1, zd1),
-             xs
-         );
- 
--        let yf0 = FastNoiseLite._Lerp(xf00, xf10, ys);
--        let yf1 = FastNoiseLite._Lerp(xf01, xf11, ys);
-+        let yf0 = this._Lerp(xf00, xf10, ys);
-+        let yf1 = this._Lerp(xf01, xf11, ys);
- 
--        return FastNoiseLite._Lerp(yf0, yf1, zs) * 0.964921414852142333984375;
-+        return this._Lerp(yf0, yf1, zs) * 0.964921414852142333984375;
-     }
- 
-     /**
-@@ -2072,29 +2073,29 @@ export default class FastNoiseLite {
-         let y3 = y1 + (this._PrimeY << 1);
- 
-         return (
--            FastNoiseLite._CubicLerp(
--                FastNoiseLite._CubicLerp(
-+            this._CubicLerp(
-+                this._CubicLerp(
-                     this._ValCoordR2(seed, x0, y0),
-                     this._ValCoordR2(seed, x1, y0),
-                     this._ValCoordR2(seed, x2, y0),
-                     this._ValCoordR2(seed, x3, y0),
-                     xs
-                 ),
--                FastNoiseLite._CubicLerp(
-+                this._CubicLerp(
-                     this._ValCoordR2(seed, x0, y1),
-                     this._ValCoordR2(seed, x1, y1),
-                     this._ValCoordR2(seed, x2, y1),
-                     this._ValCoordR2(seed, x3, y1),
-                     xs
-                 ),
--                FastNoiseLite._CubicLerp(
-+                this._CubicLerp(
-                     this._ValCoordR2(seed, x0, y2),
-                     this._ValCoordR2(seed, x1, y2),
-                     this._ValCoordR2(seed, x2, y2),
-                     this._ValCoordR2(seed, x3, y2),
-                     xs
-                 ),
--                FastNoiseLite._CubicLerp(
-+                this._CubicLerp(
-                     this._ValCoordR2(seed, x0, y3),
-                     this._ValCoordR2(seed, x1, y3),
-                     this._ValCoordR2(seed, x2, y3),
-@@ -2139,30 +2140,30 @@ export default class FastNoiseLite {
-         let z3 = z1 + (this._PrimeZ << 1);
- 
-         return (
--            FastNoiseLite._CubicLerp(
--                FastNoiseLite._CubicLerp(
--                    FastNoiseLite._CubicLerp(
-+            this._CubicLerp(
-+                this._CubicLerp(
-+                    this._CubicLerp(
-                         this._ValCoordR3(seed, x0, y0, z0),
-                         this._ValCoordR3(seed, x1, y0, z0),
-                         this._ValCoordR3(seed, x2, y0, z0),
-                         this._ValCoordR3(seed, x3, y0, z0),
-                         xs
-                     ),
--                    FastNoiseLite._CubicLerp(
-+                    this._CubicLerp(
-                         this._ValCoordR3(seed, x0, y1, z0),
-                         this._ValCoordR3(seed, x1, y1, z0),
-                         this._ValCoordR3(seed, x2, y1, z0),
-                         this._ValCoordR3(seed, x3, y1, z0),
-                         xs
-                     ),
--                    FastNoiseLite._CubicLerp(
-+                    this._CubicLerp(
-                         this._ValCoordR3(seed, x0, y2, z0),
-                         this._ValCoordR3(seed, x1, y2, z0),
-                         this._ValCoordR3(seed, x2, y2, z0),
-                         this._ValCoordR3(seed, x3, y2, z0),
-                         xs
-                     ),
--                    FastNoiseLite._CubicLerp(
-+                    this._CubicLerp(
-                         this._ValCoordR3(seed, x0, y3, z0),
-                         this._ValCoordR3(seed, x1, y3, z0),
-                         this._ValCoordR3(seed, x2, y3, z0),
-@@ -2171,29 +2172,29 @@ export default class FastNoiseLite {
-                     ),
-                     ys
-                 ),
--                FastNoiseLite._CubicLerp(
--                    FastNoiseLite._CubicLerp(
-+                this._CubicLerp(
-+                    this._CubicLerp(
-                         this._ValCoordR3(seed, x0, y0, z1),
-                         this._ValCoordR3(seed, x1, y0, z1),
-                         this._ValCoordR3(seed, x2, y0, z1),
-                         this._ValCoordR3(seed, x3, y0, z1),
-                         xs
-                     ),
--                    FastNoiseLite._CubicLerp(
-+                    this._CubicLerp(
-                         this._ValCoordR3(seed, x0, y1, z1),
-                         this._ValCoordR3(seed, x1, y1, z1),
-                         this._ValCoordR3(seed, x2, y1, z1),
-                         this._ValCoordR3(seed, x3, y1, z1),
-                         xs
-                     ),
--                    FastNoiseLite._CubicLerp(
-+                    this._CubicLerp(
-                         this._ValCoordR3(seed, x0, y2, z1),
-                         this._ValCoordR3(seed, x1, y2, z1),
-                         this._ValCoordR3(seed, x2, y2, z1),
-                         this._ValCoordR3(seed, x3, y2, z1),
-                         xs
-                     ),
--                    FastNoiseLite._CubicLerp(
-+                    this._CubicLerp(
-                         this._ValCoordR3(seed, x0, y3, z1),
-                         this._ValCoordR3(seed, x1, y3, z1),
-                         this._ValCoordR3(seed, x2, y3, z1),
-@@ -2202,29 +2203,29 @@ export default class FastNoiseLite {
-                     ),
-                     ys
-                 ),
--                FastNoiseLite._CubicLerp(
--                    FastNoiseLite._CubicLerp(
-+                this._CubicLerp(
-+                    this._CubicLerp(
-                         this._ValCoordR3(seed, x0, y0, z2),
-                         this._ValCoordR3(seed, x1, y0, z2),
-                         this._ValCoordR3(seed, x2, y0, z2),
-                         this._ValCoordR3(seed, x3, y0, z2),
-                         xs
-                     ),
--                    FastNoiseLite._CubicLerp(
-+                    this._CubicLerp(
-                         this._ValCoordR3(seed, x0, y1, z2),
-                         this._ValCoordR3(seed, x1, y1, z2),
-                         this._ValCoordR3(seed, x2, y1, z2),
-                         this._ValCoordR3(seed, x3, y1, z2),
-                         xs
-                     ),
--                    FastNoiseLite._CubicLerp(
-+                    this._CubicLerp(
-                         this._ValCoordR3(seed, x0, y2, z2),
-                         this._ValCoordR3(seed, x1, y2, z2),
-                         this._ValCoordR3(seed, x2, y2, z2),
-                         this._ValCoordR3(seed, x3, y2, z2),
-                         xs
-                     ),
--                    FastNoiseLite._CubicLerp(
-+                    this._CubicLerp(
-                         this._ValCoordR3(seed, x0, y3, z2),
-                         this._ValCoordR3(seed, x1, y3, z2),
-                         this._ValCoordR3(seed, x2, y3, z2),
-@@ -2233,29 +2234,29 @@ export default class FastNoiseLite {
-                     ),
-                     ys
-                 ),
--                FastNoiseLite._CubicLerp(
--                    FastNoiseLite._CubicLerp(
-+                this._CubicLerp(
-+                    this._CubicLerp(
-                         this._ValCoordR3(seed, x0, y0, z3),
-                         this._ValCoordR3(seed, x1, y0, z3),
-                         this._ValCoordR3(seed, x2, y0, z3),
-                         this._ValCoordR3(seed, x3, y0, z3),
-                         xs
-                     ),
--                    FastNoiseLite._CubicLerp(
-+                    this._CubicLerp(
-                         this._ValCoordR3(seed, x0, y1, z3),
-                         this._ValCoordR3(seed, x1, y1, z3),
-                         this._ValCoordR3(seed, x2, y1, z3),
-                         this._ValCoordR3(seed, x3, y1, z3),
-                         xs
-                     ),
--                    FastNoiseLite._CubicLerp(
-+                    this._CubicLerp(
-                         this._ValCoordR3(seed, x0, y2, z3),
-                         this._ValCoordR3(seed, x1, y2, z3),
-                         this._ValCoordR3(seed, x2, y2, z3),
-                         this._ValCoordR3(seed, x3, y2, z3),
-                         xs
-                     ),
--                    FastNoiseLite._CubicLerp(
-+                    this._CubicLerp(
-                         this._ValCoordR3(seed, x0, y3, z3),
-                         this._ValCoordR3(seed, x1, y3, z3),
-                         this._ValCoordR3(seed, x2, y3, z3),
-@@ -2281,18 +2282,18 @@ export default class FastNoiseLite {
-         let x0 = Math.floor(x);
-         let y0 = Math.floor(y);
- 
--        let xs = FastNoiseLite._InterpHermite(x - x0);
--        let ys = FastNoiseLite._InterpHermite(y - y0);
-+        let xs = this._InterpHermite(x - x0);
-+        let ys = this._InterpHermite(y - y0);
- 
-         x0 = Math.imul(x0, this._PrimeX);
-         y0 = Math.imul(y0, this._PrimeY);
-         let x1 = x0 + this._PrimeX;
-         let y1 = y0 + this._PrimeY;
- 
--        let xf0 = FastNoiseLite._Lerp(this._ValCoordR2(seed, x0, y0), this._ValCoordR2(seed, x1, y0), xs);
--        let xf1 = FastNoiseLite._Lerp(this._ValCoordR2(seed, x0, y1), this._ValCoordR2(seed, x1, y1), xs);
-+        let xf0 = this._Lerp(this._ValCoordR2(seed, x0, y0), this._ValCoordR2(seed, x1, y0), xs);
-+        let xf1 = this._Lerp(this._ValCoordR2(seed, x0, y1), this._ValCoordR2(seed, x1, y1), xs);
- 
--        return FastNoiseLite._Lerp(xf0, xf1, ys);
-+        return this._Lerp(xf0, xf1, ys);
-     }
- 
-     /**
-@@ -2308,9 +2309,9 @@ export default class FastNoiseLite {
-         let y0 = Math.floor(y);
-         let z0 = Math.floor(z);
- 
--        let xs = FastNoiseLite._InterpHermite(x - x0);
--        let ys = FastNoiseLite._InterpHermite(y - y0);
--        let zs = FastNoiseLite._InterpHermite(z - z0);
-+        let xs = this._InterpHermite(x - x0);
-+        let ys = this._InterpHermite(y - y0);
-+        let zs = this._InterpHermite(z - z0);
- 
-         x0 = Math.imul(x0, this._PrimeX);
-         y0 = Math.imul(y0, this._PrimeY);
-@@ -2319,31 +2320,31 @@ export default class FastNoiseLite {
-         let y1 = y0 + this._PrimeY;
-         let z1 = z0 + this._PrimeZ;
- 
--        let xf00 = FastNoiseLite._Lerp(
-+        let xf00 = this._Lerp(
-             this._ValCoordR3(seed, x0, y0, z0),
-             this._ValCoordR3(seed, x1, y0, z0),
-             xs
-         );
--        let xf10 = FastNoiseLite._Lerp(
-+        let xf10 = this._Lerp(
-             this._ValCoordR3(seed, x0, y1, z0),
-             this._ValCoordR3(seed, x1, y1, z0),
-             xs
-         );
--        let xf01 = FastNoiseLite._Lerp(
-+        let xf01 = this._Lerp(
-             this._ValCoordR3(seed, x0, y0, z1),
-             this._ValCoordR3(seed, x1, y0, z1),
-             xs
-         );
--        let xf11 = FastNoiseLite._Lerp(
-+        let xf11 = this._Lerp(
-             this._ValCoordR3(seed, x0, y1, z1),
-             this._ValCoordR3(seed, x1, y1, z1),
-             xs
-         );
- 
--        let yf0 = FastNoiseLite._Lerp(xf00, xf10, ys);
--        let yf1 = FastNoiseLite._Lerp(xf01, xf11, ys);
-+        let yf0 = this._Lerp(xf00, xf10, ys);
-+        let yf1 = this._Lerp(xf01, xf11, ys);
- 
--        return FastNoiseLite._Lerp(yf0, yf1, zs);
-+        return this._Lerp(yf0, yf1, zs);
-     }
- 
-     /**
-@@ -2361,7 +2362,7 @@ export default class FastNoiseLite {
-          */
-         let R2 = (seed, amp, freq, coord, x, y) => {
-             switch (this._DomainWarpType) {
--                case FastNoiseLite.DomainWarpType.OpenSimplex2:
-+                case this.DomainWarpType.OpenSimplex2:
-                     this._SingleDomainWarpOpenSimplex2Gradient(
-                         seed,
-                         amp * 38.283687591552734375,
-@@ -2372,7 +2373,7 @@ export default class FastNoiseLite {
-                         y
-                     );
-                     break;
--                case FastNoiseLite.DomainWarpType.OpenSimplex2Reduced:
-+                case this.DomainWarpType.OpenSimplex2Reduced:
-                     this._SingleDomainWarpOpenSimplex2Gradient(
-                         seed,
-                         amp * 16.0,
-@@ -2383,7 +2384,7 @@ export default class FastNoiseLite {
-                         y
-                     );
-                     break;
--                case FastNoiseLite.DomainWarpType.BasicGrid:
-+                case this.DomainWarpType.BasicGrid:
-                     this._SingleDomainWarpBasicGrid(seed, amp, freq, coord, x, y);
-                     break;
-             }
-@@ -2401,7 +2402,7 @@ export default class FastNoiseLite {
-          */
-         let R3 = (seed, amp, freq, coord, x, y, z) => {
-             switch (this._DomainWarpType) {
--                case FastNoiseLite.DomainWarpType.OpenSimplex2:
-+                case this.DomainWarpType.OpenSimplex2:
-                     this._SingleDomainWarpOpenSimplex2Gradient(
-                         seed,
-                         amp * 32.69428253173828125,
-@@ -2413,7 +2414,7 @@ export default class FastNoiseLite {
-                         z
-                     );
-                     break;
--                case FastNoiseLite.DomainWarpType.OpenSimplex2Reduced:
-+                case this.DomainWarpType.OpenSimplex2Reduced:
-                     this._SingleDomainWarpOpenSimplex2Gradient(
-                         seed,
-                         amp * 7.71604938271605,
-@@ -2425,7 +2426,7 @@ export default class FastNoiseLite {
-                         z
-                     );
-                     break;
--                case FastNoiseLite.DomainWarpType.BasicGrid:
-+                case this.DomainWarpType.BasicGrid:
-                     this._SingleDomainWarpBasicGrid(seed, amp, freq, coord, x, y, z);
-                     break;
-             }
-@@ -2464,8 +2465,8 @@ export default class FastNoiseLite {
-             let xs = coord.x;
-             let ys = coord.y;
-             switch (this._DomainWarpType) {
--                case FastNoiseLite.DomainWarpType.OpenSimplex2:
--                case FastNoiseLite.DomainWarpType.OpenSimplex2Reduced:
-+                case this.DomainWarpType.OpenSimplex2:
-+                case this.DomainWarpType.OpenSimplex2Reduced:
-                     const SQRT3 = 1.7320508075688772935274463415059;
-                     const F2 = 0.5 * (SQRT3 - 1);
-                     let t = (xs + ys) * F2;
-@@ -2492,7 +2493,7 @@ export default class FastNoiseLite {
-             let ys = coord.y;
-             let zs = coord.z;
-             switch (this._WarpTransformType3D) {
--                case FastNoiseLite.TransformType3D.ImproveXYPlanes:
-+                case this.TransformType3D.ImproveXYPlanes:
-                 {
-                     let xy = xs + ys;
-                     let s2 = xy * -0.211324865405187;
-@@ -2503,7 +2504,7 @@ export default class FastNoiseLite {
-                 }
-                     break;
- 
--                case FastNoiseLite.TransformType3D.ImproveXZPlanes:
-+                case this.TransformType3D.ImproveXZPlanes:
-                 {
-                     let xz = xs + zs;
-                     let s2 = xz * -0.211324865405187;
-@@ -2513,7 +2514,7 @@ export default class FastNoiseLite {
-                     ys += xz * 0.577350269189626;
-                 }
-                     break;
--                case FastNoiseLite.TransformType3D.DefaultOpenSimplex2:
-+                case this.TransformType3D.DefaultOpenSimplex2:
-                     const R3 = 2.0 / 3.0;
-                     let r = (xs + ys + zs) * R3; // Rotation, not skew
-                     xs = r - xs;
-@@ -2550,8 +2551,8 @@ export default class FastNoiseLite {
-                 let xs = coord.x;
-                 let ys = coord.y;
-                 switch (this._DomainWarpType) {
--                    case FastNoiseLite.DomainWarpType.OpenSimplex2:
--                    case FastNoiseLite.DomainWarpType.OpenSimplex2Reduced:
-+                    case this.DomainWarpType.OpenSimplex2:
-+                    case this.DomainWarpType.OpenSimplex2Reduced:
-                         const SQRT3 = 1.7320508075688772935274463415059;
-                         const F2 = 0.5 * (SQRT3 - 1);
-                         let t = (xs + ys) * F2;
-@@ -2584,7 +2585,7 @@ export default class FastNoiseLite {
-                 let ys = coord.y;
-                 let zs = coord.z;
-                 switch (this._WarpTransformType3D) {
--                    case FastNoiseLite.TransformType3D.ImproveXYPlanes:
-+                    case this.TransformType3D.ImproveXYPlanes:
-                     {
-                         let xy = xs + ys;
-                         let s2 = xy * -0.211324865405187;
-@@ -2594,7 +2595,7 @@ export default class FastNoiseLite {
-                         zs += xy * 0.577350269189626;
-                     }
-                         break;
--                    case FastNoiseLite.TransformType3D.ImproveXZPlanes:
-+                    case this.TransformType3D.ImproveXZPlanes:
-                     {
-                         let xz = xs + zs;
-                         let s2 = xz * -0.211324865405187;
-@@ -2604,7 +2605,7 @@ export default class FastNoiseLite {
-                         ys += xz * 0.577350269189626;
-                     }
-                         break;
--                    case FastNoiseLite.TransformType3D.DefaultOpenSimplex2:
-+                    case this.TransformType3D.DefaultOpenSimplex2:
-                     {
-                         const R3 = 2.0 / 3.0;
-                         let r = (xs + ys + zs) * R3; // Rotation, not skew
-@@ -2646,8 +2647,8 @@ export default class FastNoiseLite {
-             let xs = coord.x;
-             let ys = coord.y;
-             switch (this._DomainWarpType) {
--                case FastNoiseLite.DomainWarpType.OpenSimplex2:
--                case FastNoiseLite.DomainWarpType.OpenSimplex2Reduced:
-+                case this.DomainWarpType.OpenSimplex2:
-+                case this.DomainWarpType.OpenSimplex2Reduced:
-                     const SQRT3 = 1.7320508075688772935274463415059;
-                     const F2 = 0.5 * (SQRT3 - 1);
-                     let t = (xs + ys) * F2;
-@@ -2679,7 +2680,7 @@ export default class FastNoiseLite {
-             let ys = coord.y;
-             let zs = coord.z;
-             switch (this._WarpTransformType3D) {
--                case FastNoiseLite.TransformType3D.ImproveXYPlanes:
-+                case this.TransformType3D.ImproveXYPlanes:
-                 {
-                     let xy = xs + ys;
-                     let s2 = xy * -0.211324865405187;
-@@ -2689,7 +2690,7 @@ export default class FastNoiseLite {
-                     zs += xy * 0.577350269189626;
-                 }
-                     break;
--                case FastNoiseLite.TransformType3D.ImproveXZPlanes:
-+                case this.TransformType3D.ImproveXZPlanes:
-                 {
-                     let xz = xs + zs;
-                     let s2 = xz * -0.211324865405187;
-@@ -2699,7 +2700,7 @@ export default class FastNoiseLite {
-                     ys += xz * 0.577350269189626;
-                 }
-                     break;
--                case FastNoiseLite.TransformType3D.DefaultOpenSimplex2:
-+                case this.TransformType3D.DefaultOpenSimplex2:
-                 {
-                     const R3 = 2.0 / 3.0;
-                     let r = (xs + ys + zs) * R3; // Rotation, not skew
-@@ -2754,8 +2755,8 @@ export default class FastNoiseLite {
-             let x0 = Math.floor(xf);
-             let y0 = Math.floor(yf);
- 
--            let xs = FastNoiseLite._InterpHermite(xf - x0);
--            let ys = FastNoiseLite._InterpHermite(yf - y0);
-+            let xs = this._InterpHermite(xf - x0);
-+            let ys = this._InterpHermite(yf - y0);
- 
-             x0 = Math.imul(x0, this._PrimeX);
-             y0 = Math.imul(y0, this._PrimeY);
-@@ -2765,17 +2766,17 @@ export default class FastNoiseLite {
-             let hash0 = this._HashR2(seed, x0, y0) & (255 << 1);
-             let hash1 = this._HashR2(seed, x1, y0) & (255 << 1);
- 
--            let lx0x = FastNoiseLite._Lerp(this._RandVecs2D[hash0], this._RandVecs2D[hash1], xs);
--            let ly0x = FastNoiseLite._Lerp(this._RandVecs2D[hash0 | 1], this._RandVecs2D[hash1 | 1], xs);
-+            let lx0x = this._Lerp(this._RandVecs2D[hash0], this._RandVecs2D[hash1], xs);
-+            let ly0x = this._Lerp(this._RandVecs2D[hash0 | 1], this._RandVecs2D[hash1 | 1], xs);
- 
-             hash0 = this._HashR2(seed, x0, y1) & (255 << 1);
-             hash1 = this._HashR2(seed, x1, y1) & (255 << 1);
- 
--            let lx1x = FastNoiseLite._Lerp(this._RandVecs2D[hash0], this._RandVecs2D[hash1], xs);
--            let ly1x = FastNoiseLite._Lerp(this._RandVecs2D[hash0 | 1], this._RandVecs2D[hash1 | 1], xs);
-+            let lx1x = this._Lerp(this._RandVecs2D[hash0], this._RandVecs2D[hash1], xs);
-+            let ly1x = this._Lerp(this._RandVecs2D[hash0 | 1], this._RandVecs2D[hash1 | 1], xs);
- 
--            coord.x += FastNoiseLite._Lerp(lx0x, lx1x, ys) * warpAmp;
--            coord.y += FastNoiseLite._Lerp(ly0x, ly1x, ys) * warpAmp;
-+            coord.x += this._Lerp(lx0x, lx1x, ys) * warpAmp;
-+            coord.y += this._Lerp(ly0x, ly1x, ys) * warpAmp;
-         };
- 
-         /**
-@@ -2797,9 +2798,9 @@ export default class FastNoiseLite {
-             let y0 = Math.floor(yf);
-             let z0 = Math.floor(zf);
- 
--            let xs = FastNoiseLite._InterpHermite(xf - x0);
--            let ys = FastNoiseLite._InterpHermite(yf - y0);
--            let zs = FastNoiseLite._InterpHermite(zf - z0);
-+            let xs = this._InterpHermite(xf - x0);
-+            let ys = this._InterpHermite(yf - y0);
-+            let zs = this._InterpHermite(zf - z0);
- 
-             x0 = Math.imul(x0, this._PrimeX);
-             y0 = Math.imul(y0, this._PrimeY);
-@@ -2811,38 +2812,38 @@ export default class FastNoiseLite {
-             let hash0 = this._HashR3(seed, x0, y0, z0) & (255 << 2);
-             let hash1 = this._HashR3(seed, x1, y0, z0) & (255 << 2);
- 
--            let lx0x = FastNoiseLite._Lerp(this._RandVecs3D[hash0], this._RandVecs3D[hash1], xs);
--            let ly0x = FastNoiseLite._Lerp(this._RandVecs3D[hash0 | 1], this._RandVecs3D[hash1 | 1], xs);
--            let lz0x = FastNoiseLite._Lerp(this._RandVecs3D[hash0 | 2], this._RandVecs3D[hash1 | 2], xs);
-+            let lx0x = this._Lerp(this._RandVecs3D[hash0], this._RandVecs3D[hash1], xs);
-+            let ly0x = this._Lerp(this._RandVecs3D[hash0 | 1], this._RandVecs3D[hash1 | 1], xs);
-+            let lz0x = this._Lerp(this._RandVecs3D[hash0 | 2], this._RandVecs3D[hash1 | 2], xs);
- 
-             hash0 = this._HashR3(seed, x0, y1, z0) & (255 << 2);
-             hash1 = this._HashR3(seed, x1, y1, z0) & (255 << 2);
- 
--            let lx1x = FastNoiseLite._Lerp(this._RandVecs3D[hash0], this._RandVecs3D[hash1], xs);
--            let ly1x = FastNoiseLite._Lerp(this._RandVecs3D[hash0 | 1], this._RandVecs3D[hash1 | 1], xs);
--            let lz1x = FastNoiseLite._Lerp(this._RandVecs3D[hash0 | 2], this._RandVecs3D[hash1 | 2], xs);
-+            let lx1x = this._Lerp(this._RandVecs3D[hash0], this._RandVecs3D[hash1], xs);
-+            let ly1x = this._Lerp(this._RandVecs3D[hash0 | 1], this._RandVecs3D[hash1 | 1], xs);
-+            let lz1x = this._Lerp(this._RandVecs3D[hash0 | 2], this._RandVecs3D[hash1 | 2], xs);
- 
--            let lx0y = FastNoiseLite._Lerp(lx0x, lx1x, ys);
--            let ly0y = FastNoiseLite._Lerp(ly0x, ly1x, ys);
--            let lz0y = FastNoiseLite._Lerp(lz0x, lz1x, ys);
-+            let lx0y = this._Lerp(lx0x, lx1x, ys);
-+            let ly0y = this._Lerp(ly0x, ly1x, ys);
-+            let lz0y = this._Lerp(lz0x, lz1x, ys);
- 
-             hash0 = this._HashR3(seed, x0, y0, z1) & (255 << 2);
-             hash1 = this._HashR3(seed, x1, y0, z1) & (255 << 2);
- 
--            lx0x = FastNoiseLite._Lerp(this._RandVecs3D[hash0], this._RandVecs3D[hash1], xs);
--            ly0x = FastNoiseLite._Lerp(this._RandVecs3D[hash0 | 1], this._RandVecs3D[hash1 | 1], xs);
--            lz0x = FastNoiseLite._Lerp(this._RandVecs3D[hash0 | 2], this._RandVecs3D[hash1 | 2], xs);
-+            lx0x = this._Lerp(this._RandVecs3D[hash0], this._RandVecs3D[hash1], xs);
-+            ly0x = this._Lerp(this._RandVecs3D[hash0 | 1], this._RandVecs3D[hash1 | 1], xs);
-+            lz0x = this._Lerp(this._RandVecs3D[hash0 | 2], this._RandVecs3D[hash1 | 2], xs);
- 
-             hash0 = this._HashR3(seed, x0, y1, z1) & (255 << 2);
-             hash1 = this._HashR3(seed, x1, y1, z1) & (255 << 2);
- 
--            lx1x = FastNoiseLite._Lerp(this._RandVecs3D[hash0], this._RandVecs3D[hash1], xs);
--            ly1x = FastNoiseLite._Lerp(this._RandVecs3D[hash0 | 1], this._RandVecs3D[hash1 | 1], xs);
--            lz1x = FastNoiseLite._Lerp(this._RandVecs3D[hash0 | 2], this._RandVecs3D[hash1 | 2], xs);
-+            lx1x = this._Lerp(this._RandVecs3D[hash0], this._RandVecs3D[hash1], xs);
-+            ly1x = this._Lerp(this._RandVecs3D[hash0 | 1], this._RandVecs3D[hash1 | 1], xs);
-+            lz1x = this._Lerp(this._RandVecs3D[hash0 | 2], this._RandVecs3D[hash1 | 2], xs);
- 
--            coord.x += FastNoiseLite._Lerp(lx0y, FastNoiseLite._Lerp(lx0x, lx1x, ys), zs) * warpAmp;
--            coord.y += FastNoiseLite._Lerp(ly0y, FastNoiseLite._Lerp(ly0x, ly1x, ys), zs) * warpAmp;
--            coord.z += FastNoiseLite._Lerp(lz0y, FastNoiseLite._Lerp(lz0x, lz1x, ys), zs) * warpAmp;
-+            coord.x += this._Lerp(lx0y, this._Lerp(lx0x, lx1x, ys), zs) * warpAmp;
-+            coord.y += this._Lerp(ly0y, this._Lerp(ly0x, ly1x, ys), zs) * warpAmp;
-+            coord.z += this._Lerp(lz0y, this._Lerp(lz0x, lz1x, ys), zs) * warpAmp;
-         };
- 
-         if (arguments.length === 6 && arguments[3] instanceof Vector2) {
+      * 2d Vector
