@@ -159,7 +159,7 @@ Extension::Extension(RuntimeFunctions & runFuncs, EDITDATA * edPtr, void * objCE
         const std::map<std::tstring, FastNoiseLite::FractalType> noise_fractal_type_ids = {
             {_T("None"),                FastNoiseLite::FractalType_None},
             {_T("FBm"),                 FastNoiseLite::FractalType_FBm},
-            {_T("Rigid"),               FastNoiseLite::FractalType_Ridged},
+            {_T("Ridged"),               FastNoiseLite::FractalType_Ridged},
             {_T("PingPong"),            FastNoiseLite::FractalType_PingPong}
         };
 

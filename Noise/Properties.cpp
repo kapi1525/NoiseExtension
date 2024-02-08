@@ -109,7 +109,7 @@ void CustomPropertyReader::GetProperty(size_t id, DarkEdif::Properties::Converte
     const std::string fractal_types[] = {
         "None",
         "FBm",
-        "Rigid",
+        "Ridged",
         "PingPong",
         "None"      // Due to mistake there was a 5th fractal type in some versions
     };

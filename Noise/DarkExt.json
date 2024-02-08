@@ -81,7 +81,7 @@
                 "Fractal types",
                 [ 12, "None" ],
                 [ 13, "FBm" ],
-                [ 14, "Rigid" ],
+                [ 14, "Ridged" ],
                 [ 15, "PingPong" ],
                 "---",
                 [ 36, "Domain warp progressive" ],
@@ -384,7 +384,7 @@
                 "Returns": "Integer"
             },
             { //14
-                "Title": "Rigid(",
+                "Title": "Ridged(",
                 "Returns": "Integer"
             },
             { //15
@@ -594,7 +594,7 @@
                 "Items": [
                     "None",
                     "FBm",
-                    "Rigid",
+                    "Ridged",
                     "PingPong"
                 ]
             },
