@@ -1,5 +1,5 @@
 diff --git a/node_modules/fastnoise-lite/FastNoiseLite.js b/node_modules/fastnoise-lite/FastNoiseLite.js
-index e901f35..9b1cade 100644
+index e901f35..e65fbba 100644
 --- a/node_modules/fastnoise-lite/FastNoiseLite.js
 +++ b/node_modules/fastnoise-lite/FastNoiseLite.js
 @@ -84,125 +84,168 @@ for (let x = 0; x < 128; x++) {
@@ -284,6 +284,15 @@ index e901f35..9b1cade 100644
          if (seed !== undefined) {
              this._Seed = seed;
          }
+@@ -475,7 +518,7 @@ export default class FastNoiseLite {
+      * @description 2D/3D warps the input position using current domain warp settings
+      * @param {Vector2|Vector3} coord
+      */
+-    DomainWrap(coord) {
++    DomainWarp(coord) {
+         switch (this._FractalType) {
+             default:
+                 this._DomainWarpSingle(coord);
 @@ -489,191 +532,6 @@ export default class FastNoiseLite {
          }
      }
