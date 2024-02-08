@@ -12,294 +12,458 @@
 // "use strict";
 
 // webpack handles imports and bundles everything into single js file
+// It seems like webpack handles everything in a smart way and names cant conflict with other extensions
+import "DarkEdif";
 import FastNoiseLite from "fastnoise-lite";
 
-// Global data, including sub-applications, just how God intended.
-// Note: This will allow newer SDK versions in later SDKs to take over.
-// We need this[] and globalThis[] instead of direct because HTML5 Final Project minifies and breaks the names otherwise
-globalThis['darkEdif'] = (globalThis['darkEdif'] && globalThis['darkEdif'].sdkVersion >= 18) ? globalThis['darkEdif'] :
-    new (/** @constructor */ function() {
-    // window variable is converted into __scope for some reason, so globalThis it is.
-    this.data = {};
-    this.getGlobalData = function (key) {
-        key = key.toLowerCase();
-        if (key in this.data) {
-            return this.data[key];
+
+// Mixing new syntax with old closure, what could go wrong!
+// NOTE: Closure seems to partialy support class syntax: class methods are supported but public, static member variables produce errors
+export default class CRunNoise extends CRunExtension {
+    constructor() {
+        /// <summary> Constructor of Fusion object. </summary>
+        super();    // Calls the parrent object constructor, inits ho with null
+
+        // DarkEdif SDK exts should have these four variables defined.
+        // We need this[] and globalThis[] instead of direct because HTML5 Final Project minifies and breaks the names otherwise
+        this['ExtensionVersion'] = 22;      // To match C++ version
+        this['SDKVersion'] = 18;            // To match C++ version
+        this['DebugMode'] = true;
+        this['ExtensionName'] = 'Noise';
+
+        // Can't find DarkEdif wrapper
+        if (!globalThis.hasOwnProperty('darkEdif')) {
+            throw "a wobbly";
         }
-        return null;
-    };
-    this.setGlobalData = function (key, value) {
-        key = key.toLowerCase();
-        this.data[key] = value;
-    };
+        globalThis['darkEdif'].checkSupportsSDKVersion(this.SDKVersion);
 
-    this.getCurrentFusionEventNumber = function (ext) {
-        return ext.rh.rhEvtProg.rhEventGroup.evgLine || -1;
-    };
-    this.sdkVersion = 18;
-    this.checkSupportsSDKVersion = function (sdkVer) {
-        if (sdkVer < 16 || sdkVer > 18) {
-            throw "HTML5 DarkEdif SDK does not support SDK version " + this.sdkVersion;
-        }
-    };
+        this.fnlNoise = null;
+        this.fnlWarp = null;
 
-    // minifier will rename notMinified, so we can detect minifier simply
-    this.minified = false;
-    if (!this.hasOwnProperty('minified'))
-        this['minified'] = true;
-
-    this.consoleLog = function (ext, str) {
-        // Log if DebugMode not defined, or true
-        if (ext == null || ext['DebugMode'] == null || ext['DebugMode']) {
-            // Exts will be renamed in minified
-            if (this['minified'] && ext != null && ext['DebugMode'] == true) {
-                console.warn("DebugMode left true for an extension in minified mode. Did the ext developer not set it false before distributing?");
-                ext['DebugMode'] = false;
-            }
-
-            const extName = (ext == null || this['minified']) ? "Unknown DarkEdif ext" :
-                ext['ExtensionName'] || ext.constructor.name.replaceAll('CRun', '').replaceAll('_',' ');
-            console.log(extName + " - " + str);
-        }
-    };
-    if (!this['minified']) {
-        let that = this;
-        // Use this for debugging to make sure objects are deleted.
-        // Note they're not garbage collected when last holder releases it, but at any point after,
-        // when the GC decides to.
-        // On Chrome, it took half a minute or so, and delay was possibly affected by whether the page has focus.
-        // GC is not required, remember - the cleanup may not happen at all in some browsers.
-        this.finalizer = new FinalizationRegistry(function(desc) {
-            that.consoleLog(null, "Noting the destruction of [" + desc + "].");
-        });
-    }
-    else {
-        this.finalizer = { register: function(desc) { } };
-    }
-
-    this['Properties'] = function(ext, edPtrFile, extVersion) {
-        // DarkEdif SDK stores offset of DarkEdif props away from start of EDITDATA inside private data.
-        // eHeader is 20 bytes, so this should be 20+ bytes.
-        if (ext.ho.privateData < 20)
-            throw "Not smart properties - eHeader missing?";
-        // DarkEdif SDK header read:
-        // header uint32, hash uint32, hashtypes uint32, numprops uint16, pad uint16, sizeBytes uint32 (includes whole EDITDATA)
-        // then checkbox list, one bit per checkbox, including non-checkbox properties
-        // so skip numProps / 8 bytes
-        // then moving to Data list:
-        // size uint32 (includes whole Data), propType uint16, propNameSize uint8, propname u8 (lowercased), then data bytes
-
-        let header = new Uint8Array(edPtrFile.readBuffer(4 + 4 + 4 + 2 + 2 + 4));
-        if (String.fromCharCode.apply('', [header[3], header[2], header[1], header[0]]) != 'DAR1')
-            throw "Did you read this.ho.privateData bytes?";
-
-        let headerDV = new DataView(header.buffer);
-        this.numProps = headerDV.getUint16(4 + 4 + 4, true); // Skip past hash and hashTypes
-        this.sizeBytes = headerDV.getUint32(4 + 4 + 4 + 4, true); // skip past numProps and pad
-
-        let editData = edPtrFile.readBuffer(this.sizeBytes - header.byteLength);
-        this.chkboxes = editData.slice(0, Math.ceil(this.numProps / 8));
-        let that = this;
-        let GetPropertyIndex = function(chkIDOrName) {
-            if (typeof chkIDOrName == 'number') {
-                if (that.numProps >= chkIDOrName) {
-                    throw "Invalid property ID " + chkIDOrName + ", max ID is " + (that.numProps - 1) + ".";
-                }
-                return chkIDOrName;
-            }
-            const p = that.props.find(function(p) { return p.propName == chkIDOrName; });
-            if (p == null)
-                throw "Invalid property name \"" + chkIDOrName + "\"";
-            return p.index;
+        this.noiseSettings = {
+            upperRange:         1.0,
+            lowerRange:         -1.0,
+            seed:               1337,
+            type:               Object.values(FastNoiseLite.NoiseType).indexOf("OpenSimplex2"),
+            rotationType3D:     Object.values(FastNoiseLite.RotationType3D).indexOf("None"),
+            fractalType:        Object.values(FastNoiseLite.FractalType).indexOf("None"),
+            cellularFunction:   Object.values(FastNoiseLite.CellularDistanceFunction).indexOf("EuclideanSq"),
+            cellularReturnType: Object.values(FastNoiseLite.CellularReturnType).indexOf("Distance"),
         };
-        this['IsPropChecked'] = function(chkIDOrName) {
-            const idx = GetPropertyIndex(chkIDOrName);
-            if (idx == -1)
+
+        this.warpSettings = {
+            enabled:            false,
+            seed:               1337,
+            type:               Object.values(FastNoiseLite.DomainWarpType).indexOf("OpenSimplex2"),
+            rotationType3D:     Object.values(FastNoiseLite.RotationType3D).indexOf("None"),
+            fractalType:        Object.values(FastNoiseLite.FractalType).indexOf("None"),
+        };
+
+        // =============================
+        // Function arrays
+        // =============================
+
+        this.$actionFuncs = [
+            // 0
+            this.setSeed,
+            // 1
+            this.setNoiseType,
+            // 2
+            (frequency) => {
+                this.fnlNoise.SetFrequency(frequency);
+            },
+            // 3
+            this.setFractalType,
+            // 4
+            (fractalOctaves) => {
+                this.fnlNoise.SetFractalOctaves(fractalOctaves);
+            },
+            // 5
+            (fractalLacnarity) => {
+                this.fnlNoise.SetFractalLacunarity(fractalLacnarity);
+            },
+            // 6
+            (fractalWeightedStrength) => {
+                this.fnlNoise.SetFractalWeightedStrength(fractalWeightedStrength);
+            },
+            // 7
+            (fractalPingPongStrength) => {
+                this.fnlNoise.SetFractalPingPongStrength(fractalPingPongStrength);
+            },
+            // 8
+            this.setCellularDistanceFunc,
+            // 9
+            this.setCellularRetType,
+            // 10
+            (cellularJitter) => {
+                this.fnlNoise.SetCellularJitter(cellularJitter);
+            },
+            // 11
+            (fractalGain) => {
+                this.fnlNoise.SetFractalGain(fractalGain);
+            },
+            // 12
+            this.setRotationType3D,
+            // 13
+            () => {
+                this.warpSettings.enabled = true;
+            },
+            // 14
+            () => {
+                this.warpSettings.enabled = false;
+            },
+            // 15
+            this.setWarpType,
+            // 16
+            (warpAmp) => {
+                this.fnlWarp.SetDomainWarpAmp(warpAmp);
+            },
+            // 17
+            (warpSeed) => {
+                this.fnlWarp.SetSeed(warpSeed);
+            },
+            // 18
+            (warpFrequency) => {
+                this.fnlWarp.SetFrequency(warpFrequency);
+            },
+            // 19
+            this.setWarpRortationType3D,
+            // 20
+            this.warpSetFractalType,
+            // 21
+            (warpFractalOctaves) => {
+                this.fnlWarp.SetFractalOctaves(warpFractalOctaves);
+            },
+            // 22
+            (warpFractalLacunarity) => {
+                this.fnlWarp.SetFractalLacunarity(warpFractalLacunarity);
+            },
+            // 23
+            (warpFractalGain) => {
+                this.fnlWarp.SetFractalGain(warpFractalGain);
+            },
+            // 24
+            (upperRange) => {
+                this.noiseSettings.upperRange = upperRange;
+            },
+            // 25
+            (lowerRange) => {
+                this.noiseSettings.lowerRange = lowerRange;
+            },
+            // 26
+            (surface, xOffset, yOffset, zOffset) => {
+                console.warn("Fill surface object with noise is unsupported");
+            }
+        ];
+
+        // update getNumOfConditions function if you edit this!!!!
+        this.$conditionFuncs = [
+        ];
+
+        this.$expressionFuncs = [
+            // 0
+            () => {
+                return this.noiseSettings.seed;
+            },
+            // 1
+            this.stringToSeed,
+            // 2
+            (x, y, z) => {
+                let pos = {};
+                pos.x = x;
+                pos.y = y;
+                pos.z = z;
+
+                if (this.warpSettings.enabled) {
+                    this.fnlWarp.DomainWarp(pos);
+                }
+
+                return this.mapNoiseValue(this.fnlNoise.GetNoise(pos.x, pos.y, pos.z));
+            },
+            // 3
+            (x, y) => {
+                let pos = {};
+                pos.x = x;
+                pos.y = y;
+
+                if (this.warpSettings.enabled) {
+                    this.fnlWarp.DomainWarp(pos);
+                }
+
+                return this.mapNoiseValue(this.fnlNoise.GetNoise(pos.x, pos.y));
+            },
+            // 4
+            (x) => {
+                let pos = {};
+                pos.x = x;
+                pos.y = 0;
+
+                if (this.warpSettings.enabled) {
+                    this.fnlWarp.DomainWarp(pos);
+                }
+
+                return this.mapNoiseValue(this.fnlNoise.GetNoise(pos.x, pos.y));
+            },
+            // 5
+            (x, xOffset, xSize) => {
+                let xPos = x - xOffset;
+                let radius = xSize / (Math.PI * 2.0);
+                let angleStep = 360.0 / xSize;
+                let angle = xPos * angleStep;
+                angle = angle * Math.PI / 180.0;
+
+                let pos = {};
+                pos.x = (radius * Math.cos(angle));
+                pos.y = (radius * Math.sin(angle));
+
+                if (this.warpSettings.enabled) {
+                    this.fnlWarp.DomainWarp(pos);
+                }
+
+                return this.mapNoiseValue(this.fnlNoise.GetNoise(pos.x, pos.y));
+            },
+            // 6
+            () => {
+                // reused for FastNoiseLite.DomainWarpType.OpenSimplex2, both should be 0
+                return Object.values(FastNoiseLite.NoiseType).indexOf("OpenSimplex2");
+            },
+            // 7
+            () => {
+                return Object.values(FastNoiseLite.NoiseType).indexOf("OpenSimplex2S");
+            },
+            // 8
+            () => {
+                return Object.values(FastNoiseLite.NoiseType).indexOf("Cellular");
+            },
+            // 9
+            () => {
+                return Object.values(FastNoiseLite.NoiseType).indexOf("Perlin");
+            },
+            // 10
+            () => {
+                return Object.values(FastNoiseLite.NoiseType).indexOf("ValueCubic");
+            },
+            // 11
+            () => {
+                return Object.values(FastNoiseLite.NoiseType).indexOf("Value");
+            },
+            // 12
+            () => {
+                // reused for FastNoiseLite.RotationType3D.None, both should be 0
+                return Object.values(FastNoiseLite.FractalType).indexOf("None");
+            },
+            // 13
+            () => {
+                return Object.values(FastNoiseLite.FractalType).indexOf("FBm");
+            },
+            // 14
+            () => {
+                // FIXME: Was it always called that??????
+                return Object.values(FastNoiseLite.FractalType).indexOf("Ridged");
+            },
+            // 15
+            () => {
+                return Object.values(FastNoiseLite.FractalType).indexOf("PingPong");
+            },
+            // 16
+            () => {
+                return Object.values(FastNoiseLite.CellularDistanceFunction).indexOf("Euclidean");
+            },
+            // 17
+            () => {
+                return Object.values(FastNoiseLite.CellularDistanceFunction).indexOf("EuclideanSq");
+            },
+            // 18
+            () => {
+                return Object.values(FastNoiseLite.CellularDistanceFunction).indexOf("Manhattan");
+            },
+            // 19
+            () => {
+                return Object.values(FastNoiseLite.CellularDistanceFunction).indexOf("Hybrid");
+            },
+            // 20
+            () => {
+                return Object.values(FastNoiseLite.CellularReturnType).indexOf("CellValue");
+            },
+            // 21
+            () => {
+                return Object.values(FastNoiseLite.CellularReturnType).indexOf("Distance");
+            },
+            // 22
+            () => {
+                return Object.values(FastNoiseLite.CellularReturnType).indexOf("Distance2");
+            },
+            // 23
+            () => {
+                return Object.values(FastNoiseLite.CellularReturnType).indexOf("Distance2Add");
+            },
+            // 24
+            () => {
+                return Object.values(FastNoiseLite.CellularReturnType).indexOf("Distance2Sub");
+            },
+            // 25
+            () => {
+                return Object.values(FastNoiseLite.CellularReturnType).indexOf("Distance2Mul");
+            },
+            // 26
+            () => {
+                return Object.values(FastNoiseLite.CellularReturnType).indexOf("Distance2Div");
+            },
+            // 27
+            () => {
+                return this.noiseSettings.type;
+            },
+            // 28
+            () => {
+                return this.noiseSettings.fractalType;
+            },
+            // 29
+            () => {
+                return this.noiseSettings.cellularFunction;
+            },
+            // 30
+            () => {
+                return this.noiseSettings.cellularReturnType;
+            },
+            // 31
+            () => {
+                return Object.values(FastNoiseLite.RotationType3D).indexOf("ImproveXYPlanes");
+            },
+            // 32
+            () => {
+                return Object.values(FastNoiseLite.RotationType3D).indexOf("ImproveXZPlanes");
+            },
+            // 33
+            () => {
+                return this.noiseSettings.rotationType3D;
+            },
+            // 34
+            () => {
+                return Object.values(FastNoiseLite.DomainWarpType).indexOf("OpenSimplex2Reduced");
+            },
+            // 35
+            () => {
+                return Object.values(FastNoiseLite.DomainWarpType).indexOf("BasicGrid");
+            },
+            // 36
+            () => {
+                return Object.values(FastNoiseLite.FractalType).indexOf("DomainWarpProgressive");
+            },
+            // 37
+            () => {
+                return Object.values(FastNoiseLite.FractalType).indexOf("DomainWarpIndependent");
+            },
+            // 38
+            () => {
+                if(this.warpSettings.enabled)
+                    return 1;
                 return 0;
-            return (that.chkboxes[Math.floor(idx / 8)] & (1 << idx % 8)) != 0;
-        };
-        this['GetPropertyStr'] = function(chkIDOrName) {
-            const idx = GetPropertyIndex(chkIDOrName);
-            if (idx == -1)
-                return "";
-            const prop = that.props[idx];
-            const textPropIDs = [
-                5, // PROPTYPE_EDIT_STRING:
-                22, // PROPTYPE_EDIT_MULTILINE:
-                16, // PROPTYPE_FILENAME:
-                19, // PROPTYPE_PICTUREFILENAME:
-                26, // PROPTYPE_DIRECTORYNAME:
-                7, // PROPTYPE_COMBOBOX:
-                20, // PROPTYPE_COMBOBOXBTN:
-                24 // PROPTYPE_ICONCOMBOBOX:
-            ];
-            if (textPropIDs.indexOf(prop.propTypeID) != -1) {
-                let t = that.textDecoder.decode(prop.propData);
-                if (prop.propTypeID == 22) //PROPTYPE_EDIT_MULTILINE
-                    t = t.replaceAll('\r', ''); // CRLF to LF
-                return t;
+            },
+            // 39
+            () => {
+                return this.warpSettings.seed;
+            },
+            // 40
+            () => {
+                return Object.values(FastNoiseLite.DomainWarpType).indexOf(this.warpSettings.type);
+            },
+            // 41
+            () => {
+                return this.warpSettings.rotationType3D;
+            },
+            // 42
+            () => {
+                return this.warpSettings.fractalType;
+            },
+            // 43
+            () => {
+                console.warn("Fill surface object with noise is unsupported");
+            },
+            // 44
+            () => {
+                console.warn("Fill surface object with noise is unsupported");
+            },
+            // 45
+            () => {
+                console.warn("Fill surface object with noise is unsupported");
+            },
+            // 46
+            () => {
+                console.warn("Fill surface object with noise is unsupported");
+            },
+            // 47
+            () => {
+                console.warn("Fill surface object with noise is unsupported");
+            },
+            // 48
+            () => {
+                console.warn("Fill surface object with noise is unsupported");
             }
-            throw "Property " + prop.propName  + " is not textual.";
-        };
-        this['GetPropertyNum'] = function(chkIDOrName) {
-            const idx = that.GetPropertyIndex(chkIDOrName);
-            if (idx == -1)
-                return 0.0;
-            const prop = that.props[idx];
-            const numPropIDsInteger = [
-                6, // PROPTYPE_EDIT_NUMBER
-                9, // PROPTYPE_COLOR
-                11, // PROPTYPE_SLIDEREDIT
-                12, // PROPTYPE_SPINEDIT
-                13 // PROPTYPE_DIRCTRL
-            ];
-            const numPropIDsFloat = [
-                21, // PROPTYPE_EDIT_FLOAT
-                27 // PROPTYPE_SPINEDITFLOAT
-            ];
-            if (numPropIDsInteger.indexOf(prop.propTypeID) != -1) {
-                return new DataView(prop.propData).getUint32(0, true);
-            }
-            if (numPropIDsFloat.indexOf(prop.propTypeID) != -1) {
-                return new DataView(prop.propData).getFloat32(0, true);
-            }
-            throw "Property " + prop.propName  + " is not numeric.";
-        };
-
-        this.props = [];
-        const data = editData.slice(this.chkboxes.length);
-        const dataDV = new DataView(new Uint8Array(data).buffer);
-
-        this.textDecoder = null;
-        if (globalThis['TextDecoder'] != null) {
-            this.textDecoder = new globalThis['TextDecoder']();
-        }
-        else {
-            // one byte = one char - should suffice for basic ASCII property names
-            this.textDecoder = {
-                decode: function(txt) {
-                    return String.fromCharCode.apply("", txt);
-                }
-            };
-        }
-
-        for (let i = 0, pt = 0, propSize, propEnd; i < this.numProps; ++i) {
-            propSize = dataDV.getUint32(pt, true);
-            propEnd = pt + propSize;
-            const propTypeID = dataDV.getUint16(pt + 4, true);
-            const propNameLength = dataDV.getUint8(pt + 4 + 2);
-            pt += 4 + 2 + 1;
-            const propName = this.textDecoder.decode(new Uint8Array(data.slice(pt, pt + propNameLength)));
-            pt += propNameLength;
-            const propData = new Uint8Array(data.slice(pt, pt + propSize - (4 + 2 + 1 + propNameLength)));
-
-            this.props.push({ index: i, propTypeID: propTypeID, propName: propName, propData: propData });
-            pt = propEnd;
-        }
-    };
-})();
-
-/** @constructor */
-export default function CRunNoise() {
-    /// <summary> Constructor of Fusion object. </summary>
-
-    // DarkEdif SDK exts should have these four variables defined.
-    // We need this[] and globalThis[] instead of direct because HTML5 Final Project minifies and breaks the names otherwise
-    this['ExtensionVersion'] = 1; // To match C++ version
-    this['SDKVersion'] = 18; // To match C++ version
-    this['DebugMode'] = true;
-    this['ExtensionName'] = 'Noise';
-
-    // Can't find DarkEdif wrapper
-    if (!globalThis.hasOwnProperty('darkEdif')) {
-        throw "a wobbly";
-    }
-    globalThis['darkEdif'].checkSupportsSDKVersion(this.SDKVersion);
-
-    console.log("Hello!");
-
-
-    // Works with both HTML development and final project
-    let noise = new FastNoiseLite();
-    noise.SetNoiseType(noise.NoiseType.OpenSimplex2);
-
-    let noiseData = [];
-
-    for (let x = 0; x < 128; x++) {
-        noiseData[x] = [];
-
-        for (let y = 0; y < 128; y++) {
-            noiseData[x][y] = noise.GetNoise(x,y);
-        }
+        ];
     }
 
-    console.log(noiseData);
+    mapNoiseValue(value) {
+        return (this.noiseSettings.lowerRange + (this.noiseSettings.upperRange - this.noiseSettings.lowerRange) * ((value - -1.0) / (1.0 - -1.0)));
+    }
 
-    // ======================================================================================================
-    // Actions
-    // ======================================================================================================
-    this.Action_ActionExample = function (ExampleParameter) {
-        // nothing, as C++ does nothing
-    };
-    this.Action_SecondActionExample = function () {
-        // nothing, as C++ does nothing
-    };
+    setSeed(seed) {
+        this.fnlNoise.SetSeed(seed);
+        this.noiseSettings.seed = seed;
+    }
 
-    // ======================================================================================================
-    // Conditions
-    // ======================================================================================================
-    this.Condition_AreTwoNumbersEqual = function (First, Second) {
-        return First == Second;
-    };
+    setNoiseType(type) {
+        this.fnlNoise.SetNoiseType(Object.values(FastNoiseLite.NoiseType)[type]);
+        this.noiseSettings.type = type;
+    }
 
-    // =============================
-    // Expressions
-    // =============================
+    setFractalType(fractalType) {
+        this.fnlNoise.SetFractalType(Object.values(FastNoiseLite.FractalType)[fractalType]);
+        this.noiseSettings.FractalType = fractalType;
+    }
 
-    this.Expression_Add = function (First, Second) {
-        return First + Second;
-    };
-    this.Expression_HelloWorld = function () {
-        return "Hello world!";
-    };
+    setCellularDistanceFunc(cellularDistanceFunc) {
+        this.fnlNoise.SetCellularDistanceFunction(Object.values(FastNoiseLite.CellularDistanceFunction)[cellularDistanceFunc]);
+        this.noiseSettings.CellularDistanceFunction = cellularDistanceFunc;
+    }
 
-    // =============================
-    // Function arrays
-    // =============================
+    setCellularRetType(cellularRetType) {
+        this.fnlNoise.SetCellularReturnType(Object.values(FastNoiseLite.CellularReturnType)[cellularRetType]);
+        this.noiseSettings.CellularReturnType = cellularRetType;
+    }
 
-    this.$actionFuncs = [
-    /* 0 */ this.Action_ActionExample,
-    /* 1 */ this.Action_SecondActionExample
-    ];
-    this.$conditionFuncs = [
-    /* 0 */ this.Condition_AreTwoNumbersEqual
+    setRotationType3D(rotationType3D) {
+        this.fnlNoise.SetRotationType3D(Object.values(FastNoiseLite.RotationType3D)[rotationType3D]);
+        this.noiseSettings.rotationType3D = rotationType3D;
+    }
 
-    // update getNumOfConditions function if you edit this!!!!
-    ];
-    this.$expressionFuncs = [
-    /* 0 */ this.Expression_Add,
-    /* 1 */ this.Expression_HelloWorld
-    ];
-}
-//
-CRunNoise.prototype = CServices.extend(new CRunExtension(),
-{
-    /// <summary> Prototype definition </summary>
-    /// <description> This class is a sub-class of CRunExtension, by the mean of the
-    /// CServices.extend function which copies all the properties of
-    /// the parent class to the new class when it is created.
-    /// As all the necessary functions are defined in the parent class,
-    /// you only need to keep the ones that you actually need in your code. </description>
+    setWarpType(warpType) {
+        this.fnlWarp.SetDomainWarpType(Object.values(FastNoiseLite.DomainWarpType)[warpType]);
+        this.warpSettings.type = warpType;
+    }
 
-    getNumberOfConditions: function()
-    {
-        /// <summary> Returns the number of conditions </summary>
-        /// <returns type="Number" isInteger="true"> Warning, if this number is not correct, the application _will_ crash</returns>
-        return 1; // $conditionFuncs not available yet
-    },
+    setWarpRortationType3D(warpRotationType3D) {
+        this.fnlWarp.SetRotationType3D(Object.values(FastNoiseLite.RotationType3D)[warpRotationType3D]);
+        this.warpSettings.rotationType3D = warpRotationType3D;
+    }
 
-    createRunObject: function(file, cob, version)
-    {
+    warpSetFractalType(warpFractalType) {
+        this.fnlWarp.SetFractalType(Object.values(FastNoiseLite.FractalType)[warpFractalType]);
+        this.warpSettings.fractalType = warpFractalType;
+    }
+
+
+    stringToSeed(str) {
+        // TODO:
+        return 1337;
+    }
+
+
+    getNumberOfConditions() {
+        return 0; // $conditionFuncs not available yet
+    }
+
+
+    createRunObject(file, cob, version) {
         /// <summary> Creation of the Fusion extension. </summary>
         /// <param name="file"> A CFile object, pointing to the object's data zone </param>
         /// <param name="cob"> A CCreateObjectInfo containing infos about the created object</param>
@@ -318,30 +482,27 @@ CRunNoise.prototype = CServices.extend(new CRunExtension(),
         // DarkEdif properties are accessible as on other platforms: IsPropChecked(), GetPropertyStr(), GetPropertyNum()
         let props = new darkEdif['Properties'](this, file, version);
 
-        // this.checkboxWithinFolder = props['IsPropChecked']("Checkbox within folder");
-        // this.editable6Text = props['GetPropertyStr']("Editable 6");
+        this.fnlNoise = new FastNoiseLite();
+        this.fnlWarp = new FastNoiseLite();
 
         // The return value is not used in this version of the runtime: always return false.
         return false;
-    },
+    }
 
-    handleRunObject: function()
-    {
+    handleRunObject() {
         /// <summary> This function is called at every loop of the game. You have to perform
         /// in it all the tasks necessary for your object to function. </summary>
         /// <returns type="Number"> One of two options:
-        ///							   0 : this function will be called during the next loop
+        ///                            0 : this function will be called during the next loop
         /// CRunExtension.REFLAG_ONESHOT : this function will not be called anymore,
-        ///								   unless this.reHandle() is called. </returns>
+        ///                                unless this.reHandle() is called. </returns>
         return CRunExtension.REFLAG_ONESHOT;
-    },
+    }
 
-    condition: function(num, cnd)
-    {
+    condition(num, cnd) {
         /// <summary> Called when a condition of this object is tested. </summary>
         /// <param name="num" type="Number" integer="true"> The number of the condition; 0+. </param>
-        /// <param name="cnd" type="CCndExtension"> a CCndExtension object, allowing you to retreive the parameters
-        //			of the condition. </param>
+        /// <param name="cnd" type="CCndExtension"> a CCndExtension object, allowing you to retreive the parameters of the condition. </param>
         /// <returns type="Boolean"> True if the condition is currently true. </returns>
 
         const func = this.$conditionFuncs[~~num];
@@ -355,14 +516,12 @@ CRunNoise.prototype = CServices.extend(new CRunExtension(),
             args[i] = cnd.getParamExpString(this.rh, i);
 
         return func.apply(this, args);
-    },
-    action: function(num, act)
-    {
+    }
+
+    action(num, act) {
         /// <summary> Called when an action of this object is executed </summary>
-        /// <param name="num" type="Number"> The ID/number of the action, as defined by
-        ///		its array index. </param>
-        /// <param name="act" type="CActExtension"> A CActExtension object, allowing you to
-        ///		retrieve the parameters of the action </param>
+        /// <param name="num" type="Number"> The ID/number of the action, as defined by its array index. </param>
+        /// <param name="act" type="CActExtension"> A CActExtension object, allowing you to retrieve the parameters of the action </param>
 
         const func = this.$actionFuncs[~~num];
         if (func == null)
@@ -375,9 +534,9 @@ CRunNoise.prototype = CServices.extend(new CRunExtension(),
             args[i] = act.getParamExpression(this.rh, i);
 
         func.apply(this, args);
-    },
-    expression: function(num)
-    {
+    }
+
+    expression(num) {
         /// <summary> Called during the evaluation of an expression. </summary>
         /// <param name="num" type="Number"> The ID/number of the expression. </param>
         /// <returns> The result of the calculation, a number or a string </returns>
@@ -396,7 +555,4 @@ CRunNoise.prototype = CServices.extend(new CRunExtension(),
 
         return func.apply(this, args);
     }
-
-    // No comma for the last function : the Google compiler
-    // we use for final projects does not accept it
-});
+}

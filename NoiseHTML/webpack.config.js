@@ -12,7 +12,16 @@ module.exports = {
             export: 'default',
         },
     },
-    target: ['web', 'es3'],
-    mode: 'development',      // Mode production is broken but thats fine, closure will minify everything.
+    resolve: {
+        alias: {
+            // TODO: Make this chose the correct sdk if targeting html or uwp
+            DarkEdif$: path.resolve(__dirname, 'DarkEdif.html.js'),
+        },
+    },
+    optimization: {
+        minimize: false,
+    },
+    target: 'web',
+    mode: 'development',
     devtool: false,
 };
