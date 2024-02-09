@@ -140,10 +140,11 @@ export default globalThis['darkEdif'] = (globalThis['darkEdif'] && globalThis['d
             throw "Property " + prop.propName  + " is not textual.";
         };
         this['GetPropertyNum'] = function(chkIDOrName) {
-            const idx = that.GetPropertyIndex(chkIDOrName);
+            const idx = GetPropertyIndex(chkIDOrName);
             if (idx == -1)
                 return 0.0;
             const prop = that.props[idx];
+            const propDV = new DataView(prop.propData.buffer);
             const numPropIDsInteger = [
                 6, // PROPTYPE_EDIT_NUMBER
                 9, // PROPTYPE_COLOR
@@ -156,10 +157,10 @@ export default globalThis['darkEdif'] = (globalThis['darkEdif'] && globalThis['d
                 27 // PROPTYPE_SPINEDITFLOAT
             ];
             if (numPropIDsInteger.indexOf(prop.propTypeID) != -1) {
-                return new DataView(prop.propData).getUint32(0, true);
+                return propDV.getUint32(0, true);
             }
             if (numPropIDsFloat.indexOf(prop.propTypeID) != -1) {
-                return new DataView(prop.propData).getFloat32(0, true);
+                return propDV.getFloat32(0, true);
             }
             throw "Property " + prop.propName  + " is not numeric.";
         };
