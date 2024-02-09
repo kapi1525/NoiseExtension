@@ -44,19 +44,19 @@ export default class CRunNoise extends CRunExtension {
             upperRange:         1.0,
             lowerRange:         -1.0,
             seed:               1337,
-            type:               Object.values(FastNoiseLite.NoiseType).indexOf("OpenSimplex2"),
-            rotationType3D:     Object.values(FastNoiseLite.RotationType3D).indexOf("None"),
-            fractalType:        Object.values(FastNoiseLite.FractalType).indexOf("None"),
-            cellularFunction:   Object.values(FastNoiseLite.CellularDistanceFunction).indexOf("EuclideanSq"),
-            cellularReturnType: Object.values(FastNoiseLite.CellularReturnType).indexOf("Distance"),
+            type:               FastNoiseLite.NoiseType.OpenSimplex2,
+            rotationType3D:     FastNoiseLite.RotationType3D.None,
+            fractalType:        FastNoiseLite.FractalType.None,
+            cellularFunction:   FastNoiseLite.CellularDistanceFunction.EuclideanSq,
+            cellularReturnType: FastNoiseLite.CellularReturnType.Distance,
         };
 
         this.warpSettings = {
             enabled:            false,
             seed:               1337,
-            type:               Object.values(FastNoiseLite.DomainWarpType).indexOf("OpenSimplex2"),
-            rotationType3D:     Object.values(FastNoiseLite.RotationType3D).indexOf("None"),
-            fractalType:        Object.values(FastNoiseLite.FractalType).indexOf("None"),
+            type:               FastNoiseLite.DomainWarpType.OpenSimplex2,
+            rotationType3D:     FastNoiseLite.RotationType3D.None,
+            fractalType:        FastNoiseLite.FractalType.None,
         };
 
         // =============================
@@ -67,13 +67,17 @@ export default class CRunNoise extends CRunExtension {
             // 0
             this.setSeed,
             // 1
-            this.setNoiseType,
+            (noiseType) => {
+                this.setNoiseType(this.getNoiseTypeString(noiseType));
+            },
             // 2
             (frequency) => {
                 this.fnlNoise.SetFrequency(frequency);
             },
             // 3
-            this.setFractalType,
+            (fractalType) => {
+                this.setFractalType(this.getFractalTypeString(fractalType));
+            },
             // 4
             (fractalOctaves) => {
                 this.fnlNoise.SetFractalOctaves(fractalOctaves);
@@ -91,9 +95,13 @@ export default class CRunNoise extends CRunExtension {
                 this.fnlNoise.SetFractalPingPongStrength(fractalPingPongStrength);
             },
             // 8
-            this.setCellularDistanceFunc,
+            (cellularDistanceFunc) => {
+                this.setCellularDistanceFunc(this.getCellularDistanceFuncString(cellularDistanceFunc));
+            },
             // 9
-            this.setCellularRetType,
+            (cellularRetType) => {
+                this.setCellularRetType(this.getCellularRetTypeString(cellularRetType));
+            },
             // 10
             (cellularJitter) => {
                 this.fnlNoise.SetCellularJitter(cellularJitter);
@@ -103,7 +111,9 @@ export default class CRunNoise extends CRunExtension {
                 this.fnlNoise.SetFractalGain(fractalGain);
             },
             // 12
-            this.setRotationType3D,
+            (noiseRotationType3D) => {
+                this.setRotationType3D(this.getRotationType3DString(noiseRotationType3D));
+            },
             // 13
             () => {
                 this.warpSettings.enabled = true;
@@ -113,7 +123,9 @@ export default class CRunNoise extends CRunExtension {
                 this.warpSettings.enabled = false;
             },
             // 15
-            this.setWarpType,
+            (warpType) => {
+                this.setWarpType(this.getWarpTypeString(warpType));
+            },
             // 16
             (warpAmp) => {
                 this.fnlWarp.SetDomainWarpAmp(warpAmp);
@@ -127,9 +139,13 @@ export default class CRunNoise extends CRunExtension {
                 this.fnlWarp.SetFrequency(warpFrequency);
             },
             // 19
-            this.setWarpRortationType3D,
+            (warpRotationType3D) => {
+                this.setWarpRortationType3D(this.getRotationType3DString(warpRotationType3D));
+            },
             // 20
-            this.warpSetFractalType,
+            (warpFractalType) => {
+                this.warpSetFractalType(this.getFractalTypeString(warpFractalType));
+            },
             // 21
             (warpFractalOctaves) => {
                 this.fnlWarp.SetFractalOctaves(warpFractalOctaves);
@@ -225,133 +241,132 @@ export default class CRunNoise extends CRunExtension {
             // 6
             () => {
                 // reused for FastNoiseLite.DomainWarpType.OpenSimplex2, both should be 0
-                return Object.values(FastNoiseLite.NoiseType).indexOf("OpenSimplex2");
+                return this.getNoiseTypeIndex("OpenSimplex2");
             },
             // 7
             () => {
-                return Object.values(FastNoiseLite.NoiseType).indexOf("OpenSimplex2S");
+                return this.getNoiseTypeIndex("OpenSimplex2S");
             },
             // 8
             () => {
-                return Object.values(FastNoiseLite.NoiseType).indexOf("Cellular");
+                return this.getNoiseTypeIndex("Cellular");
             },
             // 9
             () => {
-                return Object.values(FastNoiseLite.NoiseType).indexOf("Perlin");
+                return this.getNoiseTypeIndex("Perlin");
             },
             // 10
             () => {
-                return Object.values(FastNoiseLite.NoiseType).indexOf("ValueCubic");
+                return this.getNoiseTypeIndex("ValueCubic");
             },
             // 11
             () => {
-                return Object.values(FastNoiseLite.NoiseType).indexOf("Value");
+                return this.getNoiseTypeIndex("Value");
             },
             // 12
             () => {
                 // reused for FastNoiseLite.RotationType3D.None, both should be 0
-                return Object.values(FastNoiseLite.FractalType).indexOf("None");
+                return this.getFractalTypeIndex("None");
             },
             // 13
             () => {
-                return Object.values(FastNoiseLite.FractalType).indexOf("FBm");
+                return this.getFractalTypeIndex("FBm");
             },
             // 14
             () => {
-                // FIXME: Was it always called that??????
-                return Object.values(FastNoiseLite.FractalType).indexOf("Ridged");
+                return this.getFractalTypeIndex("Ridged");
             },
             // 15
             () => {
-                return Object.values(FastNoiseLite.FractalType).indexOf("PingPong");
+                return this.getFractalTypeIndex("PingPong");
             },
             // 16
             () => {
-                return Object.values(FastNoiseLite.CellularDistanceFunction).indexOf("Euclidean");
+                return this.getCellularDistanceFuncIndex("Euclidean");
             },
             // 17
             () => {
-                return Object.values(FastNoiseLite.CellularDistanceFunction).indexOf("EuclideanSq");
+                return this.getCellularDistanceFuncIndex("EuclideanSq");
             },
             // 18
             () => {
-                return Object.values(FastNoiseLite.CellularDistanceFunction).indexOf("Manhattan");
+                return this.getCellularDistanceFuncIndex("Manhattan");
             },
             // 19
             () => {
-                return Object.values(FastNoiseLite.CellularDistanceFunction).indexOf("Hybrid");
+                return this.getCellularDistanceFuncIndex("Hybrid");
             },
             // 20
             () => {
-                return Object.values(FastNoiseLite.CellularReturnType).indexOf("CellValue");
+                return this.getCellularRetTypeIndex("CellValue");
             },
             // 21
             () => {
-                return Object.values(FastNoiseLite.CellularReturnType).indexOf("Distance");
+                return this.getCellularRetTypeIndex("Distance");
             },
             // 22
             () => {
-                return Object.values(FastNoiseLite.CellularReturnType).indexOf("Distance2");
+                return this.getCellularRetTypeIndex("Distance2");
             },
             // 23
             () => {
-                return Object.values(FastNoiseLite.CellularReturnType).indexOf("Distance2Add");
+                return this.getCellularRetTypeIndex("Distance2Add");
             },
             // 24
             () => {
-                return Object.values(FastNoiseLite.CellularReturnType).indexOf("Distance2Sub");
+                return this.getCellularRetTypeIndex("Distance2Sub");
             },
             // 25
             () => {
-                return Object.values(FastNoiseLite.CellularReturnType).indexOf("Distance2Mul");
+                return this.getCellularRetTypeIndex("Distance2Mul");
             },
             // 26
             () => {
-                return Object.values(FastNoiseLite.CellularReturnType).indexOf("Distance2Div");
+                return this.getCellularRetTypeIndex("Distance2Div");
             },
             // 27
             () => {
-                return this.noiseSettings.type;
+                return this.getNoiseTypeIndex(this.noiseSettings.type);
             },
             // 28
             () => {
-                return this.noiseSettings.fractalType;
+                return this.getFractalTypeIndex(this.noiseSettings.fractalType);
             },
             // 29
             () => {
-                return this.noiseSettings.cellularFunction;
+                return this.getCellularDistanceFuncIndex(this.noiseSettings.cellularFunction);
             },
             // 30
             () => {
-                return this.noiseSettings.cellularReturnType;
+                return this.getCellularRetTypeIndex(this.noiseSettings.cellularReturnType);
             },
             // 31
             () => {
-                return Object.values(FastNoiseLite.RotationType3D).indexOf("ImproveXYPlanes");
+                return this.getRotationType3DIndex("ImproveXYPlanes");
             },
             // 32
             () => {
-                return Object.values(FastNoiseLite.RotationType3D).indexOf("ImproveXZPlanes");
+                return this.getRotationType3DIndex("ImproveXZPlanes");
             },
             // 33
             () => {
-                return this.noiseSettings.rotationType3D;
+                return this.getRotationType3DIndex(this.noiseSettings.rotationType3D);
             },
             // 34
             () => {
-                return Object.values(FastNoiseLite.DomainWarpType).indexOf("OpenSimplex2Reduced");
+                return this.getWarpTypeIndex("OpenSimplex2Reduced");
             },
             // 35
             () => {
-                return Object.values(FastNoiseLite.DomainWarpType).indexOf("BasicGrid");
+                return this.getWarpTypeIndex("BasicGrid");
             },
             // 36
             () => {
-                return Object.values(FastNoiseLite.FractalType).indexOf("DomainWarpProgressive");
+                return this.getFractalTypeIndex("DomainWarpProgressive");
             },
             // 37
             () => {
-                return Object.values(FastNoiseLite.FractalType).indexOf("DomainWarpIndependent");
+                return this.getFractalTypeIndex("DomainWarpIndependent");
             },
             // 38
             () => {
@@ -365,15 +380,15 @@ export default class CRunNoise extends CRunExtension {
             },
             // 40
             () => {
-                return Object.values(FastNoiseLite.DomainWarpType).indexOf(this.warpSettings.type);
+                return this.getWarpTypeIndex(this.warpSettings.type);
             },
             // 41
             () => {
-                return this.warpSettings.rotationType3D;
+                return this.getRotationType3DIndex(this.warpSettings.rotationType3D);
             },
             // 42
             () => {
-                return this.warpSettings.fractalType;
+                return this.getFractalTypeIndex(this.warpSettings.fractalType);
             },
             // 43
             () => {
@@ -411,45 +426,101 @@ export default class CRunNoise extends CRunExtension {
         this.noiseSettings.seed = seed;
     }
 
+
+    // All of these functions expect a string id, use get...String to get it from index.
     setNoiseType(type) {
-        this.fnlNoise.SetNoiseType(Object.values(FastNoiseLite.NoiseType)[type]);
+        this.fnlNoise.SetNoiseType(type);
         this.noiseSettings.type = type;
     }
 
     setFractalType(fractalType) {
-        this.fnlNoise.SetFractalType(Object.values(FastNoiseLite.FractalType)[fractalType]);
-        this.noiseSettings.FractalType = fractalType;
+        this.fnlNoise.SetFractalType(fractalType);
+        this.noiseSettings.fractalType = fractalType;
     }
 
     setCellularDistanceFunc(cellularDistanceFunc) {
-        this.fnlNoise.SetCellularDistanceFunction(Object.values(FastNoiseLite.CellularDistanceFunction)[cellularDistanceFunc]);
-        this.noiseSettings.CellularDistanceFunction = cellularDistanceFunc;
+        this.fnlNoise.SetCellularDistanceFunction(cellularDistanceFunc);
+        this.noiseSettings.cellularDistanceFunction = cellularDistanceFunc;
     }
 
     setCellularRetType(cellularRetType) {
-        this.fnlNoise.SetCellularReturnType(Object.values(FastNoiseLite.CellularReturnType)[cellularRetType]);
-        this.noiseSettings.CellularReturnType = cellularRetType;
+        this.fnlNoise.SetCellularReturnType(cellularRetType);
+        this.noiseSettings.cellularReturnType = cellularRetType;
     }
 
     setRotationType3D(rotationType3D) {
-        this.fnlNoise.SetRotationType3D(Object.values(FastNoiseLite.RotationType3D)[rotationType3D]);
+        this.fnlNoise.SetRotationType3D(rotationType3D);
         this.noiseSettings.rotationType3D = rotationType3D;
     }
 
     setWarpType(warpType) {
-        this.fnlWarp.SetDomainWarpType(Object.values(FastNoiseLite.DomainWarpType)[warpType]);
+        this.fnlWarp.SetDomainWarpType(warpType);
         this.warpSettings.type = warpType;
     }
 
     setWarpRortationType3D(warpRotationType3D) {
-        this.fnlWarp.SetRotationType3D(Object.values(FastNoiseLite.RotationType3D)[warpRotationType3D]);
+        this.fnlWarp.SetRotationType3D(warpRotationType3D);
         this.warpSettings.rotationType3D = warpRotationType3D;
     }
 
     warpSetFractalType(warpFractalType) {
-        this.fnlWarp.SetFractalType(Object.values(FastNoiseLite.FractalType)[warpFractalType]);
+        this.fnlWarp.SetFractalType(warpFractalType);
         this.warpSettings.fractalType = warpFractalType;
     }
+
+
+    // FastNoiseLite js port stores type enums as strings, but we need numeric ids like in the c++ version
+    // Since all type enums are stored in the same order instead of ids we can use the value index as one.
+    // All input should come as numeric id and be converted to correct string id from FastNoiseLite enums and that string should be stored.
+    getNoiseTypeIndex(noiseType) {
+        return Object.values(FastNoiseLite.NoiseType).indexOf(noiseType);
+    }
+
+    getFractalTypeIndex(fractalType) {
+        return Object.values(FastNoiseLite.FractalType).indexOf(fractalType);
+    }
+
+    getCellularDistanceFuncIndex(cellularDistanceFunc) {
+        return Object.values(FastNoiseLite.CellularDistanceFunction).indexOf(cellularDistanceFunc);
+    }
+
+    getCellularRetTypeIndex(cellularRetType) {
+        return Object.values(FastNoiseLite.CellularReturnType).indexOf(cellularRetType);
+    }
+
+    getRotationType3DIndex(rotationType3D) {
+        return Object.values(FastNoiseLite.RotationType3D).indexOf(rotationType3D);
+    }
+
+    getWarpTypeIndex(warpType) {
+        return Object.values(FastNoiseLite.DomainWarpType).indexOf(warpType);
+    }
+
+    // Convert index to string
+    getNoiseTypeString(noiseType) {
+        return Object.values(FastNoiseLite.NoiseType)[noiseType];
+    }
+
+    getFractalTypeString(fractalType) {
+        return Object.values(FastNoiseLite.FractalType)[fractalType];
+    }
+
+    getCellularDistanceFuncString(cellularDistanceFunc) {
+        return Object.values(FastNoiseLite.CellularDistanceFunction)[cellularDistanceFunc];
+    }
+
+    getCellularRetTypeString(cellularRetType) {
+        return Object.values(FastNoiseLite.CellularReturnType)[cellularRetType];
+    }
+
+    getRotationType3DString(rotationType3D) {
+        return Object.values(FastNoiseLite.RotationType3D)[rotationType3D];
+    }
+
+    getWarpTypeString(warpType) {
+        return Object.values(FastNoiseLite.DomainWarpType)[warpType];
+    }
+
 
 
     stringToSeed(str) {
