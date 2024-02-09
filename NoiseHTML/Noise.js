@@ -132,7 +132,7 @@ export default class CRunNoise extends CRunExtension {
             },
             // 17
             (warpSeed) => {
-                this.fnlWarp.SetSeed(warpSeed);
+                this.setWarpSeed(warpSeed);
             },
             // 18
             (warpFrequency) => {
@@ -426,6 +426,10 @@ export default class CRunNoise extends CRunExtension {
         this.noiseSettings.seed = seed;
     }
 
+    setWarpSeed(seed) {
+        this.fnlWarp.SetSeed(seed);
+        this.warpSettings.seed = seed;
+    }
 
     // All of these functions expect a string id, use get...String to get it from index.
     setNoiseType(type) {
@@ -463,7 +467,7 @@ export default class CRunNoise extends CRunExtension {
         this.warpSettings.rotationType3D = warpRotationType3D;
     }
 
-    warpSetFractalType(warpFractalType) {
+    setWarpFractalType(warpFractalType) {
         this.fnlWarp.SetFractalType(warpFractalType);
         this.warpSettings.fractalType = warpFractalType;
     }
@@ -555,6 +559,51 @@ export default class CRunNoise extends CRunExtension {
 
         this.fnlNoise = new FastNoiseLite();
         this.fnlWarp = new FastNoiseLite();
+
+        this.setNoiseType(props["GetPropertyStr"]("Noise type"));
+
+        this.noiseSettings.upperRange = props["GetPropertyNum"]("Noise value upper range");
+        this.noiseSettings.lowerRange = props["GetPropertyNum"]("Noise value lower range");
+
+        this.setSeed(this.stringToSeed(props["GetPropertyStr"]("Noise seed")));
+        this.fnlNoise.SetFrequency(props["GetPropertyNum"]("Noise frequency"));
+        this.setRotationType3D(props["GetPropertyStr"]("Rotation type 3D"));
+
+        this.setFractalType(props["GetPropertyStr"]("Fractal type"));
+        this.fnlNoise.SetFractalOctaves(props["GetPropertyNum"]("Fractal octaves"))
+        this.fnlNoise.SetFractalLacunarity(props["GetPropertyNum"]("Fractal lacunarity"));
+        this.fnlNoise.SetFractalGain(props["GetPropertyNum"]("Fractal gain"));
+        this.fnlNoise.SetFractalWeightedStrength(props["GetPropertyNum"]("Fractal weighted strength"));
+        this.fnlNoise.SetFractalPingPongStrength(props["GetPropertyNum"]("Fractal PingPong strength"));
+
+        this.setCellularDistanceFunc(props["GetPropertyStr"]("Cellular distance function"));
+        this.setCellularRetType(props["GetPropertyStr"]("Cellular return type"));
+        this.fnlNoise.SetCellularJitter(props["GetPropertyNum"]("Cellular jitter"));
+
+        {
+            const warpType = props["GetPropertyStr"]("Domain warp type");
+
+            if(warpType === "Disabled") {
+                this.warpSettings.enabled = false;
+            } else {
+                this.warpSettings.enabled = true;
+                this.setWarpType(warpType);
+            }
+        }
+
+        this.fnlWarp.SetDomainWarpAmp(props["GetPropertyNum"]("Domain warp amplitude"));
+
+        this.setWarpSeed(this.stringToSeed(props["GetPropertyStr"]("Domain warp seed")));
+        this.fnlWarp.SetFrequency(props["GetPropertyNum"]("Domain warp frequency"));
+        this.setWarpRortationType3D(props["GetPropertyStr"]("Domain warp rotation type 3D"));
+
+        this.setWarpFractalType(props["GetPropertyStr"]("DW fractal type"));
+        this.fnlWarp.SetFractalOctaves(props["GetPropertyNum"]("DW fractal octaves"))
+        this.fnlWarp.SetFractalLacunarity(props["GetPropertyNum"]("DW fractal lacunarity"));
+        this.fnlWarp.SetFractalGain(props["GetPropertyNum"]("DW fractal gain"));
+
+        console.log(this.noiseSettings);
+        console.log(this.warpSettings);
 
         // The return value is not used in this version of the runtime: always return false.
         return false;
