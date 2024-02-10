@@ -11,24 +11,52 @@ int Extension::current_noise_seed() {
 	return noise.seed;
 }
 
-int Extension::string_to_seed(const TCHAR* String) {
-	std::string Text = DarkEdif::TStringToANSI(std::tstring(String));
+int Extension::string_to_seed(const TCHAR* string) {
+	std::string text = DarkEdif::TStringToUTF8(std::tstring(string));
 
-	unsigned int Seed = 0;
+    {
+        // Trim whitespace
+        int start = 0;
+        int end = 0;
+        for (size_t i = 0; i < text.length(); i++) {
+            if(!std::isspace(text.at(i))) {
+                start = i;
+                break;
+            }
+        }
 
-	for (size_t i = 0; i < Text.length(); i++) {
-		if (Text.at(i) >= '0' && Text.at(i) <= '9') {
-			Seed = Seed * 10;
-			Seed = Seed + (Text.at(i) - 48);
-		}
-		else {
-			Seed = Seed * 100;
-			srand((int)Text.at(i) + i);
-			Seed = Seed + rand() % 99;
-		}
-	}
+        for (size_t i = text.length() - 1; i > 0; i--) {
+            if(!std::isspace(text.at(i))) {
+                end = i;
+                break;
+            }
+        }
 
-	return Seed;
+        text = std::string(text, start, end - start + 1);
+    }
+
+	unsigned int seed = 0;
+    bool is_a_number = true;
+
+    // Check if is a number
+    for (size_t i = 0; i < text.length(); i++) {
+        if(!std::isdigit(text.at(i))) {
+            is_a_number = false;
+        }
+    }
+
+    if(is_a_number) {
+        seed = std::stoi(text);
+    }
+    else {
+        for (size_t i = 0; i < text.length(); i++) {
+            const auto byte = text.at(i);
+            seed += (byte + 1) * 6991;
+            seed = seed << i;
+        }
+    }
+
+	return seed;
 }
 
 

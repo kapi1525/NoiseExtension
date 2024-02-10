@@ -528,8 +528,25 @@ export default class CRunNoise extends CRunExtension {
 
 
     stringToSeed(str) {
-        // TODO:
-        return 1337;
+        let seed = 0;
+        str = str.trim();
+
+        if(!isNaN(str)) {
+            seed = Number(str);
+        }
+        else {
+            // Convert the string to raw UTF8 bytes
+            let enc = new TextEncoder;
+            let rawBytes = enc.encode(str);
+
+            for (let i = 0; i < rawBytes.length; i++) {
+                const byte = rawBytes[i];
+                seed += (byte + 1) * 6991;
+                seed = seed << i;
+            }
+        }
+
+        return seed;
     }
 
 
