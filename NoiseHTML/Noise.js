@@ -418,7 +418,7 @@ export default class CRunNoise extends CRunExtension {
     }
 
     mapNoiseValue(value) {
-        return (this.noiseSettings.lowerRange + (this.noiseSettings.upperRange - this.noiseSettings.lowerRange) * ((value - -1.0) / (1.0 - -1.0))).toFixed(6);
+        return (this.noiseSettings.lowerRange + (this.noiseSettings.upperRange - this.noiseSettings.lowerRange) * ((value - -1.0) / (1.0 - -1.0)));
     }
 
     setSeed(seed) {
