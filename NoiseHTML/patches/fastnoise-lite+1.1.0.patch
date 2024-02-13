@@ -1,5 +1,5 @@
 diff --git a/node_modules/fastnoise-lite/FastNoiseLite.js b/node_modules/fastnoise-lite/FastNoiseLite.js
-index e901f35..e65fbba 100644
+index e901f35..2d64792 100644
 --- a/node_modules/fastnoise-lite/FastNoiseLite.js
 +++ b/node_modules/fastnoise-lite/FastNoiseLite.js
 @@ -84,125 +84,168 @@ for (let x = 0; x < 128; x++) {
@@ -485,10 +485,11 @@ index e901f35..e65fbba 100644
      /**
       * @private
       */
-@@ -3180,6 +3038,148 @@ export default class FastNoiseLite {
+@@ -3180,7 +3038,149 @@ export default class FastNoiseLite {
      }
  }
  
+-class Vector2 {
 +/**
 + * @static
 + * @enum {string}
@@ -631,6 +632,16 @@ index e901f35..e65fbba 100644
 +    return t < 1 ? t : 2 - t;
 +};
 +
- class Vector2 {
++export class Vector2 {
      /**
       * 2d Vector
+      * @param {number} x
+@@ -3192,7 +3192,7 @@ class Vector2 {
+     }
+ }
+ 
+-class Vector3 {
++export class Vector3 {
+     /**
+      * 3d Vector
+      * @param {number} x

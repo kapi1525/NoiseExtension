@@ -14,7 +14,7 @@
 // webpack handles imports and bundles everything into single js file
 // It seems like webpack handles everything in a smart way and names cant conflict with other extensions
 import "DarkEdif";
-import FastNoiseLite from "fastnoise-lite";
+import FastNoiseLite, { Vector3, Vector2 } from "fastnoise-lite";
 
 
 // Mixing new syntax with old closure, what could go wrong!
@@ -185,10 +185,7 @@ export default class CRunNoise extends CRunExtension {
             this.stringToSeed,
             // 2
             (x, y, z) => {
-                let pos = {};
-                pos.x = x;
-                pos.y = y;
-                pos.z = z;
+                let pos = new Vector3(x, y, z);
 
                 if (this.warpSettings.enabled) {
                     this.fnlWarp.DomainWarp(pos);
@@ -198,9 +195,7 @@ export default class CRunNoise extends CRunExtension {
             },
             // 3
             (x, y) => {
-                let pos = {};
-                pos.x = x;
-                pos.y = y;
+                let pos = new Vector2(x, y);
 
                 if (this.warpSettings.enabled) {
                     this.fnlWarp.DomainWarp(pos);
@@ -210,9 +205,7 @@ export default class CRunNoise extends CRunExtension {
             },
             // 4
             (x) => {
-                let pos = {};
-                pos.x = x;
-                pos.y = 0;
+                let pos = new Vector2(x, 0);
 
                 if (this.warpSettings.enabled) {
                     this.fnlWarp.DomainWarp(pos);
