@@ -612,9 +612,6 @@ export default class CRunNoise extends CRunExtension {
         this.fnlWarp.SetFractalLacunarity(props["GetPropertyNum"]("DW fractal lacunarity"));
         this.fnlWarp.SetFractalGain(props["GetPropertyNum"]("DW fractal gain"));
 
-        console.log(this.noiseSettings);
-        console.log(this.warpSettings);
-
         // The return value is not used in this version of the runtime: always return false.
         return false;
     }
