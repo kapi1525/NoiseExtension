@@ -1,8 +1,4 @@
 #pragma once
-
-
-#include "json.hpp"
-
 #include <vector>
 #include <thread>
 #include <mutex>
@@ -10,19 +6,24 @@
 #include <chrono>
 #include <condition_variable>
 #include <atomic>
+#include "json.hpp"
 
 #ifdef _WIN32
-	#include "..\Windows\MMFMasterHeader.h"
+	#include "..\Windows\MMFWindowsMasterHeader.hpp"
 	extern HINSTANCE hInstLib;
 #elif defined (__ANDROID__)
-	#include "..\Android\MMFAndroidMasterHeader.h"
+	#include "..\Android\MMFAndroidMasterHeader.hpp"
 #elif defined (__APPLE__)
-	#include "../iOS/MMFiOSMasterHeader.h"
+#if MacBuild == 0
+	#include "../iOS/MMFiOSMasterHeader.hpp"
+#else
+	#include "../Mac/MMFMacMasterHeader.hpp"
+#endif
 #endif
 
 class Extension;
 
-#include "ObjectSelection.h"
+#include "ObjectSelection.hpp"
 
 // DarkEdif provides C++11 type checking between JSON and C++ definition.
 #if defined(_DEBUG) && defined(_WIN32) && !defined(FAST_ACE_LINK)
@@ -41,7 +42,7 @@ class Extension;
 		Edif::SDK->ExpressionFunctions[ID] = Edif::MemberFunctionPointer(&Extension::Function);
 #endif
 
-struct RUNDATA;
+struct RUNDATA; // ghost define; we never dereference RUNDATA, just RunObject
 struct EDITDATA;
 struct ACEInfo;
 namespace Edif
@@ -150,17 +151,20 @@ namespace Edif
 	class Runtime
 	{
 	protected:
+		friend RunHeader;
 
-#ifdef _WIN32
-		HeaderObject * hoPtr;
-#elif defined(__ANDROID__)
-		RuntimeFunctions &runFuncs;
+		HeaderObject* hoPtr;
+#ifdef __ANDROID__
+		friend ConditionOrActionManager_Android;
+		friend ExpressionManager_Android;
 		global<jobject> javaExtPtr;
 		global<jclass> javaExtPtrClass;
 		global<jobject> javaHoObject;
 		global<jclass> javaHoClass;
-#else
-		RuntimeFunctions& runFuncs;
+		global<jclass> javaCEventClass;
+		global<jobject> javaRhObject;
+		global<jclass> javaCRunClass;
+#elif defined(__APPLE__)
 		void * objCExtPtr;
 #endif
 
@@ -168,39 +172,58 @@ namespace Edif
 		long param1, param2;
 
 #ifdef _WIN32
-		Runtime(HeaderObject * _hoPtr);
+		Runtime(Extension * ext);
+		EventParam* ParamZero;
 #elif defined(__ANDROID__)
-		Runtime(RuntimeFunctions & runFuncs, jobject javaExtPtr);
-#else
-		Runtime(RuntimeFunctions &runFuncs, void * objCExtPtr);
-#endif
-		~Runtime();
+		Runtime(Extension* ext, jobject javaExtPtr);
+		global<jobject> curCEvent;
+		jobject curAct = nullptr;
+		void InvalidateByNewACE();
 
-		void Rehandle();
-
-		void GenerateEvent(int EventID);
-		void PushEvent(int EventID);
-
-		void * Allocate(size_t);
-		TCHAR * CopyString(const TCHAR *);
-		char * CopyStringEx(const char *);
-		wchar_t * CopyStringEx(const wchar_t *);
-
-#ifdef __ANDROID__
 		// Attaches current thread, and gets JNIEnv for it; errors are fatal
 		static JNIEnv * AttachJVMAccessForThisThread(const char * threadName, bool asDaemon = false);
 		static void DetachJVMAccessForThisThread();
 		// Gets JNIEnv * for this thread, or null.
 		static JNIEnv * GetJNIEnvForThisThread();
+#else
+		Runtime(Extension* ext, void * const objCExtPtr);
+		void * curCEvent;
 #endif
+
+		~Runtime();
+
+		void Rehandle();
+
+		// Immediately creates an event, calling that condition ID in this object, and invalidating object selection.
+		void GenerateEvent(int EventID);
+		// Queues an event to run at the end of the actions, which will ccall this condition ID.
+		void PushEvent(int EventID);
+
+		void * Allocate(std::size_t);
+		TCHAR * CopyString(const TCHAR *);
+		char * CopyStringEx(const char *);
+		wchar_t * CopyStringEx(const wchar_t *);
 
 		void Pause();
 		void Resume();
 
 		void Redisplay();
 		void Redraw();
-		RunObject * RunObjPtrFromFixed(int fixedValue);
-		int FixedFromRunObjPtr(RunObject * object);
+
+		RunObjectMultiPlatPtr RunObjPtrFromFixed(int fixedValue);
+		int FixedFromRunObjPtr(RunObjectMultiPlatPtr object);
+
+		// For Object action parameters. Returns the object/qualifier OI used in the events; only necessary if you are looping the instances yourself.
+		// @remarks This works for conditions too, but it should be unnecessary, as they're passed this OI directly.
+		short GetOIFromObjectParam(std::size_t paramIndex);
+
+		// For Object action parameters. Cancels other selected instances of the OI being looped through by Fusion runtime.
+		// Only necessary if you are looping the instances yourself, or doing a singleton pattern.
+		void CancelRepeatingObjectAction();
+
+		// Returns current Fusion frame number, 1+.
+		// @remarks shorthand for rhPtr->App->nCurrentFrame
+		int GetCurrentFusionFrameNumber();
 
 		void SetPosition(int X, int Y);
 #ifdef _WIN32
@@ -229,7 +252,7 @@ namespace Edif
 
 		bool IsUnicode();
 
-		Riggs::ObjectSelection ObjectSelection;
+		DarkEdif::ObjectSelection ObjectSelection;
 
 		void WriteGlobal(const TCHAR * name, void * Value);
 		void * ReadGlobal(const TCHAR * name);

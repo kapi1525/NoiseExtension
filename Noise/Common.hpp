@@ -2,7 +2,10 @@
 
 #define MMFEXT
 
-#include "DarkEdif.h"
+// TODO: Use the new cross platform functions if possible.
+#define FUSION_INTERNAL_ACCESS
+
+#include "DarkEdif.hpp"
 
 #ifdef _DEBUG
 #define JSON_COMMENT_MACRO "(Debug) "
@@ -14,7 +17,7 @@
 
 // EDITDATA with smart properties
 struct EDITDATA {
-	NO_DEFAULT_CTORS(EDITDATA)
+	NO_DEFAULT_CTORS_OR_DTORS(EDITDATA)
 
 	// Header - required
 	extHeader eHeader;
@@ -27,18 +30,8 @@ struct EDITDATA {
 	DarkEdif::Properties Props;
 };
 
-
-
 class Extension;
-
-struct RUNDATA {
-	// Main header - required
-	HeaderObject rHo;
-
-	// Required
-	Extension* pExtension;
-};
 
 #include "FastNoiseLite.h"
 #include "SurfaceObject.hpp"
-#include "Extension.h"
+#include "Extension.hpp"

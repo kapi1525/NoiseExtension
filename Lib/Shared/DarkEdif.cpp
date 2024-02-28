@@ -1,8 +1,8 @@
-#include "Common.h"
+#include "Common.hpp"
 #include <atomic>
-#include "DarkEdif.h"
+#include "DarkEdif.hpp"
 #include <math.h>
-#include "Extension.h"
+#include "Extension.hpp"
 
 #ifdef _WIN32
 extern HINSTANCE hInstLib;
@@ -453,7 +453,7 @@ DarkEdif::DLL::PropAccesser & Elevate(const DarkEdif::Properties &p)
 // Reads DarkEdif::Properties without the fanfare.
 struct DarkEdif::DLL::PropAccesser
 {
-	NO_DEFAULT_CTORS(PropAccesser);
+	NO_DEFAULT_CTORS_OR_DTORS(PropAccesser);
 	// Type of DarKEdif::Properties
 	decltype(Properties::propVersion) propVersion;
 
@@ -1610,7 +1610,7 @@ struct Properties::JSONPropertyReader : Properties::PropertyReader
 
 			static int intData2;
 			intData2 = (int)intDataAsLong;
-			
+
 			return convRet->Return_OK(&intData2, sizeof(int));
 		}
 		case IDs::PROPTYPE_EDIT_FLOAT:
@@ -2990,14 +2990,22 @@ std::uint16_t DarkEdif::DLL::Internal_GetEDITDATASizeFromJSON()
 
 
 // Static definition; set during SDK::SDK()
+#ifdef _WIN32
 bool DarkEdif::IsFusion25;
+#else
+//constexpr bool DarkEdif::IsFusion25 = true;
+#endif
 
 // Returns the Fusion event number for this group. Works in CF2.5 and MMF2.0
 std::uint16_t DarkEdif::GetEventNumber(eventGroup * evg) {
+	// Windows may be 2.0 or 2.5; if 2.5, the local SDK's evgInhibit is where the identifier is.
+	// Android/iOS is assumed to be 2.5 and should work directly.
+#ifdef _WIN32
 	if (DarkEdif::IsFusion25) {
-		return evg->evgInhibit;
+		return evg->get_evgInhibit();
 	}
-	return evg->evgIdentifier;
+#endif
+	return evg->get_evgIdentifier();
 }
 
 /// <summary> If error, -1 is returned. </summary>
@@ -3011,10 +3019,10 @@ int DarkEdif::GetCurrentFusionEventNum(const Extension * const ext)
 
 #ifdef _WIN32
 	// Can we read current event?
-	if (!ext->rhPtr->EventGroup)
+	if (!ext->rhPtr->get_EventGroup())
 		return -1;
 
-	int eventNum = GetEventNumber(ext->rhPtr->EventGroup);
+	int eventNum = GetEventNumber(ext->rhPtr->get_EventGroup());
 	if (eventNum != 0)
 		return eventNum;
 	return -1;
@@ -3064,8 +3072,8 @@ std::tstring DarkEdif::MakePathUnembeddedIfNeeded(const Extension * ext, const s
 	}
 
 	jstring pathJava = CStrToJStr(std::string(filePath).c_str());
-	RuntimeFunctions::string str;
-	str.ctx = threadEnv->CallObjectMethod(ext->javaExtPtr, getEventIDMethod, pathJava);
+	JavaAndCString str;
+	str.ctx = (jstring)threadEnv->CallObjectMethod(ext->javaExtPtr, getEventIDMethod, pathJava);
 	str.ptr = mainThreadJNIEnv->GetStringUTFChars((jstring)str.ctx, NULL);
 	const std::string truePath = str.ptr ? str.ptr : "";
 
@@ -3584,21 +3592,21 @@ static DarkEdif::FusionDebuggerAdmin FusionDebugAdmin;
 std::uint16_t * FusionAPI GetDebugTree(RUNDATA *rdPtr)
 {
 #pragma DllExportHint
-	return FusionDebugAdmin.GetDebugTree(rdPtr->pExtension);
+	return FusionDebugAdmin.GetDebugTree(((RunObject*)rdPtr)->GetExtension());
 }
 
 // This routine returns the text of a given item.
 void FusionAPI GetDebugItem(TCHAR *pBuffer, RUNDATA *rdPtr, int id)
 {
 #pragma DllExportHint
-	FusionDebugAdmin.GetDebugItem(rdPtr->pExtension, pBuffer, id);
+	FusionDebugAdmin.GetDebugItem(((RunObject *)rdPtr)->GetExtension(), pBuffer, id);
 }
 
 // This routine allows the user to edit the debugger's editable items.
 void FusionAPI EditDebugItem(RUNDATA *rdPtr, int id)
 {
 #pragma DllExportHint
-	FusionDebugAdmin.StartEditForItemID(rdPtr->pExtension, id);
+	FusionDebugAdmin.StartEditForItemID(((RunObject*)rdPtr)->GetExtension(), id);
 }
 #endif // EditorBuild
 
@@ -4835,6 +4843,7 @@ int DarkEdif::MsgBox::Custom(const int flags, const TCHAR * titlePrefix, PrintFH
 	va_end(v);
 	return ret;
 }
+extern int aceIndex;
 void DarkEdif::Log(int logLevel, PrintFHintInside const TCHAR * msgFormat, ...)
 {
 	va_list v;
@@ -4861,7 +4870,10 @@ void DarkEdif::LogV(int logLevel, PrintFHintInside const TCHAR* msgFormat, va_li
 
 	OutputDebugString(outputBuff);
 #elif defined(__ANDROID__)
-	__android_log_vprint(logLevel, PROJECT_NAME_UNDERSCORES, msgFormat, v);
+	std::string msgFormatT = std::string(aceIndex, '>');
+	msgFormatT += ' ';
+	msgFormatT += msgFormat;
+	__android_log_vprint(logLevel, PROJECT_NAME_UNDERSCORES, msgFormatT.c_str(), v);
 #else // iOS
 	static const char* logLevels[] = {
 		"", "", "verbose", "debug", "info", "warn", "error", "fatal"
@@ -4903,19 +4915,6 @@ void DarkEdif::Sleep(unsigned int milliseconds)
 
 #endif
 
-
-// =====
-// Object selection for all platforms
-// =====
-
-int RunHeader::GetEventCount() {
-#ifdef _WIN32
-	return rh4.eventCount;
-#else
-	LOGF(_T("GetEventCount not implemented on this platform."));
-	return -1;
-#endif
-}
 
 
 // =====

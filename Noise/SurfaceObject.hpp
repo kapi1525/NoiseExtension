@@ -1,5 +1,5 @@
 #pragma once
-#include "DarkEdif.h"
+#include "Common.hpp"
 
 
 
@@ -24,7 +24,7 @@ static const uint32_t SurfaceID (('S'<<24)|('U'<<16)|('R'<<8)|('F'));
 
 // Surface object RUNDATA
 struct SURFACE {
-	NO_DEFAULT_CTORS(SURFACE)
+	NO_DEFAULT_CTORS_OR_DTORS(SURFACE)
     HeaderObject rHo;
     rCom rc;
     rMvt rm;

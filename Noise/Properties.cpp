@@ -4,13 +4,13 @@
 
 #include <functional>
 #include <map>
-#include "Common.h"
+#include "Common.hpp"
 
 
 
 // versions v0.9.4 --- v1.0.1
 struct EDITDATA_v16 {
-    NO_DEFAULT_CTORS(EDITDATA_v16)
+    NO_DEFAULT_CTORS_OR_DTORS(EDITDATA_v16)
     extHeader eHeader;
     short editdata_rev;
 
@@ -31,7 +31,7 @@ struct EDITDATA_v16 {
 
 // versions v0.9.1 --- v0.9.3
 struct EDITDATA_v13 {
-    NO_DEFAULT_CTORS(EDITDATA_v13)
+    NO_DEFAULT_CTORS_OR_DTORS(EDITDATA_v13)
     extHeader eHeader;
 
     // Properties
