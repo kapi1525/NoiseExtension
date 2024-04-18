@@ -176,8 +176,8 @@ namespace Edif
 		EventParam* ParamZero;
 #elif defined(__ANDROID__)
 		Runtime(Extension* ext, jobject javaExtPtr);
-		global<jobject> curCEvent;
-		jobject curAct = nullptr;
+		global<jobject> curCEvent, curRH4ActStart;
+		jobject curRH4ActBasedOnCEventOnly = nullptr;
 		void InvalidateByNewACE();
 
 		// Attaches current thread, and gets JNIEnv for it; errors are fatal
@@ -321,6 +321,8 @@ namespace Edif
 	[[deprecated("Use PROJECT_NAME define")]]
 	void GetExtensionName(char * const writeTo);
 
+	// A cross-platform, recursion-allowed, single thread exclusive mutex.
+	// Use mutexvar.edif_lock() and mutexvar.edif_unlock() macros to track locks and find any poor coding.
 	class recursive_mutex {
 #ifdef _DEBUG
 		std::recursive_timed_mutex intern;

@@ -95,7 +95,6 @@ std::size_t CRunAppMultiPlat::GetNumFusionFrames() {
 #else // Android
 	if (numTotalFrames == 0)
 	{
-		// Application/CRunApp parentApp
 		jfieldID fieldID = threadEnv->GetFieldID(meClass, "gaNbFrames", "I");
 		JNIExceptionCheck();
 		jint totalFrames = threadEnv->GetIntField(me, fieldID);
@@ -157,7 +156,7 @@ void Edif::Runtime::GenerateEvent(int EventID)
 }
 
 void Edif::Runtime::PushEvent(int EventID)
-{							   
+{
 	CallRunTimeFunction2(hoPtr, RFUNCTION::PUSH_EVENT, EventID, 0);
 }
 
@@ -935,10 +934,7 @@ void Edif::Runtime::Rehandle()
 static int steadilyIncreasing = 0;
 void Edif::Runtime::GenerateEvent(int EventID)
 {
-	// Cached variables to do with object selection will be invalidated by this new event
 	const auto& rhPtr = this->ObjectSelection.pExtension->rhPtr;
-	rhPtr->InvalidatedByNewGeneratedEvent();
-	hoPtr->InvalidatedByNewGeneratedEvent();
 
 	// If there is a fastloop in progress, generating an event inside an action will alter
 	// Action Count, making it smaller. Thus Action Count constantly decrementing will create
@@ -958,13 +954,19 @@ void Edif::Runtime::GenerateEvent(int EventID)
 	// Due to Android's JVM use of references, this is efficient as we don't have to do a full array clone.
 
 	const int rh4CurToken = rhPtr->GetRH4CurToken();
-	const global<jobjectArray> rh4Tokens = rhPtr->GetRH4Tokens();
+	jobjectArray rh4Tokens = rhPtr->GetRH4Tokens();
+	if (rh4Tokens)
+		rh4Tokens = (jobjectArray)threadEnv->NewGlobalRef(rh4Tokens);
 
 	// Fix event group being incorrect after event finishes.
 	// This being incorrect doesn't have any major effects, as the event parsing part of
 	// runtime sets this rhEventGroup based on a local variable evgPtr, which it relies on instead
 	// We won't be using this while we're off running this event, so we can swap the reference out to a local
-	global<jobject> eventGroup = rhPtr->get_EventGroup()->me.swap_out();
+	std::unique_ptr<eventGroup> evg = rhPtr->eventProgram ? std::move(rhPtr->eventProgram->eventGrp) : nullptr;
+
+	// Cached variables to do with object selection will be invalidated by this new event
+	rhPtr->InvalidatedByNewGeneratedEvent();
+	hoPtr->InvalidatedByNewGeneratedEvent();
 
 	static jmethodID javaMethodID = threadEnv->GetMethodID(javaHoClass.ref, "generateEvent", "(II)V");
 	threadEnv->CallVoidMethod(javaHoObject, javaMethodID, EventID, 0);
@@ -973,7 +975,10 @@ void Edif::Runtime::GenerateEvent(int EventID)
 	rhPtr->SetRH2ActionLoopCount(oldActionLoopCount);
 	rhPtr->SetRH4CurToken(rh4CurToken);
 	rhPtr->SetRH4Tokens(rh4Tokens);
-	rhPtr->get_EventProgram()->SetEventGroup(eventGroup.swap_out()); // and swap it back in
+	if (rh4Tokens)
+		threadEnv->DeleteGlobalRef(rh4Tokens);
+	if (evg)
+		rhPtr->eventProgram->eventGrp = std::move(evg); // and swap it back in
 }
 
 void Edif::Runtime::PushEvent(int EventID)
@@ -1389,15 +1394,15 @@ void RunHeader::SetRH4CurToken(int newCurToken)
 	JNIExceptionCheck();
 }
 
-// Gets the current expression token array; relevant in Android only. 
-global<jobjectArray> RunHeader::GetRH4Tokens()
+// Gets the current expression token array; relevant in Android only.
+jobjectArray RunHeader::GetRH4Tokens()
 {
 	LOGV(_T("Running %s()."), _T(__FUNCTION__));
 	jobjectArray ptr = (jobjectArray)threadEnv->GetObjectField(crun, rh4TokensFieldID);
 	JNIExceptionCheck();
-	return global(ptr, "RH4Tokens from CRun GetRH4Tokens");
+	return ptr;
 }
-// Sets the current expression token array; relevant in Android only. 
+// Sets the current expression token array; relevant in Android only.
 void RunHeader::SetRH4Tokens(jobjectArray newTokensArray)
 {
 	LOGV(_T("Running %s()."), _T(__FUNCTION__));
@@ -1440,26 +1445,56 @@ jobjectArray RunHeader::GetOiList()
 
 event2 * RunHeader::GetRH4ActionStart() {
 	LOGV(_T("Running %s()."), _T(__FUNCTION__));
-	// rh4ActionStart is not used by Java runtime, but it is by iOS/Windows.
-	// It points to the currently running action in an event.
-	// That's just the current CEvent, if it's running action, which rh2ActionOn == true indicates.
-
-	// This can still be null in scenarios like an expression being read and reading rh4, but no helpful action provided.
-	if (runtime->curCEvent == nullptr)
+	// During A/C/E curCEvent should be copied out, A/C/E func code run, then copied back after.
+	// Failure to do this will result in curCEvent inconsistency which may affect any expression-function
+	// objects, fastloops, etc., and makes debugging events harder.
+	if (!get_EventProgram()->GetRH2ActionOn())
 	{
-#ifdef _DEBUG
-		// During A/C/E curCEvent should be copied out, A/C/E func code run, then copied back after.
-		// Failure to do this will result in curCEvent inconsistency which may affect any expression-function
-		// objects, fastloops, etc., and makes debugging events harder.
-		if (get_EventProgram()->GetRH2ActionOn())
-			LOGF(_T("GetRH4ActionStart(): Failed to retain curCEvent across A/C/E calls.\n"));
-#endif
 		LOGV(_T("GetRH4ActionStart(): curCEvent is invalid, was rh4ActStart read during a non-action?\n"));
 		return nullptr;
 	}
 
+	// rh4ActionStart is not present in the Android runtime, but it is in iOS/Windows.
+	// It points to the currently running action in an event, set in call_Actions().
+	// That's just the current CEvent, if it's running action, which rh2ActionOn == true indicates.
+	// However this wasn't patched for a lot of builds; so we allow it to be missing.
+	if (CEventProgram::rh4ActStartFieldID != NULL)
+	{
+		if (!rh4ActStart)
+		{
+			// Assume EventGroup is out of date if curCEvent is, and reset it too
+			if (EventGroup.has_value())
+			{
+				EventGroup.reset();
+				// We load eventgroup from eventProgram, which is tied to the frame so program should be valid
+				get_EventProgram()->eventGrp.reset();
+				threadEnv->DeleteGlobalRef(runtime->curRH4ActStart.ref);
+				runtime->curRH4ActStart.ref = nullptr;
+			}
+
+			if (runtime->curRH4ActStart.invalid())
+			{
+				// rh4ActStart will hold a global ref if needed
+				jobject rh4AS = threadEnv->GetObjectField(get_EventProgram()->me, CEventProgram::rh4ActStartFieldID);
+				JNIExceptionCheck();
+				if (!rh4AS)
+					LOGE(_T("Can't read rh4ActStart, returned null, but rh2ActionOn is true, so it should be a valid event.\n"));
+
+				rh4ActStart = std::make_unique<event2>(get_EventGroup(), event2::FindIndexMagicNum, rh4AS, runtime);
+			}
+		}
+
+		return rh4ActStart.get();
+	}
+
+	// If we don't have rh4ActionStart patch, work around it by returning the curCEvent.
+	// This only works if this ext's action is being run, which sets curCEvent.
+	// We can't return null because rh2ActionOn is true, so an action is running, so this cannot be null.
+	if (runtime->curCEvent.invalid())
+		LOGF(_T("GetRH4ActionStart(): curCEvent is invalid, and the runtime implementation of rh4ActStart is not available.\n"));
+
 	// CEvent exists and is out of date, and we're running an action
-	if ((!rh4ActStart || rh4ActStart->me.ref != runtime->curCEvent) && get_EventProgram()->GetRH2ActionOn())
+	if (!rh4ActStart || rh4ActStart->me.ref != runtime->curCEvent.ref)
 	{
 		// Assume EventGroup is out of date if curCEvent is, and reset it too
 		if (EventGroup.has_value())
@@ -1469,7 +1504,7 @@ event2 * RunHeader::GetRH4ActionStart() {
 			get_EventProgram()->eventGrp.reset();
 		}
 
-		rh4ActStart = std::make_unique<event2>(get_EventGroup(), event2::FindIndexMagicNum, runtime->curAct, runtime);
+		rh4ActStart = std::make_unique<event2>(get_EventGroup(), event2::FindIndexMagicNum, runtime->curRH4ActBasedOnCEventOnly, runtime);
 	}
 	return rh4ActStart.get();
 }
@@ -1514,7 +1549,7 @@ void RunHeader::InvalidatedByNewGeneratedEvent()
 	if (EventGroup)
 		EventGroup.reset();
 	if (eventProgram)
-		eventProgram->InvalidatedByNewGeneratedEvent(); 
+		eventProgram->InvalidatedByNewGeneratedEvent();
 	if (OiList.valid())
 	{
 		for (auto& o : OiListArray)
@@ -1546,6 +1581,8 @@ void RunHeader::InvalidatedByNewGeneratedEvent()
 	}
 }
 
+// Static definitions - default inited to zero
+jfieldID CEventProgram::rh4ActStartFieldID;
 
 eventGroup * CEventProgram::get_eventGroup() {
 	LOGV(_T("Running %s()."), _T(__FUNCTION__));
@@ -1555,8 +1592,12 @@ eventGroup * CEventProgram::get_eventGroup() {
 		JNIExceptionCheck();
 		jobject eventGroupJava = mainThreadJNIEnv->GetObjectField(me, rhEventProgFieldID);
 		JNIExceptionCheck();
-		eventGrp = std::make_unique<eventGroup>(eventGroupJava, runtime);
-		LOGV(_T("Running %s() - got a new eventGroup of %p, going to store it in eventGroup struct at %p."), _T(__FUNCTION__), eventGroupJava, eventGrp.get());
+		// This can be null, if running events from Handle tick.
+		if (eventGroupJava != nullptr)
+		{
+			eventGrp = std::make_unique<eventGroup>(eventGroupJava, runtime);
+			LOGV(_T("Running %s() - got a new eventGroup of %p, going to store it in eventGroup struct at %p."), _T(__FUNCTION__), eventGroupJava, eventGrp.get());
+		}
 	}
 	return eventGrp.get();
 }
@@ -1565,6 +1606,18 @@ CEventProgram::CEventProgram(jobject me, Edif::Runtime* runtime) :
 {
 	meClass = global(threadEnv->GetObjectClass(me), "CEventProgram class");
 	JNIExceptionCheck();
+
+	// rh4ActionStart is missing in earlier Runtime versions (<= 295.10)
+	if (RunHeader::eventProgramFieldID != NULL)
+	{
+		rh4ActStartFieldID = threadEnv->GetFieldID(meClass, "rh4ActionStart", "LActions/CAct;");
+		// Missing rh4ActionStart patch, which we allow
+		if (!rh4ActStartFieldID)
+		{
+			threadEnv->ExceptionClear();
+			LOGW(_T("Missing the rh4ActionStart field. Reading rh4ActionStart can fail and kill the application!\n"));
+		}
+	}
 }
 void CEventProgram::InvalidatedByNewGeneratedEvent()
 {
@@ -1574,14 +1627,14 @@ void CEventProgram::InvalidatedByNewGeneratedEvent()
 	if (eventGrp)
 		eventGrp.reset();
 }
-void CEventProgram::SetEventGroup(global<jobject>&& grp)
+void CEventProgram::SetEventGroup(jobject grp)
 {
 	jfieldID rhEventProgFieldID = mainThreadJNIEnv->GetFieldID(meClass, "rhEventGroup", "LEvents/CEventGroup;");
 	JNIExceptionCheck();
-	mainThreadJNIEnv->SetObjectField(me, rhEventProgFieldID, grp.ref);
+	mainThreadJNIEnv->SetObjectField(me, rhEventProgFieldID, grp);
 	JNIExceptionCheck();
-	eventGrp = std::make_unique<eventGroup>(grp.ref, runtime);
-	runtime->ObjectSelection.pExtension->rhPtr->EventGroup = eventGrp.get();
+	eventGrp = grp ? std::make_unique<eventGroup>(grp, runtime) : nullptr;
+	runtime->ObjectSelection.pExtension->rhPtr->EventGroup = grp ? eventGrp.get() : nullptr;
 }
 
 int CEventProgram::get_rh2EventCount() {
@@ -2485,7 +2538,7 @@ short qualToOi::get_Oi(std::size_t i) {
 	LOGV(_T("Running %s()."), _T(__FUNCTION__));
 	// Update internal list
 	if (OiAndOiListLength == SIZE_MAX)
-		get_OiList(0); 
+		get_OiList(0);
 
 	if (i * 2 >= OiAndOiListLength)
 		return -1;
@@ -2588,7 +2641,7 @@ EventGroupFlags eventGroup::get_evgFlags() {
 
 std::unique_ptr<event2> eventGroup::GetCAByIndex(std::size_t index) {
 	LOGV(_T("Running %s()."), _T(__FUNCTION__));
-	if (!evgEvents)
+	if (evgEvents.invalid())
 		GetEventList(); // ignore return
 
 	if (index >= evgEventsLength)

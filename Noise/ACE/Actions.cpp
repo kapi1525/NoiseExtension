@@ -184,15 +184,22 @@ static cSurface* create_surface(int width, int height, int depth, SurfaceType ty
 
 #endif
 
-void Extension::fill_surface_obj_with_noise(SURFACE* surface_obj, float xoffset, float yoffset, float zoffset, int flags) {
+void Extension::fill_surface_obj_with_noise(RunObject* surface_obj, float xoffset, float yoffset, float zoffset, int flags) {
     #ifdef _WIN32
 
-    // Make sure the object is a surface and slected image is valid
-    if(surface_obj == nullptr || surface_obj->rHo.Identifier != SurfaceID || surface_obj->selected == nullptr || surface_obj->selectedIsValid == false) {
+    // Make sure the object is a surface
+    if(surface_obj == nullptr || surface_obj->get_rHo()->Identifier != SurfaceID) {
         return;
     }
 
-    cSurface* target = surface_obj->selected;
+    SURFACE& surface_rd = *(SURFACE*)surface_obj;
+
+    // Make sure the surface slected image is valid
+    if(surface_rd.selected == nullptr || surface_rd.selectedIsValid == false) {
+        return;
+    }
+
+    cSurface* target = surface_rd.selected;
 
     int target_w, target_h, target_d;
     target->GetInfo(target_w, target_h, target_d);
@@ -221,7 +228,7 @@ void Extension::fill_surface_obj_with_noise(SURFACE* surface_obj, float xoffset,
 
     temp->Blit(*target);
     delete temp;
-    surface_obj->rc.rcChanged = true;
+    surface_rd.rc.rcChanged = true;
 
     #endif
 }

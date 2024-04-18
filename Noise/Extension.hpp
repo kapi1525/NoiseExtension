@@ -97,7 +97,7 @@ public:
 		void set_warp_fractal_gain(float gain);
 
         // Windows specific
-        void fill_surface_obj_with_noise(SURFACE* surface_obj, float xoffset, float yoffset, float zoffset, int flags);
+        void fill_surface_obj_with_noise(RunObject* surface_obj, float xoffset, float yoffset, float zoffset, int flags);
 
         // Crossplatform but only used on windows
         void fill_buffer_with_noise(uint8_t* buf, int width, int height, int pitch, int depth, float xoffset, float yoffset, float zoffset, int flags);

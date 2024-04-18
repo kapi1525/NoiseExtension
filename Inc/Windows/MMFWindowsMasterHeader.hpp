@@ -65,7 +65,7 @@ struct CRunFrame;
 struct CEditApp;
 struct CEditFrame;
 struct EDITDATA;
-struct ObjectInfo;
+struct ObjectInfo; // for more detail, include ObjectInfo.hpp
 struct dllTrans;
 struct kpj;
 struct drawRoutine;
@@ -1742,6 +1742,9 @@ struct RunHeader {
 	// Sets the rh2.rh2ActionLoopCount variable, used in actions when looping object instances to run an action on each instance
 	void SetRH2ActionLoopCount(int newActLoopCount);
 
+	// Current Fusion event line, confusingly called event group. Can be null, during Handle().
+	// @remarks Will also be null in unpatched runtimes that reset rhEventGroup by generated events;
+	//			DarkEdif exts save and restore during generating, but otherwise it's up to runtime.
 	eventGroup* get_EventGroup();
 	// Gets number of OIList currently in frame, see GetOIListByIndex()
 	// @remarks In non-Windows, this is normally a rhMaxOI variable, in Windows it's NumberOi, and includes an extra, invalid Oi
@@ -3989,8 +3992,8 @@ struct mv {
 	CSoundManager *		SndMgr;				// Sound manager
 
 	union {
-		CEditApp *		EditApp;			// Current application, edit time (not used)
-		CRunApp *		RunApp;				// Current application, runtime
+		CEditApp *		EditApp;			// Current application, edit time - different address per loaded MFA
+		CRunApp *		RunApp;				// Current application, runtime - not usable in frame editor and co, just runtime
 	};
 	union {
 		CEditFrame *	EditFrame;
@@ -4024,6 +4027,7 @@ struct mv {
 	void (CALLBACK * HelpA) (const char * pHelpFile, unsigned int nID, LPARAM lParam);
 
 	// Editor: Get default font for object creation
+	// pStyle can be NULL to ignore; cbSize is size of pStyle's buffer.
 	BOOL (CALLBACK * GetDefaultFontA) (LOGFONTA * plf, char * pStyle, int cbSize);
 
 	// Editor: Edit images and animations
@@ -4032,6 +4036,7 @@ struct mv {
 	BOOL (CALLBACK * EditAnimationA) (void * edPtr, EditAnimationParams * pParams, HWND hParent);
 
 	// Runtime: Extension User data
+	// @remarks Introduced in MMF1.5, missing in MMF1.2 and below. Runtime only.
 	void * (CALLBACK * GetExtUserData) (CRunApp* pApp, HINSTANCE hInst);
 	void * (CALLBACK * SetExtUserData) (CRunApp* pApp, HINSTANCE hInst, void * pData);
 
@@ -4055,6 +4060,7 @@ struct mv {
 	int (CALLBACK * NetCommandA) (int, void *, unsigned int, void *, unsigned int);
 
 	// Editor & Runtime: Returns the version of MMF or of the runtime
+	// Return is a bitmask of three different flag sets; MMFVERSION_MASK, MMFBUILD_MASK, MMFVERFLAG_MASK
 	unsigned int (CALLBACK * GetVersion) ();
 
 	// Editor & Runtime: callback function for properties or other functions
@@ -4064,6 +4070,7 @@ struct mv {
 	void (CALLBACK * HelpW) (const wchar_t * pHelpFile, unsigned int nID, LPARAM lParam);
 
 	// Editor: Get default font for object creation (UNICODE)
+	// pStyle can be NULL to ignore; cbSize is size of pStyle's buffer in WCHARs.
 	BOOL (CALLBACK * GetDefaultFontW) (LOGFONTW * plf, wchar_t * pStyle, int cbSize);
 
 	// Editor: Edit images and animations (UNICODE)
@@ -4071,7 +4078,7 @@ struct mv {
 	BOOL (CALLBACK * EditImageW) (EDITDATA * edPtr, EditImageParams * Params, HWND Parent);
 	BOOL (CALLBACK * EditAnimationW) (EDITDATA * edPtr, EditAnimationParams * Params, HWND Parent);
 
-	// Runtime: Binary files (UNICODE
+	// Runtime: Binary files (UNICODE)
 	BOOL (CALLBACK * GetFileW)(const wchar_t * pPath, wchar_t * pFilePath, unsigned int dwFlags);
 	void (CALLBACK * ReleaseFileW)(const wchar_t * pPath);
 	HANDLE (CALLBACK * OpenHFileW)(const wchar_t * pPath, unsigned int * pDwSize, unsigned int dwFlags);
@@ -4632,7 +4639,7 @@ struct CRunApp {
 DarkEdifInternalAccessProtected:
 	friend Edif::Runtime;
 	// Application info
-	AppMiniHeader	miniHdr;			// Version
+	AppMiniHeader	miniHdr;	 		// Version
 	AppHeader		hdr;				// General info
 	TCHAR *			name,				// name of the application
 		  *			appFileName,		// filename (temporary file in editor mode)
@@ -4643,7 +4650,7 @@ DarkEdifInternalAccessProtected:
 	// File infos
 	TCHAR *			targetFileName;		// filename of original CCN/EXE file
 	TCHAR *			tempPath;			// Temporary directory for external files
-	HFILE			file;				// File handle
+	HFILE			file;				// File handle - Yves confirmed it was opened with CreateFile, not fopen
 	unsigned int	startOffset;
 
 	// Help file

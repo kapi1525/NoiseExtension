@@ -32,9 +32,6 @@
     <TargetName>Noise</TargetName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
-  <PropertyGroup Label="Configuration" Condition="'$(Platform)'=='Win32'">
-    <PlatformToolset>v143</PlatformToolset>
-  </PropertyGroup>
   <Target Name="MissingFusionSDKProps" BeforeTargets="Build">
     <Error Condition="!exists('..\Lib\FusionSDK.props')" Text="Missing Fusion SDK property sheet &quot;..\Lib\FusionSDK.props&quot;." />
     <Error Condition="!exists('..\Lib\FusionSDK_AfterMSPropSheets.props')" Text="Missing Fusion SDK property sheet &quot;..\Lib\FusionSDK_AfterMSPropSheets.props&quot;." />
