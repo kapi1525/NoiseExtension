@@ -4,7 +4,7 @@
 
 // TODO: Merge common HTML and UWP parts
 
-/* global console, darkEdif, globalThis, alert, CRunExtension, FinalizationRegistry, CServices */
+/* global console, darkEdif, alert, CRunExtension, CServices, window */
 /* jslint esversion: 6, sub: true */
 
 // This is strict, but that can be assumed
@@ -12,12 +12,30 @@
 
 
 
+/**
+ * String.prototype.replaceAll() polyfill
+ * https://gomakethings.com/how-to-replace-a-section-of-a-string-with-another-one-with-vanilla-js/
+ * @author Chris Ferdinandi
+ * @license MIT
+ */
+if (!String.prototype.replaceAll) {
+    String.prototype.replaceAll = function(str, newStr) {
+        // If a regex pattern
+        if (Object.prototype.toString.call(str).toLowerCase() === '[object regexp]') {
+            return this.replace(str, newStr);
+        }
+
+        // If a string
+        return this.replace(new RegExp(str, 'g'), newStr);
+    };
+}
+
 // Global data, including sub-applications, just how God intended.
 // Note: This will allow newer SDK versions in later SDKs to take over.
-// We need this[] and globalThis[] instead of direct because HTML5 Final Project minifies and breaks the names otherwise
-export default globalThis['darkEdif'] = (globalThis['darkEdif'] && globalThis['darkEdif'].sdkVersion >= 19) ? globalThis['darkEdif'] :
+// We need this[] and window[] instead of direct, because HTML5 Final Project minifies and breaks the names otherwise
+// In case UWP is minified later, we'll keep these HTML5 minify precautions in UWP
+export default window['darkEdif'] = (window['darkEdif'] && window['darkEdif'].sdkVersion >= 19) ? window['darkEdif'] :
     new (/** @constructor */ function() {
-    // window variable is converted into __scope for some reason, so globalThis it is.
     this.data = {};
     this.getGlobalData = function (key) {
         key = key.toLowerCase();
@@ -37,7 +55,7 @@ export default globalThis['darkEdif'] = (globalThis['darkEdif'] && globalThis['d
     this.sdkVersion = 19;
     this.checkSupportsSDKVersion = function (sdkVer) {
         if (sdkVer < 16 || sdkVer > 19) {
-            throw "HTML5 DarkEdif SDK does not support SDK version " + this.sdkVersion;
+            throw "UWP DarkEdif SDK does not support SDK version " + this.sdkVersion;
         }
     };
 
@@ -61,20 +79,8 @@ export default globalThis['darkEdif'] = (globalThis['darkEdif'] && globalThis['d
             console.log(extName + " - " + str);
         }
     };
-    if (!this['minified']) {
-        let that = this;
-        // Use this for debugging to make sure objects are deleted.
-        // Note they're not garbage collected when last holder releases it, but at any point after,
-        // when the GC decides to.
-        // On Chrome, it took half a minute or so, and delay was possibly affected by whether the page has focus.
-        // GC is not required, remember - the cleanup may not happen at all in some browsers.
-        this.finalizer = new FinalizationRegistry(function(desc) {
-            that.consoleLog(null, "Noting the destruction of [" + desc + "].");
-        });
-    }
-    else {
-        this.finalizer = { register: function(desc) { } };
-    }
+    // UWP does not have FinalizationRegistry
+    this.finalizer = { register: function(desc) { } };
 
     this['Properties'] = function(ext, edPtrFile, extVersion) {
         // DarkEdif SDK stores offset of DarkEdif props away from start of EDITDATA inside private data.
@@ -139,9 +145,8 @@ export default globalThis['darkEdif'] = (globalThis['darkEdif'] && globalThis['d
             ];
             if (textPropIDs.indexOf(prop.propTypeID) != -1) {
                 let t = that.textDecoder.decode(prop.propData);
-                if (prop.propTypeID == 22) { //PROPTYPE_EDIT_MULTILINE
+                if (prop.propTypeID == 22) //PROPTYPE_EDIT_MULTILINE
                     t = t.replaceAll('\r', ''); // CRLF to LF
-                }
                 return t;
             }
             throw "Property " + prop.propName + " is not textual.";
@@ -177,8 +182,8 @@ export default globalThis['darkEdif'] = (globalThis['darkEdif'] && globalThis['d
         const dataDV = new DataView(new Uint8Array(data).buffer);
 
         this.textDecoder = null;
-        if (globalThis['TextDecoder'] != null) {
-            this.textDecoder = new globalThis['TextDecoder']();
+        if (window['TextDecoder'] != null) {
+            this.textDecoder = new window['TextDecoder']();
         }
         else {
             // one byte = one char - should suffice for basic ASCII property names
