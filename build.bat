@@ -171,7 +171,6 @@ goto :exit
     cd .\NoiseHTML
     call :run call npm run build
     cd ..
-    call :run xcopy /s /v /c /y /q ".\NoiseHTML\dist\Noise.js" ".\MFX\Data\Runtime\Html5\"
     exit /B 0
 
 
