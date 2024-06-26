@@ -11,15 +11,14 @@
 // This is strict, but that can be assumed
 // "use strict";
 
-// webpack handles imports and bundles everything into single js file
-// It seems like webpack handles everything in a smart way and names cant conflict with other extensions
+// esbuild handles imports and bundles everything into single js file
 import "DarkEdif";
 import FastNoiseLite, { Vector3, Vector2 } from "fastnoise-lite";
 
 
 // Mixing new syntax with old closure, what could go wrong!
 // NOTE: Closure seems to partialy support class syntax: class methods are supported but public, static member variables produce errors
-export default class CRunNoise extends CRunExtension {
+class CRunNoise extends CRunExtension {
     constructor() {
         /// <summary> Constructor of Fusion object. </summary>
         super();    // Calls the parrent object constructor, inits ho with null
@@ -365,7 +364,7 @@ export default class CRunNoise extends CRunExtension {
             },
             // 38
             () => {
-                if(this.warpSettings.enabled)
+                if (this.warpSettings.enabled)
                     return 1;
                 return 0;
             },
@@ -526,7 +525,7 @@ export default class CRunNoise extends CRunExtension {
         let seed = 0;
         str = str.trim();
 
-        if(!isNaN(str)) {
+        if (!isNaN(str)) {
             seed = Number(str);
         }
         else {
@@ -595,7 +594,7 @@ export default class CRunNoise extends CRunExtension {
         {
             const warpType = props["GetPropertyStr"]("Domain warp type");
 
-            if(warpType === "Disabled") {
+            if (warpType === "Disabled") {
                 this.warpSettings.enabled = false;
             } else {
                 this.warpSettings.enabled = true;
@@ -685,3 +684,5 @@ export default class CRunNoise extends CRunExtension {
         return func.apply(this, args);
     }
 }
+
+globalThis["CRunNoise"] = CRunNoise;

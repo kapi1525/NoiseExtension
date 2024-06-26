@@ -5,7 +5,7 @@
     "main": "Noise.js",
     "scripts": {
         "postinstall": "patch-package",
-        "build": "webpack --config webpack.config.js"
+        "build": "esbuild Noise.js --bundle --alias:DarkEdif=./DarkEdif.html.js --format=iife --banner:js=void --outfile=../MFX/Data/Runtime/Html5/Noise.js"
     },
     "repository": {
         "type": "git",
@@ -18,11 +18,10 @@
     },
     "homepage": "https://github.com/kapi1525/NoiseExtension#readme",
     "dependencies": {
-        "fastnoise-lite": "1.1.0",
+        "fastnoise-lite": "1.1.1",
         "patch-package": "^8.0.0"
     },
     "devDependencies": {
-        "webpack": "^5.90.1",
-        "webpack-cli": "^5.1.4"
+        "esbuild": "^0.21.5"
     }
 }
