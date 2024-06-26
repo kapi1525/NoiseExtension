@@ -44,7 +44,7 @@
 //       ....',;:codxkO000OOxdoc:;,''',,,;;;;,''.......',,;:clodkO00000Okxolc::;,,''..',;:ldxOKXNWWWNNK0OkkkkkkkkkkkxxddooooodxxkOOOOO000
 //       ....',;;clodxkkOOOkkdolc:;,,,,,,,,'..........,;:clodxkO0KKXKK0Okxdolcc::;;,,,;;:codkO0XXNNNNXKK0OOOOOkkkkxxdoollloodxkO0KKKXXXXX
 //
-// VERSION: 1.1.0
+// VERSION: 1.1.1
 // https://github.com/Auburn/FastNoiseLite
 
 #ifndef FASTNOISELITE_H
@@ -189,7 +189,7 @@ public:
     void SetFractalType(FractalType fractalType) { mFractalType = fractalType; }
 
     /// <summary>
-    /// Sets octave count for all fractal noise types
+    /// Sets octave count for all fractal noise types 
     /// </summary>
     /// <remarks>
     /// Default: 3
@@ -260,7 +260,7 @@ public:
     /// <remarks>
     /// Default: 1.0
     /// Note: Setting this higher than 1 will cause artifacts
-    /// </remarks>
+    /// </remarks> 
     void SetCellularJitter(float cellularJitter) { mCellularJitterModifier = cellularJitter; }
 
 
@@ -931,7 +931,7 @@ private:
     }
 
 
-    // Fractal PingPong
+    // Fractal PingPong 
 
     template <typename FNfloat>
     float GenFractalPingPong(FNfloat x, FNfloat y) const
