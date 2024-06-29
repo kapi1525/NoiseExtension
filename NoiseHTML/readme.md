@@ -2,7 +2,7 @@
 
 - Generated noise values are very simmilar but not the same. The difference is very small, almost always less than 0.000001, but its there.
   This is because JS uses 64bit double precsision floating-point numbers in calculations but c++ version uses 32bit single precission.
-- Surface object integration is *currently* not supported. Not sure if porting it is possible.
+- ~~Surface object integration is currently not supported. Not sure if porting it is possible.~~
 
 
 ## Buidling

@@ -6,8 +6,8 @@
     "scripts": {
         "postinstall": "patch-package",
         "build": "npm run buildhtml && npm run builduwp",
-        "buildhtml": "esbuild Noise.js --bundle --alias:DarkEdif=./DarkEdif.html.js --format=iife --banner:js=void --outfile=../MFX/Data/Runtime/Html5/Noise.js",
-        "builduwp": "esbuild Noise.js --bundle --alias:DarkEdif=./DarkEdif.uwp.js --format=iife --banner:js=void --outfile=../MFX/Data/Runtime/Wua/js/runtime/extensions/source/Noise.js"
+        "buildhtml": "esbuild Noise.js --bundle --alias:DarkEdif=./DarkEdif.html.js --target=es2015 --banner:js=void --outfile=../MFX/Data/Runtime/Html5/Noise.js",
+        "builduwp": "esbuild Noise.js --bundle --alias:DarkEdif=./DarkEdif.uwp.js --target=es2015 --banner:js=void --outfile=../MFX/Data/Runtime/Wua/js/runtime/extensions/source/Noise.js"
     },
     "repository": {
         "type": "git",

@@ -60,6 +60,17 @@ class CRunNoise extends CRunExtension {
             fractalType:        FastNoiseLite.FractalType.None,
         };
 
+        // Surface object integration constants
+        this.surface_id = 1398100550;
+        // What color channels should be filled with noise?
+        this.FillRed = 1<<0;
+        this.FillGreen = 1<<1;
+        this.FillBlue = 1<<2;
+        this.FillAlpha = 1<<3;
+        // Use GetNoise2D instead of GetNoise3D, z offset will be ignored
+        this.Only2D = 1<<4;
+        this.DefaultFlags = (this.FillRed | this.FillGreen | this.FillBlue);
+
         // =============================
         // Function arrays
         // =============================
@@ -168,9 +179,7 @@ class CRunNoise extends CRunExtension {
                 this.noiseSettings.lowerRange = lowerRange;
             },
             // 26
-            (surface, xOffset, yOffset, zOffset) => {
-                console.warn("Fill surface object with noise is unsupported");
-            }
+            this.fillSurfaceObjWithNoise
         ];
 
         // update getNumOfConditions function if you edit this!!!!
@@ -185,53 +194,13 @@ class CRunNoise extends CRunExtension {
             // 1
             this.stringToSeed,
             // 2
-            (x, y, z) => {
-                let pos = new Vector3(x, y, z);
-
-                if (this.warpSettings.enabled) {
-                    this.fnlWarp.DomainWarp(pos);
-                }
-
-                return this.mapNoiseValue(this.fnlNoise.GetNoise(pos.x, pos.y, pos.z));
-            },
+            this.getNoise3D,
             // 3
-            (x, y) => {
-                let pos = new Vector2(x, y);
-
-                if (this.warpSettings.enabled) {
-                    this.fnlWarp.DomainWarp(pos);
-                }
-
-                return this.mapNoiseValue(this.fnlNoise.GetNoise(pos.x, pos.y));
-            },
+            this.getNoise2D,
             // 4
-            (x) => {
-                let pos = new Vector2(x, 0);
-
-                if (this.warpSettings.enabled) {
-                    this.fnlWarp.DomainWarp(pos);
-                }
-
-                return this.mapNoiseValue(this.fnlNoise.GetNoise(pos.x, pos.y));
-            },
+            this.getNoise1D,
             // 5
-            (x, xOffset, xSize) => {
-                let xPos = x - xOffset;
-                let radius = xSize / (Math.PI * 2.0);
-                let angleStep = 360.0 / xSize;
-                let angle = xPos * angleStep;
-                angle = angle * Math.PI / 180.0;
-
-                let pos = {};
-                pos.x = (radius * Math.cos(angle));
-                pos.y = (radius * Math.sin(angle));
-
-                if (this.warpSettings.enabled) {
-                    this.fnlWarp.DomainWarp(pos);
-                }
-
-                return this.mapNoiseValue(this.fnlNoise.GetNoise(pos.x, pos.y));
-            },
+            this.getLoopingNoise1D,
             // 6
             () => {
                 // reused for FastNoiseLite.DomainWarpType.OpenSimplex2, both should be 0
@@ -386,27 +355,28 @@ class CRunNoise extends CRunExtension {
             },
             // 43
             () => {
-                console.warn("Fill surface object with noise is unsupported");
+                return this.DefaultFlags;
             },
             // 44
             () => {
-                console.warn("Fill surface object with noise is unsupported");
+                return this.FillRed;
             },
             // 45
             () => {
-                console.warn("Fill surface object with noise is unsupported");
+                return this.FillGreen;
+
             },
             // 46
             () => {
-                console.warn("Fill surface object with noise is unsupported");
+                return this.FillBlue;
             },
             // 47
             () => {
-                console.warn("Fill surface object with noise is unsupported");
+                return this.FillAlpha;
             },
             // 48
             () => {
-                console.warn("Fill surface object with noise is unsupported");
+                return this.Only2D;
             }
         ];
     }
@@ -544,6 +514,112 @@ class CRunNoise extends CRunExtension {
     }
 
 
+    getNoise3D(x, y, z) {
+        let pos = new Vector3(x, y, z);
+
+        if (this.warpSettings.enabled) {
+            this.fnlWarp.DomainWarp(pos);
+        }
+
+        return this.mapNoiseValue(this.fnlNoise.GetNoise(pos.x, pos.y, pos.z));
+    };
+
+    getNoise2D(x, y) {
+        let pos = new Vector2(x, y);
+
+        if (this.warpSettings.enabled) {
+            this.fnlWarp.DomainWarp(pos);
+        }
+
+        return this.mapNoiseValue(this.fnlNoise.GetNoise(pos.x, pos.y));
+    }
+
+    getNoise1D(x) {
+        return this.GetNoise2D(x, 0);
+    }
+
+    getLoopingNoise1D(x, xOffset, xSize) {
+        let xPos = x - xOffset;
+        let radius = xSize / (Math.PI * 2.0);
+        let angleStep = 360.0 / xSize;
+        let angle = xPos * angleStep;
+        angle = angle * Math.PI / 180.0;
+
+        return get_noise2D(radius * Math.cos(angle), radius * Math.sin(angle));
+    }
+
+
+    fillSurfaceObjWithNoise(surface_obj, xOffset, yOffset, zOffset, flags) {
+        // Make sure the object is a surface
+        if(surface_obj === undefined || surface_obj.hoIdentifier != this.surface_id) {
+            console.warn("Not a surface");
+            return;
+        }
+
+        // OSurface
+        let oSurf = surface_obj.ext.oSurf;
+
+        // Make sure the surface slected image is valid
+        if(oSurf.selectedImage === -1 || oSurf.imageList[oSurf.selectedImage] === undefined) {
+            console.warn("Image is not selected");
+            return;
+        }
+
+        // OSurfaceImage
+        let target = oSurf.imageList[oSurf.selectedImage];
+
+        const imageData = target.context.getImageData(0, 0, target.getWidth(), target.getHeight());
+
+        this.fillImageDataWithNoise(imageData, xOffset, yOffset, zOffset, flags);
+        target.context.putImageData(imageData, 0, 0);
+        oSurf.redraw();
+    }
+
+    // Fill raw buffer with noise
+    // surface object always uses 24bit depth so other depths are not supported now
+    fillImageDataWithNoise(imageData, xOffset, yOffset, zOffset, flags) {
+        let offset;
+        let noiseVal;
+        let r = 0;
+        let g = 0;
+        let b = 0;
+        let a = 255;
+
+        for (let y = 0; y < imageData.height; y++) {
+            for (let x = 0; x < imageData.width; x++) {
+                if(flags & this.Only2D) {
+                    noiseVal = this.getNoise2D(x + xOffset, y + yOffset);
+                } else {
+                    noiseVal = this.getNoise3D(x + xOffset, y + yOffset, zOffset);
+                }
+
+                offset = (y * imageData.width + x) * 4;
+
+                // RGBA layout
+                if(flags & this.FillRed) {
+                    r = noiseVal;
+                    imageData.data[offset + 0] = r;
+                }
+
+                if(flags & this.FillGreen) {
+                    g = noiseVal;
+                    imageData.data[offset + 1] = g;
+                }
+
+                if(flags & this.FillBlue) {
+                    b = noiseVal;
+                    imageData.data[offset + 2] = b;
+                }
+
+                if(flags & this.FillAlpha) {
+                    a = noiseVal;
+                    imageData.data[offset + 3] = a;
+                }
+            }
+        }
+    }
+
+
     getNumberOfConditions() {
         return 0; // $conditionFuncs not available yet
     }
@@ -658,8 +734,14 @@ class CRunNoise extends CRunExtension {
         // Note: New Direction parameter is not supported by this, add a workaround based on action and parameter index;
         // SDL Joystick's source has an example.
         const args = new Array(func.length);
-        for (let i = 0; i < args.length; i++)
-            args[i] = act.getParamExpression(this.rh, i);
+        if(num != 26) {
+            for (let i = 0; i < args.length; i++)
+                args[i] = act.getParamExpression(this.rh, i);
+        } else {
+            args[0] = act.getParamObject(this.rh, 0);
+            for (let i = 1; i < args.length; i++)
+                args[i] = act.getParamExpression(this.rh, i);
+        }
 
         func.apply(this, args);
     }
