@@ -534,7 +534,7 @@
             },
             {
                 "Title": "Noise type",
-                "Info": "Noise algorythm used to generate noise values.",
+                "Info": "Noise algorythm used to generate noise values. (Default: OpenSimplex2)",
                 "Type": "Combo Box",
                 "DefaultState": "OpenSimplex2",
                 "Items": [
@@ -566,7 +566,7 @@
             },
             {
                 "Title": "Noise frequency",
-                "Info": "Noise frequency controls how much noise is \"zoomed in\".\n(Default: 0.01)",
+                "Info": "Noise frequency controls how much noise is \"zoomed out\".\n(Default: 0.01)",
                 "Type": "Editbox Float",
                 "DefaultState": 0.01
             },
@@ -606,7 +606,7 @@
             },
             {
                 "Title": "Fractal lacunarity",
-                "Info": "Frequency multiplier between noise layers (octaves)\n(Default: 2.0).",
+                "Info": "Frequency multiplier between noise layers (octaves).\n(Default: 2.0).",
                 "Type": "Editbox Float",
                 "DefaultState": 2.0
             },
@@ -673,7 +673,7 @@
             },
             {
                 "Title": "Domain warp type",
-                "Info": "Algorythm for generating noise thats used to warp returned noise values.\n(Default: \"Disabled\")",
+                "Info": "Algorythm for generating noise thats used to warp returned noise values, creating more random results.\n(Default: \"Disabled\")",
                 "Type": "Combo Box",
                 "DefaultState": "Disabled",
                 "Items": [
@@ -691,13 +691,13 @@
             },
             {
                 "Title": "Domain warp seed",
-                "Info": "Random generator seed used to warp noise, text will be converted to a number.\n(Default: \"1337\")",
+                "Info": "Random generator seed used to generate noise for domain warp, text will be converted to a number.\n(Default: \"1337\")",
                 "Type": "Editbox String",
                 "DefaultState": "1337"
             },
             {
                 "Title": "Domain warp frequency",
-                "Info": "Frequency for domain warp.\n(Default: 0.01)",
+                "Info": "Noise frequency controls how much noise is \"zoomed out\".\n(Default: 0.01)",
                 "Type": "Editbox Float",
                 "DefaultState": 0.01
             },
@@ -736,7 +736,7 @@
             },
             {
                 "Title": "DW fractal lacunarity",
-                "Info": "Frequency multiplier between noise layers (octaves)\n(Default: 2.0).",
+                "Info": "Frequency multiplier between noise layers (octaves).\n(Default: 2.0).",
                 "Type": "Editbox Float",
                 "DefaultState": 2.0
             },
