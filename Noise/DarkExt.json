@@ -7,7 +7,7 @@
             "Author": "Kacper Bugla",
             "Copyright": "Copyright \u00A9 2024 Kacper Bugla",
             "Comment": "%sGenerates Noise using many different algorithms.",
-            "Help": "https://github.com/kapi1525/NoiseExtension/wiki",
+            "Help": "Help/Noise.chm",
             "URL": "https://github.com/kapi1525/NoiseExtension"
         },
 
@@ -534,7 +534,7 @@
             },
             {
                 "Title": "Noise type",
-                "Info": "Noise algorythm used to generate noise values. (Default: OpenSimplex2)",
+                "Info": "Noise algorythm used to generate noise values.\n(Default: OpenSimplex2)",
                 "Type": "Combo Box",
                 "DefaultState": "OpenSimplex2",
                 "Items": [
