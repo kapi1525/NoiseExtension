@@ -1,0 +1,69 @@
+name: Create offline wiki
+
+on:
+  gollum:
+  workflow_dispatch:
+
+jobs:
+  Wiki:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout main repo
+      uses: actions/checkout@v4
+      with:
+        path: 'NoiseExtension'
+
+    - name: Checkout wiki repo
+      uses: actions/checkout@v4
+      with:
+        repository: 'kapi1525/NoiseExtension.wiki'
+        path: 'NoiseExtension.wiki'
+
+    - name: Download ghwiki2chm
+      id: download
+      uses: robinraju/release-downloader@v1
+      with:
+        repository: 'kapi1525/ghwiki2chm'
+        latest: true
+        fileName: '*Linux.zip'
+        out-file-path: 'ghwiki2chm'
+
+    - name: Extract ghwiki2chm
+      working-directory: "./ghwiki2chm"
+      run: tar -xvf "${{ fromJson(steps.download.outputs.downloaded_files)[0] }}"
+
+    - name: Install chmcmd
+      run: sudo apt-get install fpc -y
+      # NOTE: As of 28.08.2024 restored cache is broken.
+      # https://github.com/awalsh128/cache-apt-pkgs-action/pull/136
+      # uses: awalsh128/cache-apt-pkgs-action@v1
+      # with:
+      #   packages: fpc
+      #   version: 1.0
+
+    - name: Run ghwiki2chm
+      run: ./ghwiki2chm/ghwiki2chm -n Noise -r NoiseExtension.wiki -o Noise.chm
+
+    - name: Copy Noise.chm
+      run: |
+        mkdir ./NoiseExtension/Help
+        cp Noise.chm ./NoiseExtension/Help
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: Noise.chm
+        path: Noise.chm
+
+    - name: Create Pull Request
+      uses: peter-evans/create-pull-request@v6
+      with:
+        path: ./NoiseExtension
+        commit-message: Update offline wiki.
+        author: github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>
+        branch: offline-wiki
+        title: Update offline wiki.
+        body: Automated pr with updated chm file.
+
+
