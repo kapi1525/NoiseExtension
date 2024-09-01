@@ -7,7 +7,8 @@
         "postinstall": "patch-package",
         "build": "npm run buildhtml && npm run builduwp",
         "buildhtml": "esbuild Noise.js --bundle --alias:DarkEdif=./DarkEdif.html.js --target=es2015 --banner:js=void --outfile=../MFX/Data/Runtime/Html5/Noise.js",
-        "builduwp": "esbuild Noise.js --bundle --alias:DarkEdif=./DarkEdif.uwp.js --target=es2015 --banner:js=void --outfile=../MFX/Data/Runtime/Wua/js/runtime/extensions/source/Noise.js"
+        "builduwp": "esbuild Noise.js --bundle --alias:DarkEdif=./DarkEdif.uwp.js --target=es2015 --banner:js=void --outfile=../MFX/Data/Runtime/Wua/js/runtime/extensions/source/Noise.js",
+        "tsc": "tsc"
     },
     "repository": {
         "type": "git",
@@ -20,10 +21,11 @@
     },
     "homepage": "https://github.com/kapi1525/NoiseExtension#readme",
     "dependencies": {
+        "esbuild": "^0.21.5",
         "fastnoise-lite": "1.1.1",
         "patch-package": "^8.0.0"
     },
     "devDependencies": {
-        "esbuild": "^0.21.5"
+        "typescript": "^5.5.2"
     }
 }
