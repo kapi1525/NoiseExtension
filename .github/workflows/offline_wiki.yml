@@ -57,7 +57,7 @@ jobs:
         path: Noise.chm
 
     - name: Create Pull Request
-      uses: peter-evans/create-pull-request@v6
+      uses: peter-evans/create-pull-request@v7
       with:
         path: ./NoiseExtension
         commit-message: Update offline wiki.
