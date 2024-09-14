@@ -158,7 +158,7 @@ namespace DarkEdif {
 			// Run when user has finished editing.
 			void EditDone(Extension *ext, const TCHAR *newText, size_t newTextSize) {
 				if (isInt ? (bool)intStoreDataToExt : (bool)textStoreDataToExt)
-					throw std::exception("Not an editable property.");
+					// FIXME: throw std::exception("Not an editable property.");
 				cachedText = std::tstring_view(newText, newTextSize);
 			}
 		};
@@ -238,7 +238,9 @@ namespace DarkEdif {
 
 	// Extension name; ANSI/Wide on Windows, UTF-8 elsewhere.
 	extern std::tstring ExtensionName;
+    #ifndef __wasi__
 	extern std::thread::id MainThreadID;
+    #endif
 	extern WindowHandleType Internal_WindowHandle;
 
 	enum class MFXRunMode

@@ -1930,7 +1930,7 @@ HGLOBAL DarkEdif::DLL::DLL_UpdateEditStructure(mv * mV, EDITDATA * oldEdPtr)
 				smartPropertyReader.SmartPropertyReader::SmartPropertyReader();
 				jsonPropertyReader.JSONPropertyReader::JSONPropertyReader();
 			}
-			
+
 			preSmartPropertyReader.Initialise(convState, &retState);
 			if (retStateAdmin.convRetType == Properties::ConvReturnType::OK)
 				readers.push_back({ &preSmartPropertyReader, "PreSmartPropertyReader" });
@@ -2133,7 +2133,7 @@ HGLOBAL DarkEdif::DLL::DLL_UpdateEditStructure(mv * mV, EDITDATA * oldEdPtr)
 			// for reset only, once - as above, but once for a MFA, not every frame with ext
 			// never				- never makes popup
 			// Default: for reset only, once
-			// 
+			//
 			// Worth noting that property upgrade errors will always create an error popup box - this is not affected by this setting.
 
 			std::string upgradeBox = DarkEdif::GetIniSetting("SmartPropertiesUpgradeBox"sv);
@@ -2922,11 +2922,13 @@ std::uint16_t DarkEdif::GetEventNumber(eventGroup * evg) {
 /// <summary> If error, -1 is returned. </summary>
 int DarkEdif::GetCurrentFusionEventNum(const Extension * const ext)
 {
+    #ifndef __wasi__
 	// Reading Fusion's internals requires the main runtime to not be editing them
 	if (MainThreadID != std::this_thread::get_id()) {
 		LOGE(_T("Read GetCurrentFusionEventNum from non-main thread. Returning -1.\n"));
 		return -1;
 	}
+    #endif
 
 #ifdef _WIN32
 	// Can we read current event?
@@ -2951,8 +2953,13 @@ int DarkEdif::GetCurrentFusionEventNum(const Extension * const ext)
 	}
 
 	return threadEnv->CallIntMethod(ext->javaExtPtr, getEventIDMethod);
-#else // iOS
+#elif defined(__APPLE__)
 	return DarkEdifObjCFunc(PROJECT_NAME_RAW, getCurrentFusionEventNum)(ext->objCExtPtr);
+#elif defined(__wasi__)
+    // FIXME: STUB
+    return 0;
+#else
+    #error Unsupported platform.
 #endif
 }
 
@@ -2990,8 +2997,13 @@ std::tstring DarkEdif::MakePathUnembeddedIfNeeded(const Extension * ext, const s
 
 	threadEnv->DeleteLocalRef(pathJava);
 	threadEnv->DeleteLocalRef((jobject)str.ctx);
-#else
+#elif defined(__APPLE__)
 	const std::string truePath = DarkEdifObjCFunc(PROJECT_NAME_RAW, makePathUnembeddedIfNeeded)(ext->objCExtPtr, std::string(filePath).c_str());
+#elif defined(__wasi__)
+    // FIXME: STUB
+    const std::string truePath = "";
+#else
+    #error Unsupported platform.
 #endif
 	if (filePath != truePath)
 		LOGV(_T("File path extracted from \"%s\" to \"%s\".\n"), std::tstring(filePath).c_str(), truePath.c_str());
@@ -3252,7 +3264,7 @@ void DarkEdif::LOGFInternal(PrintFHintInside const TCHAR * x, ...)
 	DarkEdif::MsgBox::Error(_T("Fatal error"), _T("%s"), buf);
 	std::abort();
 }
-#else // APPLE
+#elif defined(__APPLE__) // APPLE
 void DarkEdif::BreakIfDebuggerAttached()
 {
 	__builtin_trap();
@@ -3273,6 +3285,29 @@ void DarkEdif::LOGFInternal(PrintFHintInside const TCHAR * x, ...)
 	vsprintf(buf, x, va);
 	va_end(va);
 }
+#elif defined(__wasi__)
+void DarkEdif::BreakIfDebuggerAttached()
+{
+    // FIXME: STUB
+}
+
+int DarkEdif::MessageBoxA(WindowHandleType hwnd, const TCHAR * text, const TCHAR * caption, int iconAndButtons)
+{
+	::DarkEdif::Log(iconAndButtons, "Message box \"%s\" absorbed: \"%s\".", caption, text);
+	DarkEdif::BreakIfDebuggerAttached();
+	return 0;
+}
+
+void DarkEdif::LOGFInternal(PrintFHintInside const TCHAR * x, ...)
+{
+	char buf[2048];
+	va_list va;
+	va_start(va, x);
+	vsprintf(buf, x, va);
+	va_end(va);
+}
+#else
+    #error Unsupported platform.
 #endif
 
 
@@ -3327,14 +3362,14 @@ namespace DarkEdif
 	void FusionDebugger::StartEditForItemID(int debugItemID)
 	{
 		if (debugItemID < 0 || (std::uint16_t)debugItems.size() < debugItemID)
-			throw std::exception("Couldn't find debug ID in Fusion debugger list.");
+			// FIXME: throw std::exception("Couldn't find debug ID in Fusion debugger list.");
 		auto &di = debugItems[debugItemID];
 
 		EditDebugInfo edi = {};
 		if (di.isInt)
 		{
 			if (!di.intStoreDataToExt)
-				throw std::exception("Item not editable.");
+				// FIXME: throw std::exception("Item not editable.");
 			edi.value = di.cachedInt;
 			long ret = ext->Runtime.EditInteger(&edi);
 			if (ret == IDOK)
@@ -3353,7 +3388,7 @@ namespace DarkEdif
 		else
 		{
 			if (!di.textStoreDataToExt)
-				throw std::exception("Item not editable.");
+				// FIXME: throw std::exception("Item not editable.");
 			edi.text = di.cachedText.data();
 			di.cachedText.resize(_tcslen(edi.text));
 			edi.lText = di.cachedText.size();
@@ -3373,7 +3408,7 @@ namespace DarkEdif
 	void FusionDebugger::GetDebugItemFromCacheOrExt(TCHAR *writeTo, int debugItemID)
 	{
 		if (debugItemID < 0 || debugItemID >= (std::uint16_t)debugItems.size())
-			throw std::exception("Couldn't find debug ID in Fusion debugger list.");
+			// FIXME: throw std::exception("Couldn't find debug ID in Fusion debugger list.");
 
 		// Reader function exists, and timer for refreshing (if it exists) has expired
 		auto &di = debugItems[debugItemID];
@@ -3413,7 +3448,7 @@ namespace DarkEdif
 		const char *userSuppliedName
 	) {
 		if (debugItems.size() == 127)
-			throw std::exception("Too many items added to Fusion debugger.");
+			// FIXME: throw std::exception("Too many items added to Fusion debugger.");
 
 		debugItems.push_back(DebugItem(getLatestFromExt, saveUserInputToExt, refreshMS, userSuppliedName));
 		// End it with DB_END, and second-to-last item is the new debug item ID
@@ -3432,10 +3467,10 @@ namespace DarkEdif
 		const char *userSuppliedName
 	) {
 		if (debugItems.size() == 127)
-			throw std::exception("too many items added to Fusion debugger");
+			// FIXME: throw std::exception("too many items added to Fusion debugger");
 
 		if (userSuppliedName && std::any_of(debugItems.cbegin(), debugItems.cend(), [=](const DebugItem &d) { return d.DoesUserSuppliedNameMatch(userSuppliedName); }))
-			throw std::exception("name already in use. Must be unique");
+			// FIXME: throw std::exception("name already in use. Must be unique");
 
 		debugItems.push_back(DebugItem(getLatestFromExt, saveUserInputToExt, refreshMS, userSuppliedName));
 		// End it with DB_END, and second-to-last item is the new debug item ID
@@ -3453,7 +3488,7 @@ namespace DarkEdif
 				if (debugItems[i].isInt)
 					debugItems[i].cachedInt = newValue;
 				else
-					throw std::exception("Fusion debugger item is text, not int type");
+					// FIXME: throw std::exception("Fusion debugger item is text, not int type");
 				return;
 			}
 		}
@@ -3463,14 +3498,14 @@ namespace DarkEdif
 		const char *userSuppliedName, const TCHAR *newText
 	) {
 		if (!newText)
-			throw std::exception("null not allowed");
+			// FIXME: throw std::exception("null not allowed");
 
 		for (size_t i = 0; i < debugItems.size(); i++)
 		{
 			if (debugItems[i].DoesUserSuppliedNameMatch(userSuppliedName))
 			{
 				if (debugItems[i].isInt)
-					throw std::exception("Fusion debugger item is text, not int type");
+					// FIXME: throw std::exception("Fusion debugger item is text, not int type");
 				else
 					debugItems[i].cachedText = newText;
 				return;
@@ -3559,7 +3594,7 @@ bool DarkEdif::FileExists(const std::tstring_view path)
 	const DWORD fileAttr = GetFileAttributes(pathSafe.c_str());
 	return fileAttr != INVALID_FILE_ATTRIBUTES && (fileAttr & FILE_ATTRIBUTE_DIRECTORY) != FILE_ATTRIBUTE_DIRECTORY;
 #else
-	throw std::runtime_error("Function not implemented in non-Windows");
+	// FIXME: throw std::runtime_error("Function not implemented in non-Windows");
 #endif
 }
 
@@ -3601,7 +3636,7 @@ static std::tstring GetModulePath(HMODULE hModule)
 	DarkEdif::MsgBox::Error(_T("Fatal error - Path too long"),
 		_T("Your application path is too long, several Fusion extensions may have difficulty loading.\n"
 			"Build with the Unicode " PROJECT_NAME " to remove the limit."));
-	throw std::runtime_error("Path reading error"); // Don't bother returning anything to user code.
+	// FIXME: throw std::runtime_error("Path reading error"); // Don't bother returning anything to user code.
 #else
 	// Max limit on path is 32,767 characters... ish. The documentation says it may go further.
 	// If we assume surrogate pairs are in play, this limit can nearly double, although the folder names in the path are still capped to MAX_PATH each.
@@ -3689,11 +3724,11 @@ std::tstring_view DarkEdif::GetMFXRelativeFolder(GetFusionFolderType type)
 #else
 std::tstring_view DarkEdif::GetRunningApplicationPath(DarkEdif::GetRunningApplicationPathType type)
 {
-	throw std::runtime_error("GetRunningApplicationPath function not implemented on non-Windows.");
+	// FIXME: throw std::runtime_error("GetRunningApplicationPath function not implemented on non-Windows.");
 }
 std::tstring_view DarkEdif::GetMFXRelativeFolder(GetFusionFolderType type)
 {
-	throw std::runtime_error("GetMFXRelativeFolder function not implemented on non-Windows.");
+	// FIXME: throw std::runtime_error("GetMFXRelativeFolder function not implemented on non-Windows.");
 }
 #endif // _WIN32
 
@@ -3829,7 +3864,7 @@ void DarkEdif::SDKUpdater::StartUpdateCheck()
 
 	// Shouldn't run twice.
 	if (updateThread != NULL)
-		throw std::runtime_error("Using multiple update threads");
+		// FIXME: throw std::runtime_error("Using multiple update threads");
 
 	updateThread = CreateThread(NULL, NULL, DarkEdifUpdateThread, NULL, 0, NULL);
 	if (updateThread == NULL)
@@ -4666,7 +4701,9 @@ DWORD WINAPI DarkEdifUpdateThread(void *)
 
 // Define it
 std::tstring DarkEdif::ExtensionName(_T("" PROJECT_NAME ""s));
+#ifndef __wasi__
 std::thread::id DarkEdif::MainThreadID;
+#endif
 WindowHandleType DarkEdif::Internal_WindowHandle;
 DarkEdif::MFXRunMode DarkEdif::RunMode = DarkEdif::MFXRunMode::Unset;
 
@@ -4792,6 +4829,9 @@ void DarkEdif::LogV(int logLevel, PrintFHintInside const TCHAR* msgFormat, va_li
 	printf("%-9s", logLevels[logLevel]);
 	vprintf(msgFormat, v);
 #endif
+#ifdef __wasi__
+    fflush(stdout);
+#endif
 }
 
 #if (defined(__ANDROID__) || defined(__APPLE__)) && DARKEDIF_LOG_MIN_LEVEL <= DARKEDIF_LOG_INFO
@@ -4818,10 +4858,12 @@ void DarkEdif::OutputDebugStringAInternal(const char * debugString)
 // To get the Windows-like behaviour
 void DarkEdif::Sleep(unsigned int milliseconds)
 {
+#ifndef __wasi__
 	if (milliseconds == 0)
 		std::this_thread::yield();
 	else
 		std::this_thread::sleep_for(std::chrono::milliseconds(milliseconds));
+#endif
 }
 
 #endif

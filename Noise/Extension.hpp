@@ -27,8 +27,12 @@ public:
 	Extension(RunObject* const rdPtr, const EDITDATA* const edPtr, const CreateObjectInfo* const cobPtr);
 #elif defined(__ANDROID__)
 	Extension(const EDITDATA* const edPtr, const jobject javaExtPtr);
-#else
+#elif defined(__APPLE__)
 	Extension(const EDITDATA* const edPtr, void* const objCExtPtr);
+#elif defined(__wasi__)
+	Extension(const EDITDATA* const edPtr, const CreateObjectInfo* const cobPtr);
+#else
+    #error Unsupported platform.
 #endif
 	~Extension();
 
@@ -55,7 +59,6 @@ public:
         FastNoiseLite::RotationType3D rotation_type_3d;
         FastNoiseLite::FractalType fractal_type;
     } warp;
-
 
 
 	// Actions

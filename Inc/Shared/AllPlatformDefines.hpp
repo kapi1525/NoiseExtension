@@ -20,7 +20,7 @@
 #ifndef ThreadSafeStaticInitIsSafe
 	// The threadsafe init is disabled, or we're using VS 2017, so it's safe.
 	// Or we're targeting Vista+ (WINVER >= 0x0600), threadsafe init works there, so safe too.
-	#if !defined(__cpp_threadsafe_static_init) || _MSC_VER < 1920 || WINVER > 0x0503 
+	#if !defined(__cpp_threadsafe_static_init) || _MSC_VER < 1920 || WINVER > 0x0503
 		#define ThreadSafeStaticInitIsSafe 1
 	#endif
 // We're still targeting XP, and it's VS 2019, why don't we have the define?
@@ -68,7 +68,7 @@ using namespace std::string_view_literals;
 #ifdef _MSC_VER
 	#define PrintFHintInside _In_z_ _Printf_format_string_
 	#define PrintFHintAfter(formatParamIndex,dotsParamIndex) /* no op */
-#elif defined(__clang__) && !defined (__INTELLISENSE__)
+#elif defined(__clang__) && !defined (__INTELLISENSE__) && !defined (__wasi__)  // FIXME: Make this work with wasm
 	#define PrintFHintInside /* no op */
 	// Where formatParamIndex is 1-based index of the format param, and dots is the 1-based index of ...
 	// Note class member functions should include the "this" pointer in the indexing.
@@ -137,7 +137,10 @@ namespace DarkEdif {
 }
 
 #ifndef DARKEDIF_LOG_MIN_LEVEL
-	#ifdef _DEBUG
+    // NOTE: Temporary
+    #ifdef __wasi__
+        #define DARKEDIF_LOG_MIN_LEVEL DARKEDIF_LOG_VERBOSE
+	#elif defined(_DEBUG)
 		#define DARKEDIF_LOG_MIN_LEVEL DARKEDIF_LOG_INFO
 	#else
 		#define DARKEDIF_LOG_MIN_LEVEL DARKEDIF_LOG_WARN
@@ -380,13 +383,17 @@ enum class REFLAG : short {
 #define	ACTFLAGS_REPEAT	0x1
 
 // Maximum number of qualifiers an object can have
-#define MAX_QUALIFIERS 8	
+#define MAX_QUALIFIERS 8
 
 #define LOGF(x, ...) DarkEdif::LOGFInternal(x, ##__VA_ARGS__)
 
 // Useful functions
-#include <thread>
-#include <atomic>
+#ifndef __wasi__
+    // Currently not fully supported
+    // FIXME: Use wasi threads when they are stable
+    #include <thread>
+    #include <atomic>
+#endif
 #include <assert.h>
 
 // Prevents using Fusion internals directly, to allow multiplatform consistency

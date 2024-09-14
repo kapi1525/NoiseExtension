@@ -843,7 +843,7 @@ ProjectFunc void JNICALL JNI_OnUnload(JavaVM * vm, void * reserved)
 #endif
 }
 
-#else // iOS
+#elif defined(__APPLE__) // iOS
 #include "Extension.hpp"
 
 // Raw creation func
@@ -883,4 +883,61 @@ ProjectFunc void PROJ_FUNC_GEN(PROJECT_NAME_RAW, _destroyRunObject)(void * cppEx
 	delete ((Extension *)cppExt);
 }
 
+#elif defined(__wasi__)
+
+ProjectFunc void* wasm_alloc(size_t size) {
+    return malloc(size);
+}
+
+ProjectFunc void wasm_free(void* ptr) {
+    free(ptr);
+}
+
+ProjectFunc void init() {
+	mv* mV = nullptr;
+	if (!Edif::SDK) {
+		LOGV("The SDK is being initialized.\n");
+		Edif::Init(mV, false);
+	}
+}
+
+ProjectFunc void dealloc() {
+	LOGV("The SDK is being freed.\n");
+}
+
+ProjectFunc int getNumberOfConditions() {
+	return CurLang["Conditions"].u.array.length;
+}
+
+ProjectFunc void* createRunObject(void* file, CreateObjectInfo* cob, int version) {
+    EDITDATA* edPtr = (EDITDATA *)file;
+    assert(version == Extension::Version);
+	Extension* ext = new Extension(edPtr, cob);
+	return ext;
+}
+
+ProjectFunc void destroyRunObject(Extension* ext, bool bFast) {
+	delete ext;
+}
+
+ProjectFunc REFLAG handleRunObject(Extension* ext) {
+	return ext->Handle();
+}
+
+ProjectFunc REFLAG displayRunObject(Extension* ext) {
+	return ext->Display();
+}
+
+ProjectFunc short pauseRunObject(Extension* ext) {
+	return ext->FusionRuntimePaused();
+}
+
+ProjectFunc short continueRunObject(Extension* ext) {
+	return ext->FusionRuntimeContinued();
+}
+
+
+
+#else
+    #error Unsupported platform.
 #endif
