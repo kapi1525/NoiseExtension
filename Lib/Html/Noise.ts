@@ -21,8 +21,8 @@ interface CppLand {
     pauseRunObject?: () => void;
     continueRunObject?: () => void;
     // ACE jumps
-    confitionJump?: () => void;
-    actionJump?: () => void;
+    conditionJump: (ext: number, num: number) => number;
+    actionJump: (ext: number, num: number) => void;
     expressionJump: (ext: number, num: number) => void;
 }
 
@@ -38,9 +38,28 @@ class CRunNoise extends CRunExtension {
     static wasi = new WASI([], [], [new OpenFile(new File([])), ConsoleStdout.lineBuffered(msg => console.log(`[WASI stdout] ${msg}`)), ConsoleStdout.lineBuffered(msg => console.warn(`[WASI stderr] ${msg}`))]);
 
     static wasmImports = {
+        condition_action_manager: {
+            get_float:              (index: number) => {
+                if(CRunNoise.that.curConditionActionParams === null || CRunNoise.that.rh === null) {
+                    return 0;
+                }
+                return Number(CRunNoise.that.curConditionActionParams.getParamExpression(CRunNoise.that.rh, index));
+            },
+            get_string:             (index: number) => {
+                if(CRunNoise.that.curConditionActionParams === null || CRunNoise.that.rh === null) {
+                    return 0;
+                }
+                const strPtr = CRunNoise.wasmCStringAlloc(String(CRunNoise.that.curConditionActionParams.getParamExpression(CRunNoise.that.rh, index)));
+                CRunNoise.that.wasmCStrings.push(strPtr);
+                return strPtr;
+            },
+            get_integer:            (index: number) => {
+                return CRunNoise.wasmImports.condition_action_manager.get_float(index);
+            },
+        },
         expression_manager: {
             set_value_int:          (a: number) => { CRunNoise.that.curExpressionReturn = a; },
-            set_value_float:        (a: number) => { console.log("set_value_float" + a); CRunNoise.that.curExpressionReturn = a; },
+            set_value_float:        (a: number) => { CRunNoise.that.curExpressionReturn = a; },
             set_value_cstr:         (str_ptr: number) => { CRunNoise.that.curExpressionReturn = str_ptr; }, // FIXME
             get_float:              (index: number) => {
                 if(CRunNoise.that.ho === null) {
@@ -49,37 +68,25 @@ class CRunNoise extends CRunExtension {
                 while (CRunNoise.that.curExpressionParams.length <= index) {
                     CRunNoise.that.curExpressionParams.push(CRunNoise.that.ho.getExpParam());
                 }
-                console.log("get_float index:" + index);
-                console.log(CRunNoise.that.curExpressionParams[index])
-                return CRunNoise.that.curExpressionParams[index];
+                return Number(CRunNoise.that.curExpressionParams[index]);
             },
             get_string:             (index: number) => {
-                return 0;
-            },
-            get_integer:            (index: number) => {
                 if(CRunNoise.that.ho === null) {
                     return 0;
                 }
                 while (CRunNoise.that.curExpressionParams.length <= index) {
                     CRunNoise.that.curExpressionParams.push(CRunNoise.that.ho.getExpParam());
                 }
-                return CRunNoise.that.curExpressionParams[index];
+                const strPtr = CRunNoise.wasmCStringAlloc(String(CRunNoise.that.curExpressionParams[index]));
+                CRunNoise.that.wasmCStrings.push(strPtr);
+                return strPtr;
+            },
+            get_integer:            (index: number) => {
+                return CRunNoise.wasmImports.expression_manager.get_float(index);
             },
             // get_object:             () => {},
             set_return_type:        (rt: number) => {},
         },
-        // TODO:
-        // wasi_snapshot_preview1: {
-        //     args_get:               () => { console.warn("stub"); },
-        //     args_sizes_get:         () => { console.warn("stub"); },
-        //     fd_close:               () => { console.warn("stub"); },
-        //     fd_fdstat_get:          () => { console.warn("stub"); },
-        //     fd_prestat_get:         () => { console.warn("stub"); },
-        //     fd_prestat_dir_name:    () => { console.warn("stub"); },
-        //     fd_seek:                () => { console.warn("stub"); },
-        //     fd_write:               () => { console.warn("stub"); },
-        //     proc_exit:              () => { console.warn("stub"); },
-        // },
         wasi_snapshot_preview1: CRunNoise.wasi.wasiImport,
     };
 
@@ -93,18 +100,45 @@ class CRunNoise extends CRunExtension {
 
         init: CRunNoise.wasmInstance.exports.init as () => void,
         dealloc: CRunNoise.wasmInstance.exports.dealloc as () => void,
+
         getNumberOfConditions: CRunNoise.wasmInstance.exports.getNumberOfConditions as () => number,
         createRunObject: CRunNoise.wasmInstance.exports.createRunObject as (file_ptr: number, cob_ptr: number, version: number) => number,
         destroyRunObject: CRunNoise.wasmInstance.exports.destroyRunObject as (ext: number, bFast: boolean) => void,
 
+        conditionJump: CRunNoise.wasmInstance.exports.conditionJump as (ext: number, num: number) => number,
+        actionJump: CRunNoise.wasmInstance.exports.actionJump as (ext: number, num: number) => void,
         expressionJump: CRunNoise.wasmInstance.exports.expressionJump as (ext: number, num: number) => void,
     };
 
     cppExtPtr: number | null = null;
 
+    static that: CRunNoise;
     curExpressionReturn: number | string | null = null;
     curExpressionParams: (number | string)[] = [];
-    static that: CRunNoise;
+
+    curConditionActionParams: CCndExtension | CActExtension | null = null;
+    // Array of strings in wasm memory allocated by JS.
+    wasmCStrings: number[] = [];
+
+    // Functions for working with wasm side strings.
+    static wasmCStringAlloc(str: string): number {
+        const strLen = (str.length * 3) + 1;                    // https://developer.mozilla.org/en-US/docs/Web/API/TextEncoder/encodeInto#buffer_sizing
+        const encoder = new TextEncoder;
+        const strPtr = CRunNoise.cppLand.wasm_alloc(strLen);
+        let strArray = new Uint8Array(CRunNoise.cppLand.memory.buffer, strPtr, strLen);
+        strArray.fill(0);
+        const ret = encoder.encodeInto(str, strArray);
+        console.log(ret);
+        return strPtr;
+    }
+
+    static wasmCStringFree(strPtr: number) {
+        CRunNoise.cppLand.wasm_free(strPtr);
+    }
+
+    static wasmCStringDeref(strPtr: number): string {
+        return "";
+    }
 
     // Constructor of the object.
     // ----------------------------------------------------------------
@@ -113,16 +147,7 @@ class CRunNoise extends CRunExtension {
     // to instantiate variables.
     constructor() {
         super();
-
-        // if(CRunNoise.wasmModule != null) {
-        //     console.log("wasm already initialized.");
-        //     return;
-        // }
-
         CRunNoise.wasi.inst = CRunNoise.wasmInstance as any;
-
-        console.log(CRunNoise.cppLand);
-        console.log(CRunNoise.wasmInstance.exports);
         CRunNoise.cppLand.init();
     }
 
@@ -130,11 +155,7 @@ class CRunNoise extends CRunExtension {
     // --------------------------------------------------------------------
     // Warning, if this number is not correct, the application _will_ crash
     getNumberOfConditions(): number {
-        // const number = CRunNoise.cppLand.getNumberOfConditions();
-        const number = 0;
-        console.log(number);
-        return number;
-        // return CRunNoise.CND_LAST;
+        return CRunNoise.cppLand.getNumberOfConditions();
     }
 
     // Creation of the object
@@ -143,34 +164,8 @@ class CRunNoise extends CRunExtension {
     // - cob : a CCreateObjectInfo containing infos about the created object
     // - version : the version number of the object, as defined in the C code
     createRunObject(file: CFile, cob: CCreateObjectInfo, version: number): boolean {
-        // console.log(file.getLength());
-        // console.log(file.getBytes());
-        // console.log(file.readBuffer(file.getLength()));
-        // Use the "file" parameter to call the CFile object, and
-        // gather the data of the object in the order as they were saved
-        // (same order as the definition of the data in the EDITDATA structure
-        // of the C code).
-        // Examples :
-        // this.myIntegerValue = file.readAInt();   Reads 4 bytes as a signed number
-        // this.myShortValue = file.readAShort();   Reads 2 bytes as a unsigned number
-        // this.myString = file.readAString();      Reads a string, ending by 0
-        // this.myString = file.readAString(size);  Reads a string out of a given sized buffer
-        //                                            - The string can end before the end of the buffer with a 0
-        //                                            - If the string is as long as the buffer, it does not
-        //                                              need to end by a 0
-        //                                            > Whatever happens, this function will always position the file
-        //                                              at the end of the buffer upon exit
-        // this.myString = file.readAStringEOL();   Reads a string until a CR or a CR/LF (works with both)
-        // this.myColor = file.readAColor();        Reads a RGB value
-        // file.skipBytes(number);                  Skips a number of bytes in the file
-        // Please report to the documentation for more information on the CFile object
-
-        // The return value is not used in this version of the runtime but maybe later.
-        // So please return false;
-
+        // FIXME: This is probably wrong.
         let bytes = file.getBytes();
-
-        console.log(file);
 
         const length_in_bytes = bytes.length;
         const wasm_edptr = CRunNoise.cppLand.wasm_alloc(length_in_bytes);
@@ -183,7 +178,6 @@ class CRunNoise extends CRunExtension {
         this.cppExtPtr = CRunNoise.cppLand.createRunObject(wasm_edptr, 0, version);
 
         CRunNoise.cppLand.wasm_free(wasm_edptr);
-        console.log("Allocating Extension ptr: " + this.cppExtPtr);
         return false;
     }
 
@@ -278,25 +272,19 @@ class CRunNoise extends CRunExtension {
     // Return value :
     //    true or false
     condition(num: number, cnd: CCndExtension): boolean {
-        // You usually do a switch statement from the "num" parameter
-        // switch (num)
-        // {
-        //     // Dummy condition : true if the parameter is equal to 0
-        //     case CRunNoise.CND_DUMMY:
-        //         var parameter = cnd.getParamExpression(this.rh, 0);
-        //         return (parameter == 0);
+        if(this.cppExtPtr === null) return false;
 
-        //     // Dummy condition. Example of a condition called from within the object
-        //     // by an action. Returns true if the parameter of the action is
-        //     // equal to the parameter of the condition.
-        //     case CRunNoise.CND_DUMMY2:
-        //         var string = cnd.getParamExpString(this.rh, 0);
-        //         var fromAction = this.rh.rhEvtProg.rhCurParam0;
-        //         if (string == fromAction)
-        //             return true;
-        //         break;
-        // }
-        return false;
+        CRunNoise.that = this;
+        this.curConditionActionParams = cnd;
+        this.wasmCStrings = [];
+
+        const ret = CRunNoise.cppLand.conditionJump(this.cppExtPtr, num);
+
+        this.wasmCStrings.forEach(strPtr => {
+            CRunNoise.wasmCStringFree(strPtr);
+        });
+
+        return (ret == 1);
     }
 
     // Action entry
@@ -306,21 +294,17 @@ class CRunNoise extends CRunExtension {
     //   - act : a CActExtension object, allowing you to retreive the parameters
     //           of the action
     action(num: number, act: CActExtension) {
-        // switch (num)
-        // {
-        //     // Dummy action : changes the position of the object
-        //     case CRunNoise.ACT_DUMMY:
-        //         var x = act.getParamExpression(this.rh, 0);
-        //         var y = act.getParamExpression(this.rh, 1);
-        //         this.setPosition(x, y);
-        //         break;
+        if(this.cppExtPtr === null) return;
 
-        //     // Dummy action : calls the CND_DUMMY2 condition of this object
-        //     case CRunNoise.ACT_DUMMY2;
-        //         var string = act.getParamExpString(this.rh, 0);
-        //         this.generateEvent(CRunNoise.CND_DUMMY2, string);
-        //         break;
-        // }
+        CRunNoise.that = this;
+        this.curConditionActionParams = act;
+        this.wasmCStrings = [];
+
+        CRunNoise.cppLand.actionJump(this.cppExtPtr, num);
+
+        this.wasmCStrings.forEach(strPtr => {
+            CRunNoise.wasmCStringFree(strPtr);
+        });
     }
 
     // Expression entry
@@ -338,20 +322,13 @@ class CRunNoise extends CRunExtension {
         CRunNoise.that = this;
         this.curExpressionReturn = null;
         this.curExpressionParams = [];
+        this.wasmCStrings = [];
         CRunNoise.cppLand.expressionJump(this.cppExtPtr, num);
-        // switch (num)
-        // {
-        //     // Dummy expression : adds the two parameters
-        //     case CRunNoise.EXP_DUMMY:
-        //         var param1 = this.ho.getExpParam();     // Get first parameter
-        //         var param2 = this.ho.getExpParam();     // Get second parameter
-        //         return param1 + param2;
 
-        //     // Dummy expression : returns the length of a string
-        //     case CRunNoise.EXP_DUMMY2:
-        //         var string = this.ho.getExpParam();     // Get the string parameter
-        //         return string.length;
-        // }
+        this.wasmCStrings.forEach(strPtr => {
+            CRunNoise.wasmCStringFree(strPtr);
+        });
+
         if(this.curExpressionReturn == null) {
             return 0;
         }
@@ -364,5 +341,6 @@ class CRunNoise extends CRunExtension {
 // option is to have a prefix specific to your name or object, inserted before the
 // name of the class or functions.
 
-
+// esbuild bundles everything in a way that nothing gets exposed to outside and nothing can conflict
+// Expose extension class globaly.
 (globalThis as any)["CRunNoise"] = CRunNoise;

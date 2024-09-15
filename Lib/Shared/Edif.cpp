@@ -1152,47 +1152,36 @@ struct ConditionOrActionManager_iOS : ACEParamReader
 	}
 };
 #elif defined(__wasi__)
+namespace condition_action_manager {
+    float WASM_FUNC_IMPORT(condition_action_manager, get_float)(int index);
+    const TCHAR* WASM_FUNC_IMPORT(condition_action_manager, get_string)(int index);
+    std::int32_t WASM_FUNC_IMPORT(condition_action_manager, get_integer)(int index);
+    // long WASM_FUNC_IMPORT(condition_action_manager, get_object)(int index);
+}
 
-struct ConditionOrActionManager_Html : ACEParamReader
-{
-	::Extension* ext;
-	bool isCondition;
-
-	ConditionOrActionManager_Html(bool isCondition, Extension* ext)
-		: ext(ext), isCondition(isCondition)
-	{
-        // FIXME: STUB
-	}
+struct ConditionOrActionManager_Html : ACEParamReader {
+	ConditionOrActionManager_Html() = default;
 
 	// Inherited via ACEParamReader
-	virtual float GetFloat(int index)
-	{
-        // FIXME: STUB
+	virtual float GetFloat(int index) {
+        return condition_action_manager::get_float(index);
 	}
 
-	virtual const TCHAR* GetString(int index)
-	{
-        // FIXME: STUB
+	virtual const TCHAR* GetString(int index) {
+        return condition_action_manager::get_string(index);
 	}
 
-	virtual std::int32_t GetInteger(int index, Params type)
-	{
-        // FIXME: STUB
+	virtual std::int32_t GetInteger(int index, Params type) {
+        return condition_action_manager::get_integer(index);
 	}
 
-	virtual long GetObject(int index)
-	{
+	virtual long GetObject(int index) {
         // FIXME: STUB
-		// If condition, the parameter look-up gets an EventParam from runtime, which we dereference into a OINUM
-		if (isCondition)
-		{
-		}
+        DarkEdif::Log(DARKEDIF_LOG_ERROR, "Object action/condition parameter is not supported in webassembly!");
+        return 0;
 	}
 
-	~ConditionOrActionManager_Html()
-	{
-        // FIXME: STUB
-	}
+	~ConditionOrActionManager_Html() = default;
 };
 #else
     #error Unsupported platform.
@@ -1219,7 +1208,7 @@ ProjectFunc long PROJ_FUNC_GEN(PROJECT_NAME_RAW, _conditionJump(void * cppExtPtr
 	ext->Runtime.curCEvent = cndExt;
 #elif defined(__wasi__)
 ProjectFunc long confitionJump(Extension* ext, int ID) {
-    ConditionOrActionManager_Html params(true, ext);
+    ConditionOrActionManager_Html params;
 #else
     #error Unsupported platform.
 #endif
@@ -1288,7 +1277,7 @@ ProjectFunc void PROJ_FUNC_GEN(PROJECT_NAME_RAW, _actionJump(void * cppExtPtr, i
 #define actreturn /* void */
 #elif defined(__wasi__)
 ProjectFunc void actionJump(Extension* ext, int ID) {
-    ConditionOrActionManager_Html params(false, ext);
+    ConditionOrActionManager_Html params;
 #define actreturn /* void */
 #else
     #error Unsupported platform.
@@ -1537,47 +1526,47 @@ struct ExpressionManager_iOS : ACEParamReader {
 	}
 };
 #elif defined(__wasi__)
-void WASM_FUNC_IMPORT(expression_manager, set_value_int)(int a);
-void WASM_FUNC_IMPORT(expression_manager, set_value_float)(float a);
-void WASM_FUNC_IMPORT(expression_manager, set_value_cstr)(const char* a);
-float WASM_FUNC_IMPORT(expression_manager, get_float)(int index);
-const TCHAR* WASM_FUNC_IMPORT(expression_manager, get_string)(int index);
-std::int32_t WASM_FUNC_IMPORT(expression_manager, get_integer)(int index);
-// long WASM_FUNC_IMPORT(expression_manager, get_object)(int);
-void WASM_FUNC_IMPORT(expression_manager, set_return_type)(ExpReturnType rt);
+namespace expression_manager {
+    void WASM_FUNC_IMPORT(expression_manager, set_value_int)(int a);
+    void WASM_FUNC_IMPORT(expression_manager, set_value_float)(float a);
+    void WASM_FUNC_IMPORT(expression_manager, set_value_cstr)(const char* a);
+    float WASM_FUNC_IMPORT(expression_manager, get_float)(int index);
+    const TCHAR* WASM_FUNC_IMPORT(expression_manager, get_string)(int index);
+    std::int32_t WASM_FUNC_IMPORT(expression_manager, get_integer)(int index);
+    // long WASM_FUNC_IMPORT(expression_manager, get_object)(int);
+    void WASM_FUNC_IMPORT(expression_manager, set_return_type)(ExpReturnType rt);
+}
 
 struct ExpressionManager_Html : ACEParamReader {
-	Extension* const ext;
+	ExpressionManager_Html() = default;
 
-	ExpressionManager_Html(Extension* ext) :
-		ext(ext) {
-        // FIXME: STUB
-	}
 	void SetValue(int a) {
-        set_value_int(a);
+        expression_manager::set_value_int(a);
 	}
+
 	void SetValue(float a) {
-        LOGW("aaa %f", a);
-        set_value_float(a);
+        expression_manager::set_value_float(a);
 	}
+
 	void SetValue(const char* a) {
-        set_value_cstr(a);
+        expression_manager::set_value_cstr(a);
 	}
 
 	// Inherited via ACEParamReader
 	virtual float GetFloat(int index) {
-		return get_float(index);
+		return expression_manager::get_float(index);
 	}
 
 	virtual const TCHAR* GetString(int index) {
-		return get_string(index);
+		return expression_manager::get_string(index);
 	}
 
 	virtual std::int32_t GetInteger(int index, Params) {
-		return get_integer(index);
+		return expression_manager::get_integer(index);
 	}
+
 	virtual long GetObject(int) {
-		// Expressions can't use object parameters
+        // Expressions can't use object parameters
 		return 0;
 	}
 
@@ -1585,9 +1574,7 @@ struct ExpressionManager_Html : ACEParamReader {
 		// Do nothing. We only care on Windows.
 	}
 
-	~ExpressionManager_Html() {
-        // FIXME: STUB
-	}
+	~ExpressionManager_Html() = default;
 };
 #else
     #error Unsupported platform.
@@ -1617,7 +1604,7 @@ ProjectFunc void PROJ_FUNC_GEN(PROJECT_NAME_RAW, _expressionJump(void * cppExtPt
 	ExpressionManager_iOS params(ext);
 #elif defined(__wasi__)
 ProjectFunc void expressionJump(Extension* ext, int ID) {
-    ExpressionManager_Html params(ext);
+    ExpressionManager_Html params;
 #else
     #error Unsupported platform.
 #endif

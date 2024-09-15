@@ -41,7 +41,6 @@ float Extension::get_noise3D(float x, float y, float z) {
 }
 
 float Extension::get_noise2D(float x, float y) {
-    std::printf("%f, %f\n", noise.upper_range, noise.lower_range);
     if(warp.enabled) {
         fnl_warp.DomainWarp(x, y);
     }
