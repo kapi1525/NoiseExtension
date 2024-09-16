@@ -1533,8 +1533,6 @@ namespace expression_manager {
     float WASM_FUNC_IMPORT(expression_manager, get_float)(int index);
     const TCHAR* WASM_FUNC_IMPORT(expression_manager, get_string)(int index);
     std::int32_t WASM_FUNC_IMPORT(expression_manager, get_integer)(int index);
-    // long WASM_FUNC_IMPORT(expression_manager, get_object)(int);
-    void WASM_FUNC_IMPORT(expression_manager, set_return_type)(ExpReturnType rt);
 }
 
 struct ExpressionManager_Html : ACEParamReader {

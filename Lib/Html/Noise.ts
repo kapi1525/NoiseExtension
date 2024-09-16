@@ -60,7 +60,7 @@ class CRunNoise extends CRunExtension {
         expression_manager: {
             set_value_int:          (a: number) => { CRunNoise.that.curExpressionReturn = a; },
             set_value_float:        (a: number) => { CRunNoise.that.curExpressionReturn = a; },
-            set_value_cstr:         (str_ptr: number) => { CRunNoise.that.curExpressionReturn = str_ptr; }, // FIXME
+            set_value_cstr:         (strPtr: number) => { CRunNoise.that.curExpressionReturn = CRunNoise.wasmCStringDeref(strPtr); },
             get_float:              (index: number) => {
                 if(CRunNoise.that.ho === null) {
                     return 0;
@@ -84,8 +84,6 @@ class CRunNoise extends CRunExtension {
             get_integer:            (index: number) => {
                 return CRunNoise.wasmImports.expression_manager.get_float(index);
             },
-            // get_object:             () => {},
-            set_return_type:        (rt: number) => {},
         },
         wasi_snapshot_preview1: CRunNoise.wasi.wasiImport,
     };
@@ -128,7 +126,6 @@ class CRunNoise extends CRunExtension {
         let strArray = new Uint8Array(CRunNoise.cppLand.memory.buffer, strPtr, strLen);
         strArray.fill(0);
         const ret = encoder.encodeInto(str, strArray);
-        console.log(ret);
         return strPtr;
     }
 
@@ -137,7 +134,10 @@ class CRunNoise extends CRunExtension {
     }
 
     static wasmCStringDeref(strPtr: number): string {
-        return "";
+        const decoder = new TextDecoder;
+        let strArray = new Uint8Array(CRunNoise.cppLand.memory.buffer, strPtr);
+        strArray = strArray.subarray(0, strArray.findIndex((element) => { return element === 0; }));    // Find null terminator
+        return decoder.decode(strArray);
     }
 
     // Constructor of the object.
