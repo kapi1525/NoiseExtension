@@ -204,8 +204,8 @@ Extension::Extension(const EDITDATA* const edPtr, const CreateObjectInfo* const 
 
 	// 	set_noise_type(noise_type_ids.at(edPtr->Props.GetPropertyStr("Noise type")));
 
-    set_noise_upper_range(1.0);
-    set_noise_lower_range(-1.0);
+    set_noise_upper_range(edPtr->Props.GetPropertyNum("Noise value upper range"));
+    set_noise_lower_range(edPtr->Props.GetPropertyNum("Noise value lower range"));
 
     //     set_noise_seed(string_to_seed(edPtr->Props.GetPropertyStr("Noise seed").c_str()));
 	// 	set_noise_frequency(edPtr->Props.GetPropertyNum("Noise frequency"));

@@ -16,10 +16,10 @@ interface CppLand {
     createRunObject: (file_ptr: number, cob_ptr: number, version: number) => number;
     destroyRunObject: (ext: number, bFast: boolean) => void;
     // Object handling
-    handleRunObject?: () => void;
-    displayRunObject?: () => void;
-    pauseRunObject?: () => void;
-    continueRunObject?: () => void;
+    handleRunObject: (ext: number) => number;
+    displayRunObject: (ext: number) => number;
+    pauseRunObject: (ext: number) => number;
+    continueRunObject: (ext: number) => number;
     // ACE jumps
     conditionJump: (ext: number, num: number) => number;
     actionJump: (ext: number, num: number) => void;
@@ -39,13 +39,13 @@ class CRunNoise extends CRunExtension {
 
     static wasmImports = {
         condition_action_manager: {
-            get_float:              (index: number) => {
+            get_float: (index: number) => {
                 if(CRunNoise.that.curConditionActionParams === null || CRunNoise.that.rh === null) {
                     return 0;
                 }
                 return Number(CRunNoise.that.curConditionActionParams.getParamExpression(CRunNoise.that.rh, index));
             },
-            get_string:             (index: number) => {
+            get_string: (index: number) => {
                 if(CRunNoise.that.curConditionActionParams === null || CRunNoise.that.rh === null) {
                     return 0;
                 }
@@ -53,15 +53,15 @@ class CRunNoise extends CRunExtension {
                 CRunNoise.that.wasmCStrings.push(strPtr);
                 return strPtr;
             },
-            get_integer:            (index: number) => {
+            get_integer: (index: number) => {
                 return CRunNoise.wasmImports.condition_action_manager.get_float(index);
             },
         },
         expression_manager: {
-            set_value_int:          (a: number) => { CRunNoise.that.curExpressionReturn = a; },
-            set_value_float:        (a: number) => { CRunNoise.that.curExpressionReturn = a; },
-            set_value_cstr:         (strPtr: number) => { CRunNoise.that.curExpressionReturn = CRunNoise.wasmCStringDeref(strPtr); },
-            get_float:              (index: number) => {
+            set_value_int: (a: number) => { CRunNoise.that.curExpressionReturn = a; },
+            set_value_float: (a: number) => { CRunNoise.that.curExpressionReturn = a; },
+            set_value_cstr: (strPtr: number) => { CRunNoise.that.curExpressionReturn = CRunNoise.wasmCStringDeref(strPtr); },
+            get_float: (index: number) => {
                 if(CRunNoise.that.ho === null) {
                     return 0;
                 }
@@ -70,7 +70,7 @@ class CRunNoise extends CRunExtension {
                 }
                 return Number(CRunNoise.that.curExpressionParams[index]);
             },
-            get_string:             (index: number) => {
+            get_string: (index: number) => {
                 if(CRunNoise.that.ho === null) {
                     return 0;
                 }
@@ -81,7 +81,7 @@ class CRunNoise extends CRunExtension {
                 CRunNoise.that.wasmCStrings.push(strPtr);
                 return strPtr;
             },
-            get_integer:            (index: number) => {
+            get_integer: (index: number) => {
                 return CRunNoise.wasmImports.expression_manager.get_float(index);
             },
         },
@@ -92,17 +92,17 @@ class CRunNoise extends CRunExtension {
     static wasmInstance: WebAssembly.Instance = new WebAssembly.Instance(CRunNoise.wasmModule, CRunNoise.wasmImports);
     static cppLand: CppLand = {
         memory: CRunNoise.wasmInstance.exports.memory as WebAssembly.Memory,
-
         wasm_alloc: CRunNoise.wasmInstance.exports.wasm_alloc as (size: number) => number,
         wasm_free: CRunNoise.wasmInstance.exports.wasm_free as (ptr: number) => void,
-
         init: CRunNoise.wasmInstance.exports.init as () => void,
         dealloc: CRunNoise.wasmInstance.exports.dealloc as () => void,
-
         getNumberOfConditions: CRunNoise.wasmInstance.exports.getNumberOfConditions as () => number,
         createRunObject: CRunNoise.wasmInstance.exports.createRunObject as (file_ptr: number, cob_ptr: number, version: number) => number,
         destroyRunObject: CRunNoise.wasmInstance.exports.destroyRunObject as (ext: number, bFast: boolean) => void,
-
+        handleRunObject: CRunNoise.wasmInstance.exports.handleRunObject as (ext: number) => number,
+        displayRunObject: CRunNoise.wasmInstance.exports.displayRunObject as (ext: number) => number,
+        pauseRunObject: CRunNoise.wasmInstance.exports.pauseRunObject as (ext: number) => number,
+        continueRunObject: CRunNoise.wasmInstance.exports.continueRunObject as (ext: number) => number,
         conditionJump: CRunNoise.wasmInstance.exports.conditionJump as (ext: number, num: number) => number,
         actionJump: CRunNoise.wasmInstance.exports.actionJump as (ext: number, num: number) => void,
         expressionJump: CRunNoise.wasmInstance.exports.expressionJump as (ext: number, num: number) => void,
@@ -164,20 +164,29 @@ class CRunNoise extends CRunExtension {
     // - cob : a CCreateObjectInfo containing infos about the created object
     // - version : the version number of the object, as defined in the C code
     createRunObject(file: CFile, cob: CCreateObjectInfo, version: number): boolean {
-        // FIXME: This is probably wrong.
-        let bytes = file.getBytes();
+		// header uint32, hash uint32, hashtypes uint32, numprops uint16, pad uint16, sizeBytes uint32 (includes whole EDITDATA)
+        const fileStart = file.getFilePointer();
+        file.skipBytes(4 + 4 + 4 + 2 + 2);      // skip to sizeBytes
+        const edSize = file.readAInt();         // Fixme: should be unsigned
+        file.seek(fileStart)                    // go back to the begining
 
-        const length_in_bytes = bytes.length;
-        const wasm_edptr = CRunNoise.cppLand.wasm_alloc(length_in_bytes);
+        const edPtr = CRunNoise.cppLand.wasm_alloc(edSize);
+        const edView = new DataView(CRunNoise.cppLand.memory.buffer, edPtr, edSize);
 
-        const dv = new DataView(CRunNoise.cppLand.memory.buffer, wasm_edptr);
-        for (let index = 0; index < length_in_bytes; index++) {
-            dv.setInt8(index, file.readAByte());
+        // extHeader
+        edView.setUint32(0, edSize, true);
+        edView.setUint32(4, edSize, true);
+        edView.setUint32(8, version, true);
+        edView.setUint32(12, this.ho!.hoIdentifier, true);
+        edView.setUint32(16, this.ho!.privateData, true);
+
+        for (let i = 20; i < edSize; i++) {
+            edView.setUint8(i, file.readAByte());
         }
 
-        this.cppExtPtr = CRunNoise.cppLand.createRunObject(wasm_edptr, 0, version);
+        this.cppExtPtr = CRunNoise.cppLand.createRunObject(edPtr, 0, version);
 
-        CRunNoise.cppLand.wasm_free(wasm_edptr);
+        CRunNoise.cppLand.wasm_free(edPtr);
         return false;
     }
 
@@ -191,7 +200,8 @@ class CRunNoise extends CRunExtension {
     //      In this case, call the this.reHandle(); function of the base class
     //      to have it called again.
     handleRunObject(): number {
-        return 0;       // The object will be called next loop
+        if(this.cppExtPtr === null) return 0;
+        return CRunNoise.cppLand.handleRunObject(this.cppExtPtr);
     }
 
     // Destruction of the object
@@ -213,6 +223,8 @@ class CRunNoise extends CRunExtension {
     // This function will only be called if the object's flags in the C code
     // indicate that this is a displayable object (OEFLAG_SPRITE)
     displayRunObject(renderer: Renderer, xDraw: number, yDraw: number) {
+        if(this.cppExtPtr === null) return;
+        CRunNoise.cppLand.displayRunObject(this.cppExtPtr);
         // Example of display of an image, taking the layer and frame position
         // into account
         // var x = this.ho.hoX - this.rh.rhWindowX + this.ho.pLayer.x + xDraw;
@@ -224,12 +236,16 @@ class CRunNoise extends CRunExtension {
     // ----------------------------------------------------------------
     // Called when the game enters pause mode.
     pauseRunObject() {
+        if(this.cppExtPtr === null) return;
+        CRunNoise.cppLand.pauseRunObject(this.cppExtPtr);
     }
 
     // Get the object out of pause mode
     // -----------------------------------------------------------------
     // Called when the game quits pause mode.
     continueRunObject() {
+        if(this.cppExtPtr === null) return;
+        CRunNoise.cppLand.continueRunObject(this.cppExtPtr);
     }
 
     // Returns the current font of the object

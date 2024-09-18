@@ -2,8 +2,11 @@
 
 // FIXME: Stubs from Objects.js
 declare class CRun {};
-declare class CObject {};
-declare class CExtension {
+declare class CObject {
+    hoIdentifier: number;
+};
+declare class CExtension extends CObject {
+    privateData: number;
     getExpParam(): number | string;
 };
 
