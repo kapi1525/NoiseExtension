@@ -91,37 +91,6 @@ runtime_ext = static_library(
     dependencies: deps,
 )
 
-# List of all exported functions
-# Due to a bug in llvm --export-dynamic exports not only functions marked with visibility(default) but other internal functions as well creating bloat.
-wasm_ext_exports = [
-    # In Edif.General.cpp
-    'wasm_alloc',
-    'wasm_free',
-    'init',
-    'dealloc',
-    'getNumberOfConditions',
-    'createRunObject',
-    'destroyRunObject',
-    'handleRunObject',
-    'displayRunObject',
-    'pauseRunObject',
-    'continueRunObject',
-    # In Edif.cpp
-    'confitionJump',
-    'actionJump',
-    'expressionJump',
-]
-
-wasm_ext_export_command = '-Wl'
-
-foreach function : wasm_ext_exports
-    wasm_ext_export_command += ',--export=' + function
-endforeach
-
-
-
-
-
 # Hack: Manualy start the linker because meson uses arguments not recognized by wasm-ld
 # https://github.com/mesonbuild/meson/pull/11862
 cpp_compiler = find_program('cpp', 'clang++')
@@ -129,7 +98,7 @@ runtime_ext_wasm = custom_target('runtime_ext_wasm',
     build_by_default: true,
     input: runtime_ext.extract_all_objects(recursive: true),
     output: meson.project_name() + '.wasm',
-    command: [cpp_compiler, wasm_wasi_target, '-Wl,--no-entry', wasm_ext_export_command, '@INPUT@', '-o', '@OUTPUT@'],
+    command: [cpp_compiler, wasm_wasi_target, '-Wl,--no-entry', '@INPUT@', '-o', '@OUTPUT@'],
 )
 
 
@@ -142,14 +111,3 @@ html_ext_wrapper = custom_target('html_ext_wrapper',
     output: meson.project_name() + '.js',
     command: [npm, '--prefix', meson.current_source_dir() / 'Lib' / 'Html', 'run', 'build', '--', '--outfile=' + meson.current_build_dir() / 'Noise.js', '--alias:Noise.wasm=' + runtime_ext_wasm.full_path()],
 )
-
-
-# meson will cry
-# wasm_base64 = fs.read(runtime_ext_wasm_base64.full_path())
-
-# html_ext_wrapper = custom_target('html_ext_wrapper',
-#     build_by_default: true,
-#     input: html_ext_wrapper_no_wasm,
-#     output: meson.project_name() + '.js',
-#     command: ['sed', '-i', 's/@INSERT_WASM_BASE64@/' + wasm_base64 + '/g', '@INPUT@'],
-# )

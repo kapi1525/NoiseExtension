@@ -885,15 +885,15 @@ ProjectFunc void PROJ_FUNC_GEN(PROJECT_NAME_RAW, _destroyRunObject)(void * cppEx
 
 #elif defined(__wasi__)
 
-ProjectFunc void* wasm_alloc(size_t size) {
+ProjectFunc void* WASM_FUNC_EXPORT(wasm_alloc)(size_t size) {
     return malloc(size);
 }
 
-ProjectFunc void wasm_free(void* ptr) {
+ProjectFunc void WASM_FUNC_EXPORT(wasm_free)(void* ptr) {
     free(ptr);
 }
 
-ProjectFunc void init() {
+ProjectFunc void WASM_FUNC_EXPORT(init)() {
 	mv* mV = nullptr;
 	if (!Edif::SDK) {
 		LOGV("The SDK is being initialized.\n");
@@ -901,38 +901,38 @@ ProjectFunc void init() {
 	}
 }
 
-ProjectFunc void dealloc() {
+ProjectFunc void WASM_FUNC_EXPORT(dealloc)() {
 	LOGV("The SDK is being freed.\n");
 }
 
-ProjectFunc int getNumberOfConditions() {
+ProjectFunc int WASM_FUNC_EXPORT(getNumberOfConditions)() {
 	return CurLang["Conditions"].u.array.length;
 }
 
-ProjectFunc void* createRunObject(void* file, CreateObjectInfo* cob, int version) {
+ProjectFunc void* WASM_FUNC_EXPORT(createRunObject)(void* file, CreateObjectInfo* cob, int version) {
     EDITDATA* edPtr = (EDITDATA *)file;
     assert(version == Extension::Version);
 	Extension* ext = new Extension(edPtr, cob);
 	return ext;
 }
 
-ProjectFunc void destroyRunObject(Extension* ext, bool bFast) {
+ProjectFunc void WASM_FUNC_EXPORT(destroyRunObject)(Extension* ext, bool bFast) {
 	delete ext;
 }
 
-ProjectFunc REFLAG handleRunObject(Extension* ext) {
+ProjectFunc REFLAG WASM_FUNC_EXPORT(handleRunObject)(Extension* ext) {
 	return ext->Handle();
 }
 
-ProjectFunc REFLAG displayRunObject(Extension* ext) {
+ProjectFunc REFLAG WASM_FUNC_EXPORT(displayRunObject)(Extension* ext) {
 	return ext->Display();
 }
 
-ProjectFunc short pauseRunObject(Extension* ext) {
+ProjectFunc short WASM_FUNC_EXPORT(pauseRunObject)(Extension* ext) {
 	return ext->FusionRuntimePaused();
 }
 
-ProjectFunc short continueRunObject(Extension* ext) {
+ProjectFunc short WASM_FUNC_EXPORT(continueRunObject)(Extension* ext) {
 	return ext->FusionRuntimeContinued();
 }
 

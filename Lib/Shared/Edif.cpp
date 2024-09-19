@@ -1207,7 +1207,7 @@ ProjectFunc long PROJ_FUNC_GEN(PROJECT_NAME_RAW, _conditionJump(void * cppExtPtr
 	ConditionOrActionManager_iOS params(true, ext, cndExt);
 	ext->Runtime.curCEvent = cndExt;
 #elif defined(__wasi__)
-ProjectFunc long confitionJump(Extension* ext, int ID) {
+ProjectFunc long WASM_FUNC_EXPORT(confitionJump)(Extension* ext, int ID) {
     ConditionOrActionManager_Html params;
 #else
     #error Unsupported platform.
@@ -1276,7 +1276,7 @@ ProjectFunc void PROJ_FUNC_GEN(PROJECT_NAME_RAW, _actionJump(void * cppExtPtr, i
 	ext->Runtime.curCEvent = act;
 #define actreturn /* void */
 #elif defined(__wasi__)
-ProjectFunc void actionJump(Extension* ext, int ID) {
+ProjectFunc void WASM_FUNC_EXPORT(actionJump)(Extension* ext, int ID) {
     ConditionOrActionManager_Html params;
 #define actreturn /* void */
 #else
@@ -1601,7 +1601,7 @@ ProjectFunc void PROJ_FUNC_GEN(PROJECT_NAME_RAW, _expressionJump(void * cppExtPt
 	Extension* ext = (Extension*)cppExtPtr;
 	ExpressionManager_iOS params(ext);
 #elif defined(__wasi__)
-ProjectFunc void expressionJump(Extension* ext, int ID) {
+ProjectFunc void WASM_FUNC_EXPORT(expressionJump)(Extension* ext, int ID) {
     ExpressionManager_Html params;
 #else
     #error Unsupported platform.

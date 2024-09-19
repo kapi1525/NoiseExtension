@@ -31,7 +31,10 @@ void Sleep(unsigned int milliseconds);
 #include <map>
 
 // Used to make the DLL function be visible externally, and in C function signature, not C++
-#define ProjectFunc extern "C" __attribute__((visibility ("default")))
+// FIXME: Due to a bug in llvm --export-dynamic exports not only functions marked with visibility(default) but other internal functions as well creating bloat.
+// Created WASM_FUNC_EXPORT macro to adress this temporarily.
+// #define ProjectFunc extern "C" __attribute__((visibility ("default")))
+#define ProjectFunc
 #define FusionAPI /* no declarator */
 #include <fcntl.h>
 #include <errno.h>
@@ -674,6 +677,7 @@ static int globalCount;
 
 // Some macro abuse, imports a function implemented in javascript.
 #define WASM_FUNC_IMPORT(module, name) __attribute__((import_module(STRIFY(module)))) __attribute__((import_name(STRIFY(name)))) name
+#define WASM_FUNC_EXPORT(name) __attribute__((export_name(STRIFY(name)))) name
 
 struct ConditionOrActionManager_Html;
 struct ExpressionManager_Html;
