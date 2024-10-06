@@ -12,7 +12,6 @@ project(
 
 
 sdk_source = files(
-    # 'Lib/Shared/ACECallTable_Macro.cpp',
     'Lib/Shared/DarkEdif.cpp',
     'Lib/Shared/Edif.cpp',
     'Lib/Shared/Edif.General.cpp',
@@ -20,6 +19,8 @@ sdk_source = files(
     'Lib/Shared/ObjectSelection.cpp',
     'Lib/Shared/json.cpp',
 )
+
+subdir('Tools')
 
 ext_includes = include_directories(
     'Noise',
@@ -73,10 +74,22 @@ defines = [
 wasm_wasi_target = '--target=wasm32-wasi'
 
 
-darkext_json = custom_target('darkext_json',
+darkext_json = custom_target('DarkExt.json.h',
     input: 'Noise/DarkExt.PostMinify.json',
     output: 'DarkExt.json.h',
-    command: ['xxd', '-i', '-n', 'darkExtJSON', '@INPUT@', '@OUTPUT@'],
+    command: [bin2hpp, '@INPUT@', '@OUTPUT@', 'darkExtJSON', 'darkExtJSON_len'],
+)
+
+acecalltable = custom_target('ACECallTable_Macro.cpp',
+    input: files(
+        # Order matters!
+        'Lib/Shared/ACECallTable_Macro.cpp',
+        'Noise/Extension.cpp',
+        'Noise/Extension.hpp',
+    ),
+    output: 'Temp_ACECallTable.cpp',
+    command: [acecalltablegen, '@INPUT@', '@OUTPUT@'],
+    build_by_default: true,
 )
 
 runtime_ext = static_library(
@@ -84,6 +97,7 @@ runtime_ext = static_library(
     ext_source,
     sdk_source,
     darkext_json,
+    acecalltable,
     cpp_args: [wasm_wasi_target, '-fno-exceptions', '-fvisibility=hidden', defines],
     include_directories: ext_includes,
     name_prefix: '',
