@@ -118,9 +118,9 @@ int main(int argc, char const *argv[]) {
             }
 
             func_def function = {
-                .return_type = match[1],
-                .name = match[2],
-                .arg_types = {},
+                match[1],
+                match[2],
+                {},
             };
 
             std::string arguments = match[3];
