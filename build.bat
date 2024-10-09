@@ -151,7 +151,7 @@ goto :exit
     :: - platform
 
     if %verbose%==1 (
-        set verbosity=minimal
+        set verbosity=detailed
     ) else (
         set verbosity=quiet
     )
