@@ -158,7 +158,7 @@ namespace DarkEdif {
 			// Run when user has finished editing.
 			void EditDone(Extension *ext, const TCHAR *newText, size_t newTextSize) {
 				if (isInt ? (bool)intStoreDataToExt : (bool)textStoreDataToExt)
-					// FIXME: throw std::exception("Not an editable property.");
+					throw std::exception("Not an editable property.");
 				cachedText = std::tstring_view(newText, newTextSize);
 			}
 		};

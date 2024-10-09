@@ -607,7 +607,7 @@ Edif::SDK::SDK(mv * mV, json_value &_json) : json (_json)
 			!_stricmp(about["URL"], "https://www.example.com/");
 		if (!unchangedPropsFound)
 		{
-			std::string copy = about["Copyright"];
+			std::string copy = about["Copyright"].u.string.ptr;
 			std::transform(copy.begin(), copy.end(), copy.begin(),
 				[](unsigned char c) { return std::tolower(c); });
 			unchangedPropsFound = copy.rfind("by your name"sv) != std::string::npos;
@@ -2085,7 +2085,7 @@ void Edif::recursive_mutex::lock(edif_lock_debugParams)
 			log2 += '\n';
 			OutputDebugStringA(log2.c_str());
 			DarkEdif::BreakIfDebuggerAttached();
-			// FIXME: throw std::runtime_error("timeout");
+			throw std::runtime_error("timeout");
 		}
 	}
 	catch (std::runtime_error err)
@@ -2103,7 +2103,7 @@ void Edif::recursive_mutex::lock(edif_lock_debugParams)
 			fwrite(str.c_str(), 1, str.size(), f);
 			fclose(f);
 			LOGE(_T("%s"), DarkEdif::UTF8ToTString(str).c_str());
-			// FIXME: throw err;
+			throw err;
 		}
 	}
 	this->log << "Locked in function "sv << func << ", line "sv << line << ".\n"sv;
@@ -2129,7 +2129,7 @@ bool Edif::recursive_mutex::try_lock(edif_lock_debugParams)
 			fwrite(str.c_str(), 1, str.size(), f);
 			fclose(f);
 			LOGE(_T("%s"), DarkEdif::UTF8ToTString(str).c_str());
-			// FIXME: throw err;
+			throw err;
 		}
 	}
 	// this->log isn't safe to use if we don't have the lock
@@ -2158,7 +2158,7 @@ void Edif::recursive_mutex::unlock(edif_lock_debugParams)
 			fwrite(str.c_str(), 1, str.size(), f);
 			fclose(f);
 			LOGE(_T("%s"), DarkEdif::UTF8ToTString(str).c_str());
-			// FIXME: throw err;
+			throw err;
 		}
 	}
 }

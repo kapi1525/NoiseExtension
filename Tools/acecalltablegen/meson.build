@@ -4,4 +4,5 @@ acecalltablegen = executable(
     'acecalltablegen',
     files('acecalltablegen.cpp'),
     native: true,
+    build_by_default: false,
 )

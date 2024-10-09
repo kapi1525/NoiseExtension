@@ -356,14 +356,14 @@ std::size_t AltVals::GetAltValueCount() const {
 #ifdef _WIN32
 	return DarkEdif::IsFusion25 ? CF25.NumAltValues : 26;
 #else
-// FIXME: throw std::runtime_error("not implemented");
+throw std::runtime_error("not implemented");
 #endif
 }
 std::size_t AltVals::GetAltStringCount() const {
 #ifdef _WIN32
 	return DarkEdif::IsFusion25 ? CF25.NumAltStrings : 26;
 #else
-	// FIXME: throw std::runtime_error("not implemented");
+	throw std::runtime_error("not implemented");
 #endif
 }
 const TCHAR* AltVals::GetAltStringAtIndex(const std::size_t i) const {
@@ -375,7 +375,7 @@ const TCHAR* AltVals::GetAltStringAtIndex(const std::size_t i) const {
 		c = nullptr;
 #else
 	const TCHAR* c = nullptr;
-	// FIXME: throw std::runtime_error("not implemented");
+	throw std::runtime_error("not implemented");
 #endif
 	return c;
 }
@@ -383,7 +383,7 @@ const CValueMultiPlat* AltVals::GetAltValueAtIndex(const std::size_t i) const {
 #ifdef _WIN32
 	return DarkEdif::IsFusion25 ? &CF25.Values[i] : &MMF2.rvpValues[i];
 #else
-	// FIXME: throw std::runtime_error("Not implemented");
+	throw std::runtime_error("Not implemented");
 #endif
 }
 
@@ -393,7 +393,7 @@ void AltVals::SetAltStringAtIndex(const std::size_t i, const std::tstring_view& 
 		if (!DarkEdif::IsFusion25)
 			return LOGE(_T("Cannot set alt string at index %zu, invalid index."), i);
 
-		// TODO: if this does not work, just // FIXME: throw
+		// TODO: if this does not work, just throw
 #ifdef _WIN32
 		void * v = mvReAlloc(Edif::SDK->mV, (void *)CF25.Strings, (int)i * sizeof(TCHAR *));
 #else
@@ -405,7 +405,7 @@ void AltVals::SetAltStringAtIndex(const std::size_t i, const std::tstring_view& 
 		*(void **)&CF25.Strings = v; // TODO: Simplify
 		CF25.NumAltStrings = (int)i;
 #else
-		// FIXME: throw std::runtime_error("Not implemented");
+		throw std::runtime_error("Not implemented");
 #endif
 	}
 #ifdef _WIN32
@@ -423,22 +423,22 @@ void AltVals::SetAltStringAtIndex(const std::size_t i, const std::tstring_view& 
 		*c = t;
 	}
 #else
-	// FIXME: throw std::runtime_error("Not implemented");
+	throw std::runtime_error("Not implemented");
 #endif
 }
 void AltVals::SetAltValueAtIndex(const std::size_t, const double)
 {
-	// FIXME: throw std::runtime_error("Not implemented");
+	throw std::runtime_error("Not implemented");
 }
 void AltVals::SetAltValueAtIndex(const std::size_t, const int)
 {
-	// FIXME: throw std::runtime_error("Not implemented");
+	throw std::runtime_error("Not implemented");
 }
 std::uint32_t AltVals::GetInternalFlags() const {
 #ifdef _WIN32
 	return DarkEdif::IsFusion25 ? CF25.InternalFlags : MMF2.rvValueFlags;
 #else
-	// FIXME: throw std::runtime_error("not implemented");
+	throw std::runtime_error("not implemented");
 #endif
 }
 void AltVals::SetInternalFlags(const std::uint32_t nf) {
@@ -448,7 +448,7 @@ void AltVals::SetInternalFlags(const std::uint32_t nf) {
 	else
 		MMF2.rvValueFlags = nf;
 #else
-	// FIXME: throw std::runtime_error("not implemented");
+	throw std::runtime_error("not implemented");
 #endif
 }
 
@@ -1018,7 +1018,7 @@ char * Edif::Runtime::CopyStringEx(const char * String) {
 	return CopyString(String);
 }
 wchar_t * Edif::Runtime::CopyStringEx(const wchar_t * String) {
-	// FIXME: throw std::runtime_error("Do not use wchar_t in Android!");
+	throw std::runtime_error("Do not use wchar_t in Android!");
 	return (wchar_t *)String;
 }
 
@@ -2769,7 +2769,7 @@ char * Edif::Runtime::CopyStringEx(const char * String) {
 	return CopyString(String);
 }
 wchar_t * Edif::Runtime::CopyStringEx(const wchar_t * String) {
-	// FIXME: throw std::runtime_error("Do not use wchar_t in iOS!");
+	throw std::runtime_error("Do not use wchar_t in iOS!");
 	return (wchar_t *)String;
 }
 
@@ -3157,7 +3157,7 @@ char * Edif::Runtime::CopyStringEx(const char * String) {
 	return CopyString(String);
 }
 wchar_t * Edif::Runtime::CopyStringEx(const wchar_t * String) {
-	// FIXME: throw std::runtime_error("Do not use wchar_t in iOS!");
+	throw std::runtime_error("Do not use wchar_t in iOS!");
 	return (wchar_t *)String;
 }
 

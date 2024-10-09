@@ -3,4 +3,5 @@ bin2hpp = executable(
     'bin2hpp',
     files('bin2hpp.cpp'),
     native: true,
+    build_by_default: false,
 )

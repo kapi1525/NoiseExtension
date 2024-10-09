@@ -3362,14 +3362,14 @@ namespace DarkEdif
 	void FusionDebugger::StartEditForItemID(int debugItemID)
 	{
 		if (debugItemID < 0 || (std::uint16_t)debugItems.size() < debugItemID)
-			// FIXME: throw std::exception("Couldn't find debug ID in Fusion debugger list.");
+			throw std::exception("Couldn't find debug ID in Fusion debugger list.");
 		auto &di = debugItems[debugItemID];
 
 		EditDebugInfo edi = {};
 		if (di.isInt)
 		{
 			if (!di.intStoreDataToExt)
-				// FIXME: throw std::exception("Item not editable.");
+				throw std::exception("Item not editable.");
 			edi.value = di.cachedInt;
 			long ret = ext->Runtime.EditInteger(&edi);
 			if (ret == IDOK)
@@ -3388,7 +3388,7 @@ namespace DarkEdif
 		else
 		{
 			if (!di.textStoreDataToExt)
-				// FIXME: throw std::exception("Item not editable.");
+				throw std::exception("Item not editable.");
 			edi.text = di.cachedText.data();
 			di.cachedText.resize(_tcslen(edi.text));
 			edi.lText = di.cachedText.size();
@@ -3408,7 +3408,7 @@ namespace DarkEdif
 	void FusionDebugger::GetDebugItemFromCacheOrExt(TCHAR *writeTo, int debugItemID)
 	{
 		if (debugItemID < 0 || debugItemID >= (std::uint16_t)debugItems.size())
-			// FIXME: throw std::exception("Couldn't find debug ID in Fusion debugger list.");
+			throw std::exception("Couldn't find debug ID in Fusion debugger list.");
 
 		// Reader function exists, and timer for refreshing (if it exists) has expired
 		auto &di = debugItems[debugItemID];
@@ -3448,7 +3448,7 @@ namespace DarkEdif
 		const char *userSuppliedName
 	) {
 		if (debugItems.size() == 127)
-			// FIXME: throw std::exception("Too many items added to Fusion debugger.");
+			throw std::exception("Too many items added to Fusion debugger.");
 
 		debugItems.push_back(DebugItem(getLatestFromExt, saveUserInputToExt, refreshMS, userSuppliedName));
 		// End it with DB_END, and second-to-last item is the new debug item ID
@@ -3467,10 +3467,10 @@ namespace DarkEdif
 		const char *userSuppliedName
 	) {
 		if (debugItems.size() == 127)
-			// FIXME: throw std::exception("too many items added to Fusion debugger");
+			throw std::exception("too many items added to Fusion debugger");
 
 		if (userSuppliedName && std::any_of(debugItems.cbegin(), debugItems.cend(), [=](const DebugItem &d) { return d.DoesUserSuppliedNameMatch(userSuppliedName); }))
-			// FIXME: throw std::exception("name already in use. Must be unique");
+			throw std::exception("name already in use. Must be unique");
 
 		debugItems.push_back(DebugItem(getLatestFromExt, saveUserInputToExt, refreshMS, userSuppliedName));
 		// End it with DB_END, and second-to-last item is the new debug item ID
@@ -3488,7 +3488,7 @@ namespace DarkEdif
 				if (debugItems[i].isInt)
 					debugItems[i].cachedInt = newValue;
 				else
-					// FIXME: throw std::exception("Fusion debugger item is text, not int type");
+					throw std::exception("Fusion debugger item is text, not int type");
 				return;
 			}
 		}
@@ -3498,14 +3498,14 @@ namespace DarkEdif
 		const char *userSuppliedName, const TCHAR *newText
 	) {
 		if (!newText)
-			// FIXME: throw std::exception("null not allowed");
+			throw std::exception("null not allowed");
 
 		for (size_t i = 0; i < debugItems.size(); i++)
 		{
 			if (debugItems[i].DoesUserSuppliedNameMatch(userSuppliedName))
 			{
 				if (debugItems[i].isInt)
-					// FIXME: throw std::exception("Fusion debugger item is text, not int type");
+					throw std::exception("Fusion debugger item is text, not int type");
 				else
 					debugItems[i].cachedText = newText;
 				return;
@@ -3594,7 +3594,7 @@ bool DarkEdif::FileExists(const std::tstring_view path)
 	const DWORD fileAttr = GetFileAttributes(pathSafe.c_str());
 	return fileAttr != INVALID_FILE_ATTRIBUTES && (fileAttr & FILE_ATTRIBUTE_DIRECTORY) != FILE_ATTRIBUTE_DIRECTORY;
 #else
-	// FIXME: throw std::runtime_error("Function not implemented in non-Windows");
+	throw std::runtime_error("Function not implemented in non-Windows");
 #endif
 }
 
@@ -3636,7 +3636,7 @@ static std::tstring GetModulePath(HMODULE hModule)
 	DarkEdif::MsgBox::Error(_T("Fatal error - Path too long"),
 		_T("Your application path is too long, several Fusion extensions may have difficulty loading.\n"
 			"Build with the Unicode " PROJECT_NAME " to remove the limit."));
-	// FIXME: throw std::runtime_error("Path reading error"); // Don't bother returning anything to user code.
+	throw std::runtime_error("Path reading error"); // Don't bother returning anything to user code.
 #else
 	// Max limit on path is 32,767 characters... ish. The documentation says it may go further.
 	// If we assume surrogate pairs are in play, this limit can nearly double, although the folder names in the path are still capped to MAX_PATH each.
@@ -3724,11 +3724,11 @@ std::tstring_view DarkEdif::GetMFXRelativeFolder(GetFusionFolderType type)
 #else
 std::tstring_view DarkEdif::GetRunningApplicationPath(DarkEdif::GetRunningApplicationPathType type)
 {
-	// FIXME: throw std::runtime_error("GetRunningApplicationPath function not implemented on non-Windows.");
+	throw std::runtime_error("GetRunningApplicationPath function not implemented on non-Windows.");
 }
 std::tstring_view DarkEdif::GetMFXRelativeFolder(GetFusionFolderType type)
 {
-	// FIXME: throw std::runtime_error("GetMFXRelativeFolder function not implemented on non-Windows.");
+	throw std::runtime_error("GetMFXRelativeFolder function not implemented on non-Windows.");
 }
 #endif // _WIN32
 
@@ -3864,7 +3864,7 @@ void DarkEdif::SDKUpdater::StartUpdateCheck()
 
 	// Shouldn't run twice.
 	if (updateThread != NULL)
-		// FIXME: throw std::runtime_error("Using multiple update threads");
+		throw std::runtime_error("Using multiple update threads");
 
 	updateThread = CreateThread(NULL, NULL, DarkEdifUpdateThread, NULL, 0, NULL);
 	if (updateThread == NULL)

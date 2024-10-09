@@ -2,35 +2,56 @@ name: Build
 
 on:
   push:
-  pull_request:
-  release:
-    types: published
+  workflow_dispatch:
 
 jobs:
-  Build:
-    runs-on: windows-2022
+  build:
+    strategy:
+      matrix:
+        include:
+          - os: windows-latest
+            editor_build: "true"
+          - os: windows-latest
+            editor_build: "false"
+
+    runs-on: ${{ matrix.os }}
 
     steps:
-    - name: Checkout
-      uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: true
 
-    - name: Setup msbuild
-      uses: microsoft/setup-msbuild@v2
+      # - name: Cache subprojects
+      #   uses: actions/cache@v4
+      #   with:
+      #     path: subprojects/packagecache/
+      #     key: ${{ hashFiles('subprojects/*.wrap') }}
 
-    - name: Build
-      working-directory: ${{env.GITHUB_WORKSPACE}}
-      run: ./build.bat --bundle --sdkconfig --full --release --failonerr --verbose
+      - name: Setup python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 'pypy3.9'
+          cache: 'pip'
 
-    - name: Upload artifact
-      uses: actions/upload-artifact@v4
-      if: github.event_name != 'release'
-      with:
-        name: Noise
-        path: ./MFX/
-    
-    - name: Upload release
-      uses: AButler/upload-release-assets@v3.0
-      if: github.event_name == 'release'
-      with:
-        files: 'Noise.zip'
-        repo-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Install meson and ninja
+        run: pip install meson ninja -r requirements.txt
+
+      - name: Setup MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x86
+
+      - name: Configure
+        run: meson setup bin --buildtype release -Deditor_build=${{ matrix.editor_build }}
+
+      - name: Compile
+        run: meson compile -C bin
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          # TODO: currently only to test
+          name: Noise_editor_build=${{ matrix.editor_build }}
+          path: bin/Noise.mfx
+          if-no-files-found: error
