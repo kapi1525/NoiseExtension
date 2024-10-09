@@ -35,7 +35,7 @@ jobs:
           cache: 'pip'
 
       - name: Install meson and ninja
-        run: pip install meson ninja -r requirements.txt
+        run: pip install meson ninja
 
       - name: Setup MSVC
         uses: ilammy/msvc-dev-cmd@v1
