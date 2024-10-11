@@ -7,6 +7,11 @@ project(
     meson_version: '>=1.1',
 )
 
+# Used by SDK meson.build file
+ext_author = 'Kacper Bugla'
+ext_company = 'Kacper Bugla'
+ext_build = 22
+
 
 
 # Contains tools used during build time
@@ -43,28 +48,7 @@ ext_include = include_directories('Noise')
 if host_machine.system() == 'windows'
     ext_source += import('windows').compile_resources(
         'Noise\Ext.rc',
-        args: [
-            # TODO:
-            '/D_UNICODE',
-            '/DUNICODE',
-            '/DNDEBUG',
-            '/DEDITOR',
-            '/DKPX_MAGICNUMBER=200',
-            '/DCONFIG=Edittime Unicode',
-            '/DPROJECT_NAME=asStr(Noise)',
-            '/DAUTHOR_NAME=asStr(Kacper Bugla)',
-            '/DCOMPANY_NAME=asStr(Kacper Bugla)',
-            '/DEXTENSION_VERSION=22',
-            '/DYEAR=asStr(2024)',
-            '/DUSE_DARKEDIF_UPDATE_CHECKER=1',
-            '/DUSE_DARKEDIF_FUSION_DEBUGGER=0',
-            '/DEditorBuild=1',
-            '/DRuntimeBuild=0',
-            '/DUniBuild=1',
-            '/DUSE_DARKEDIF_UC_TAGGING=1',
-            '/DMacBuild=0',
-            '/DBUILD_DATE=asStr(2024-10-09T18:14:24.1939030+00:00)',
-        ],
+        args: sdk_args_rc,
         depend_files: [
             'Noise\Resource.h',
             'Noise\Icon.png',
@@ -75,12 +59,12 @@ if host_machine.system() == 'windows'
 endif
 
 
-ext = build_target(
+ext = shared_library(
     meson.project_name(),
     ext_source,
-    target_type: 'shared_library',
     dependencies: darkedif_sdk,
     include_directories: ext_include,
+    install: true,
     name_prefix: '',
     name_suffix: 'mfx',
 )

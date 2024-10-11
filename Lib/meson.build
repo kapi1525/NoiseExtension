@@ -1,17 +1,31 @@
 
 # Only windows builds are unicode
-unicode = false
+unicode_build = host_machine.system() == 'windows'
 
-if host_machine.system() == 'windows'
-    unicode = true
+editor_build = get_option('editor_build')
+runtime_build = not editor_build
+
+if editor_build and host_machine.system() != 'windows'
+    error('Editor .mfx can only target windows!')
 endif
 
+if not editor_build and host_machine.system() == 'windows' and get_option('debug')
+    error('Runtime windows build cant be debug')
+endif
+
+
+if host_machine.system() == 'windows' and host_machine.cpu_family() != 'x86'
+    error('All windows fusion extensions currently should be 32bit, but compiler is for: ' + host_machine.cpu_family())
+endif
+
+
+
 config = 'Runtime'
-if get_option('editor_build') and host_machine.system() == 'windows'
+if editor_build
     config = 'Edittime'
 endif
 
-if unicode
+if unicode_build
     config += ' Unicode'
 endif
 
@@ -60,18 +74,31 @@ endif
 
 
 sdk_defines = []
+sdk_defines_rc = []
 
 sdk_defines_common = [
     'CONFIG=' + config,
-    'EditorBuild=' + get_option('editor_build').to_int().to_string(),
-    'RuntimeBuild=' + (not get_option('editor_build')).to_int().to_string(),
-    'UniBuild=' + unicode.to_int().to_string(),
+    'EditorBuild=' + editor_build.to_int().to_string(),
+    'RuntimeBuild=' + runtime_build.to_int().to_string(),
+    'UniBuild=' + unicode_build.to_int().to_string(),
     'MacBuild=0',
+    'EXTENSION_VERSION=' + ext_build.to_string(),
+]
+
+sdk_defines_project = [
     'PROJECT_NAME=STRIFY(' + meson.project_name() + ')',
-    'AUTHOR_NAME=STRIFY(Kacper Bugla)',         # TODO
-    'COMPANY_NAME=STRIFY(Kacper Bugla)',        # TODO
-    'EXTENSION_VERSION=22',                     # TODO
+    'AUTHOR_NAME=STRIFY(' + ext_author + ')',
+    'COMPANY_NAME=STRIFY(' + ext_company + ')',
     'YEAR=STRIFY(2024)',                        # TODO
+]
+
+sdk_defines_project_rc = [
+    'KPX_MAGICNUMBER=200',
+    'PROJECT_NAME=asStr(' + meson.project_name() + ')',
+    'AUTHOR_NAME=asStr(' + ext_author + ')',
+    'COMPANY_NAME=asStr(' + ext_company + ')',
+    'YEAR=asStr(2024)',                        # TODO
+    'BUILD_DATE=asStr(2024-10-09T18:14:24.1939030+00:00)',  # todo
 ]
 
 if not get_option('debug')
@@ -110,15 +137,21 @@ sdk_defines_windows = [
 
 
 sdk_defines += sdk_defines_common
+sdk_defines += sdk_defines_project
+sdk_defines_rc += sdk_defines_common
+sdk_defines_rc += sdk_defines_project_rc
 
-if unicode
+if unicode_build
     sdk_defines += sdk_defines_unicode
+    sdk_defines_rc += sdk_defines_unicode
 endif
 
 if get_option('editor_build') and host_machine.system() == 'windows'
     sdk_defines += sdk_defines_editor
+    sdk_defines_rc += sdk_defines_editor
 else
     sdk_defines += sdk_defines_runtime
+    sdk_defines_rc += sdk_defines_runtime
 endif
 
 if host_machine.system() == 'windows'
@@ -146,7 +179,7 @@ endforeach
 sdk_link_args = []
 
 sdk_link_args_windows_link = [
-    '/LARGEADDRESSAWARE'
+    '/LARGEADDRESSAWARE',
 ]
 
 
@@ -154,6 +187,12 @@ if host_machine.system() == 'windows' and meson.get_compiler('cpp').get_linker_i
     sdk_link_args += sdk_link_args_windows_link
 endif
 
+
+sdk_args_rc = []
+
+foreach def : sdk_defines_rc
+    sdk_args_rc += '/D' + def
+endforeach
 
 
 darkedif_sdk = declare_dependency(
