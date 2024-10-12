@@ -44,6 +44,13 @@ endif
 ext_include = include_directories('Noise')
 
 
+# Release build use minified json
+json_minified = custom_target('minify_json',
+    build_by_default: true,
+    input: files('Noise/DarkExt.json'),
+    output: 'DarkExt.PostMinify.json',
+    command: [jsonminify, '@INPUT@', '@OUTPUT@'],
+)
 
 if host_machine.system() == 'windows'
     ext_source += import('windows').compile_resources(
@@ -54,20 +61,26 @@ if host_machine.system() == 'windows'
             'Noise\Icon.png',
             'Noise\DarkExt.json',
         ],
+        depends: json_minified,
         include_directories: sdk_include,
     )
 endif
 
 
-ext = shared_library(
+ext = shared_module(
     meson.project_name(),
     ext_source,
     dependencies: darkedif_sdk,
     include_directories: ext_include,
-    install: true,
     name_prefix: '',
     name_suffix: 'mfx',
 )
+
+
+
+# TODO: custom script that installs build extension to correct directory in a fusion install
+#       this will make meson install work
+# meson.add_install_script()
 
 
 # if(host_machine.system() == 'wasi')

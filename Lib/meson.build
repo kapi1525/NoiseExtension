@@ -180,6 +180,7 @@ sdk_link_args = []
 
 sdk_link_args_windows_link = [
     '/LARGEADDRESSAWARE',
+    '/NOIMPLIB',                # This breaks when useing default meson install, they should add a native way to disable implib.
 ]
 
 

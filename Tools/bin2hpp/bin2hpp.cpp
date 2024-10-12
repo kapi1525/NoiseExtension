@@ -34,7 +34,7 @@ int main(int argc, char const *argv[]) {
     out = std::fopen(out_path, "wb");
 
     if(!in || !out) {
-        perror("fopen failed");
+        std::perror("fopen failed");
         return -1;
     }
 
