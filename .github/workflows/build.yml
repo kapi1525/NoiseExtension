@@ -75,8 +75,8 @@ jobs:
       - name: Create a custom cross file with correct android ndk path
         run: |
           echo [constants] > cross/android-ndk.ini
-          echo android_ndk = '$ANDROID_NDK_HOME' > cross/android-ndk.ini
-          echo android_ndk_host_tag = 'linux-x86_64' > cross/android-ndk.ini
+          echo android_ndk = '$ANDROID_NDK_HOME' >> cross/android-ndk.ini
+          echo android_ndk_host_tag = 'linux-x86_64' >> cross/android-ndk.ini
 
       - name: Configure
         run: meson setup bin --buildtype release --cross-file cross/android-${{ matrix.target }}.ini --cross-file cross/android-ndk.ini
