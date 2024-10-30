@@ -75,7 +75,7 @@ jobs:
       - name: Create a custom cross file with correct android ndk path
         run: |
           echo [constants] > cross/android-ndk.ini
-          echo android_ndk = '${{ ANDROID_NDK }}' >> cross/android-ndk.ini
+          echo android_ndk = '${ ANDROID_NDK }' >> cross/android-ndk.ini
           echo android_ndk_host_tag = 'linux-x86_64' >> cross/android-ndk.ini
 
       - name: Configure
