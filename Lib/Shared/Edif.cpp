@@ -783,7 +783,7 @@ long ActionOrCondition(void * Function, int ID, Extension * ext, const ACEInfo *
 		switch (ID)
 		{
 			#define DARKEDIF_ACE_CALL_TABLE_INDEX 0
-			#include "Temp_ACECallTable.cpp"
+			#include "Temp_ACECallTable.hpp"
 
 			default:
 				DarkEdif::MsgBox::Error(_T("ActionOrCondition error"), _T("Error calling condition ID %i, not found."), ID);
@@ -796,7 +796,7 @@ long ActionOrCondition(void * Function, int ID, Extension * ext, const ACEInfo *
 		{
 			#undef DARKEDIF_ACE_CALL_TABLE_INDEX
 			#define DARKEDIF_ACE_CALL_TABLE_INDEX 1
-			#include "Temp_ACECallTable.cpp"
+			#include "Temp_ACECallTable.hpp"
 
 			default:
 				DarkEdif::MsgBox::Error(_T("ActionOrCondition error"), _T("Error calling action ID %i, not found."), ID);
@@ -1758,7 +1758,7 @@ endFunc:
 		#ifndef __INTELLISENSE__
 		#undef DARKEDIF_ACE_CALL_TABLE_INDEX
 		#define DARKEDIF_ACE_CALL_TABLE_INDEX 2
-		#include "Temp_ACECallTable.cpp"
+		#include "Temp_ACECallTable.hpp"
 		#endif // __INTELLISENSE__
 		default:
 			DarkEdif::MsgBox::Error(_T("Expression error"), _T("Error calling expression: expression ID %i not found."), ID);

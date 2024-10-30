@@ -238,14 +238,14 @@ endforeach
 
 
 if host_machine.system() != 'windows'
-    acecalltable = custom_target('ACECallTable_Macro.cpp',
+    acecalltable = custom_target('ACECallTable_Macro.hpp',
         input: files(
             # Order matters!
-            meson.project_source_root() / 'Lib' / 'Shared' / 'ACECallTable_Macro.cpp',
+            meson.project_source_root() / 'Lib' / 'Shared' / 'ACECallTable_Macro.hpp',
             meson.project_source_root() / meson.project_name() / 'Extension.cpp',
             meson.project_source_root() / meson.project_name() / 'Extension.hpp',
         ),
-        output: 'Temp_ACECallTable.cpp',
+        output: 'Temp_ACECallTable.hpp',
         command: [acecalltablegen, '@INPUT@', '@OUTPUT@'],
         build_by_default: true,
     )
