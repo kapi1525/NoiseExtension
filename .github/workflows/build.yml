@@ -101,13 +101,13 @@ jobs:
         with:
           submodules: true
 
-      # - name: Setup python
-      #   uses: actions/setup-python@v5
-      #   with:
-      #     python-version: 'pypy3.9'
+      - name: Setup python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 'pypy3.9'
 
-      # - name: Install meson and ninja
-      #   run: pip install meson ninja
+      - name: Install meson and ninja
+        run: pip install meson ninja
 
       - name: Download wasi-sdk
         id: download
@@ -116,30 +116,27 @@ jobs:
           repository: 'WebAssembly/wasi-sdk'
           latest: true
           fileName: 'wasi-sdk-*-x86_64-linux.tar.gz'
-          # out-file-path: 'ghwiki2chm'
           extract: true
 
-      - run: ls -R
+      - name: Install npm packages
+        working-directory: "./Lib/Html"
+        run: npm i
 
-      # - name: Extract ghwiki2chm
-      #   working-directory: "./ghwiki2chm"
-      #   run: tar -xvf "${{ fromJson(steps.download.outputs.downloaded_files)[0] }}"
+      - name: Create a custom cross file with correct wasi sdk path
+        run: |
+          echo [constants] > cross/wasi-sdk.ini
+          echo wasi_sdk = \'${{ fromJson(steps.download.outputs.downloaded_files)[0] }}\' >> cross/wasi-sdk.ini
 
-      # - name: Create a custom cross file with correct android ndk path
-      #   run: |
-      #     echo [constants] > cross/wasi-sdk.ini
-      #     echo wasi_sdk = \'$ANDROID_NDK\' >> cross/wasi-sdk.ini
+      - name: Configure
+        run: meson setup bin --buildtype release --cross-file cross/wasm-wasi.ini --cross-file cross/wasi-sdk.ini
 
-      # - name: Configure
-      #   run: meson setup bin --buildtype release --cross-file cross/wasm-wasi.ini --cross-file cross/wasi-sdk.ini
+      - name: Compile
+        run: meson compile -C bin
 
-      # - name: Compile
-      #   run: meson compile -C bin
-
-      # - name: Upload artifact
-      #   uses: actions/upload-artifact@v4
-      #   with:
-      #     # TODO: currently only to test
-      #     name: Noise_android-${{ matrix.target }}
-      #     path: bin/libNoise.so
-      #     if-no-files-found: error
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          # TODO: currently only to test
+          name: Noise_wasm
+          path: bin/Noise.js
+          if-no-files-found: error

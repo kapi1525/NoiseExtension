@@ -95,6 +95,15 @@ if host_machine.system() == 'wasi'
         output: meson.project_name() + '.wasm',
         command: [cpp_compiler, '--target=wasm32-wasi', '-Wl,--no-entry', '@INPUT@', '-o', '@OUTPUT@'],
     )
+
+    # javascript wrapper that loads the webassembly
+    npm = find_program('npm')
+    ext_js = custom_target(meson.project_name() + '_js',
+        build_by_default: true,
+        input: [ext_wasm, files('Lib/Html/Noise.ts')],  # meson uses this to determine if this needs to be run.
+        output: meson.project_name() + '.js',
+        command: [npm, '--prefix', meson.current_source_dir() / 'Lib' / 'Html', 'run', 'build', '--', '--outfile=' + meson.current_build_dir() / 'Noise.js', '--alias:Noise.wasm=' + ext_wasm.full_path()],
+    )
 endif
 
 
@@ -122,13 +131,4 @@ endif
 
 
 
-#     # out_js = meson.current_build_dir() / meson.project_name() + '.js.in'
-#     # javascript wrapper that loads the webassembly
-#     npm = find_program('npm')
-#     html_ext_wrapper = custom_target('html_ext_wrapper',
-#         build_by_default: true,
-#         input: [runtime_ext_wasm, files('Lib/Html/Noise.ts')],  # meson uses this to determine if this needs to be run.
-#         output: meson.project_name() + '.js',
-#         command: [npm, '--prefix', meson.current_source_dir() / 'Lib' / 'Html', 'run', 'build', '--', '--outfile=' + meson.current_build_dir() / 'Noise.js', '--alias:Noise.wasm=' + runtime_ext_wasm.full_path()],
-#     )
 # endif
