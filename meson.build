@@ -44,7 +44,7 @@ endif
 ext_include = include_directories('Noise')
 
 
-# Release build use minified json
+# runtime builds use minified json
 json_minified = custom_target('minify_json',
     build_by_default: true,
     input: files('Noise/DarkExt.json'),
@@ -64,17 +64,33 @@ if host_machine.system() == 'windows'
         depends: json_minified,
         include_directories: sdk_include,
     )
+else
+    ext_source += json_minified
 endif
 
 
-ext = shared_module(
+ext = build_target(
     meson.project_name(),
     ext_source,
+    target_type: sdk_ext_target_type,
     dependencies: darkedif_sdk,
     include_directories: ext_include,
     name_prefix: '',
     name_suffix: 'mfx',
 )
+
+if host_machine.system() == 'wasi'
+    # Hack: Manualy start the linker because meson uses arguments not recognized by wasm-ld
+    # https://github.com/mesonbuild/meson/pull/11862
+    cpp_compiler = find_program('cpp', 'clang++')
+
+    ext_wasm = custom_target(meson.project_name() + '_wasm',
+        build_by_default: true,
+        input: ext.extract_all_objects(recursive: true),
+        output: meson.project_name() + '.wasm',
+        command: [cpp_compiler, sdk_args_wasi_clang, '-Wl,--no-entry', '@INPUT@', '-o', '@OUTPUT@'],
+    )
+endif
 
 
 
@@ -99,15 +115,6 @@ ext = shared_module(
 #         dependencies: deps,
 #     )
 
-#     # Hack: Manualy start the linker because meson uses arguments not recognized by wasm-ld
-#     # https://github.com/mesonbuild/meson/pull/11862
-#     cpp_compiler = find_program('cpp', 'clang++')
-#     runtime_ext_wasm = custom_target('runtime_ext_wasm',
-#         build_by_default: true,
-#         input: runtime_ext.extract_all_objects(recursive: true),
-#         output: meson.project_name() + '.wasm',
-#         command: [cpp_compiler, wasm_wasi_target, '-Wl,--no-entry', '@INPUT@', '-o', '@OUTPUT@'],
-#     )
 
 
 #     # out_js = meson.current_build_dir() / meson.project_name() + '.js.in'

@@ -5,16 +5,12 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
+  build-windows:
     strategy:
       matrix:
-        include:
-          - os: windows-latest
-            editor_build: "true"
-          - os: windows-latest
-            editor_build: "false"
+        editor_build: ["true", "false"]
 
-    runs-on: ${{ matrix.os }}
+    runs-on: windows-latest
 
     steps:
       - name: Checkout
@@ -52,5 +48,46 @@ jobs:
         with:
           # TODO: currently only to test
           name: Noise_editor_build=${{ matrix.editor_build }}
+          path: bin/Noise.mfx
+          if-no-files-found: error
+
+  build-android:
+    strategy:
+      matrix:
+        target: ["armv7a", "aarch64", "i686", "x86_64"]
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - name: Setup python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 'pypy3.9'
+
+      - name: Install meson and ninja
+        run: pip install meson ninja
+
+      - name: Create a custom cross file with correct android ndk path
+        run: |
+          echo [constants] > cross/android-ndk.ini
+          echo android_ndk = '$ANDROID_NDK_HOME' > cross/android-ndk.ini
+          echo android_ndk_host_tag = 'linux-x86_64' > cross/android-ndk.ini
+
+      - name: Configure
+        run: meson setup bin --buildtype release --cross-file cross/android-${{ matrix.target }}.ini --cross-file cross/android-ndk.ini
+
+      - name: Compile
+        run: meson compile -C bin
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          # TODO: currently only to test
+          name: Noise_android-${{ matrix.target }}
           path: bin/Noise.mfx
           if-no-files-found: error

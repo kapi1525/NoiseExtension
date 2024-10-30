@@ -1,4 +1,3 @@
-
 # Only windows builds are unicode
 unicode_build = host_machine.system() == 'windows'
 
@@ -10,7 +9,7 @@ if editor_build and host_machine.system() != 'windows'
 endif
 
 if not editor_build and host_machine.system() == 'windows' and get_option('debug')
-    error('Runtime windows build cant be debug')
+    error('Runtime windows builds cant be debug')
 endif
 
 
@@ -27,6 +26,15 @@ endif
 
 if unicode_build
     config += ' Unicode'
+endif
+
+
+
+sdk_ext_target_type = 'shared_module'
+
+if host_machine.system() == 'wasi'
+    # hack
+    sdk_ext_target_type = 'static_library'
 endif
 
 
@@ -87,6 +95,7 @@ sdk_defines_common = [
 
 sdk_defines_project = [
     'PROJECT_NAME=STRIFY(' + meson.project_name() + ')',
+    'PROJECT_NAME_UNDERSCORES=STRIFY(' + meson.project_name().underscorify() + ')',
     'AUTHOR_NAME=STRIFY(' + ext_author + ')',
     'COMPANY_NAME=STRIFY(' + ext_company + ')',
     'YEAR=STRIFY(2024)',                        # TODO
@@ -95,6 +104,7 @@ sdk_defines_project = [
 sdk_defines_project_rc = [
     'KPX_MAGICNUMBER=200',
     'PROJECT_NAME=asStr(' + meson.project_name() + ')',
+    'PROJECT_NAME_UNDERSCORES=asStr(' + meson.project_name().underscorify() + ')',
     'AUTHOR_NAME=asStr(' + ext_author + ')',
     'COMPANY_NAME=asStr(' + ext_company + ')',
     'YEAR=asStr(2024)',                        # TODO
@@ -166,9 +176,31 @@ sdk_args_windows_msvc = [
     '/Zc:__cplusplus',
 ]
 
+sdk_args_android_clang = [
+    '-fvisibility=hidden',
+    '-fsigned-char',
+    '-fPIC',
+    '-fasm-blocks',
+    '-Wno-unknown-pragmas',
+    '-Wno-unused-const-variable',
+    '-Wno-missing-braces',
+]
+
+sdk_args_wasi_clang = [
+    '--target=wasm32-wasi'
+]
+
 
 if host_machine.system() == 'windows' and meson.get_compiler('cpp').get_id() == 'msvc'
     sdk_args += sdk_args_windows_msvc
+endif
+
+if host_machine.system() == 'android' and meson.get_compiler('cpp').get_id() == 'clang'
+    sdk_args += sdk_args_android_clang
+endif
+
+if host_machine.system() == 'wasi' and meson.get_compiler('cpp').get_id() == 'clang'
+    sdk_args += sdk_args_wasi_clang
 endif
 
 foreach def : sdk_defines
@@ -183,9 +215,17 @@ sdk_link_args_windows_link = [
     '/NOIMPLIB',                # This breaks when useing default meson install, they should add a native way to disable implib.
 ]
 
+sdk_link_wasi_wasmld = [
+    '--no-entry'
+]
+
 
 if host_machine.system() == 'windows' and meson.get_compiler('cpp').get_linker_id() == 'link'
     sdk_link_args += sdk_link_args_windows_link
+endif
+
+if host_machine.system() == 'wasi'
+    sdk_link_args += sdk_link_wasi_wasmld
 endif
 
 
@@ -194,6 +234,24 @@ sdk_args_rc = []
 foreach def : sdk_defines_rc
     sdk_args_rc += '/D' + def
 endforeach
+
+
+
+if host_machine.system() != 'windows'
+    acecalltable = custom_target('ACECallTable_Macro.cpp',
+        input: files(
+            # Order matters!
+            meson.project_source_root() / 'Lib' / 'Shared' / 'ACECallTable_Macro.cpp',
+            meson.project_source_root() / meson.project_name() / 'Extension.cpp',
+            meson.project_source_root() / meson.project_name() / 'Extension.hpp',
+        ),
+        output: 'Temp_ACECallTable.cpp',
+        command: [acecalltablegen, '@INPUT@', '@OUTPUT@'],
+        build_by_default: true,
+    )
+
+    sdk_source += acecalltable
+endif
 
 
 darkedif_sdk = declare_dependency(
