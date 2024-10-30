@@ -44,12 +44,22 @@ endif
 ext_include = include_directories('Noise')
 
 
-# runtime builds use minified json
-json_minified = custom_target('minify_json',
-    build_by_default: true,
-    input: files('Noise/DarkExt.json'),
-    output: 'DarkExt.PostMinify.json',
-    command: [jsonminify, '@INPUT@', '@OUTPUT@'],
+if runtime_build
+    # runtime builds use minified json
+    darkext_json = custom_target('minify_json',
+        build_by_default: true,
+        input: files('Noise/DarkExt.json'),
+        output: 'DarkExt.PostMinify.json',
+        command: [jsonminify, '@INPUT@', '@OUTPUT@'],
+    )
+else
+    darkext_json = files('Noise/DarkExt.json')
+endif
+
+ext_source += custom_target('embed_json',
+    input: darkext_json,
+    output: 'DarkExt.json.h',
+    command: [bin2hpp, '@INPUT@', '@OUTPUT@', 'DarkExtJSON', 'DarkExtJSON_len'],
 )
 
 if host_machine.system() == 'windows'
@@ -59,13 +69,9 @@ if host_machine.system() == 'windows'
         depend_files: [
             'Noise\Resource.h',
             'Noise\Icon.png',
-            'Noise\DarkExt.json',
         ],
-        depends: json_minified,
         include_directories: sdk_include,
     )
-else
-    ext_source += json_minified
 endif
 
 
@@ -75,8 +81,7 @@ ext = build_target(
     target_type: sdk_ext_target_type,
     dependencies: darkedif_sdk,
     include_directories: ext_include,
-    name_prefix: '',
-    name_suffix: 'mfx',
+    name_suffix: sdk_ext_name_suffix,
 )
 
 if host_machine.system() == 'wasi'
@@ -88,7 +93,7 @@ if host_machine.system() == 'wasi'
         build_by_default: true,
         input: ext.extract_all_objects(recursive: true),
         output: meson.project_name() + '.wasm',
-        command: [cpp_compiler, sdk_args_wasi_clang, '-Wl,--no-entry', '@INPUT@', '-o', '@OUTPUT@'],
+        command: [cpp_compiler, '--target=wasm32-wasi', '-Wl,--no-entry', '@INPUT@', '-o', '@OUTPUT@'],
     )
 endif
 

@@ -39,6 +39,15 @@ endif
 
 
 
+sdk_ext_name_suffix = 'mfx'
+if host_machine.system() == 'android'
+    sdk_ext_name_suffix = 'so'
+elif host_machine.system() == 'wasi'
+    sdk_ext_name_suffix = 'wasm'
+endif
+
+
+
 sdk_source_shared = files(
     'Shared/DarkEdif.cpp',
     'Shared/Edif.cpp',
@@ -187,7 +196,6 @@ sdk_args_android_clang = [
 ]
 
 sdk_args_wasi_clang = [
-    '--target=wasm32-wasi'
 ]
 
 

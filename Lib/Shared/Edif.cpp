@@ -1787,12 +1787,16 @@ endFunc:
 }
 
 // DarkExt.json
-#ifdef __wasi__
 #include "DarkExt.json.h"
-#endif
 
-int Edif::GetDependency (char *& Buffer, size_t &Size, const TCHAR * FileExtension, int Resource)
-{
+int Edif::GetDependency (char *& Buffer, size_t &Size, const TCHAR * FileExtension, int Resource) {
+    // PLatform independent, file bytes are stored inside a generated c header
+	if (_tcsicmp(FileExtension, _T("json")) == 0) {
+        Buffer = (char*)DarkExtJSON;
+        Size = DarkExtJSON_len;
+        return DependencyWasResource;
+    }
+
 #ifdef _WIN32
 	TCHAR Filename [MAX_PATH];
 	GetSiblingPath (Filename, FileExtension);
@@ -1832,58 +1836,8 @@ int Edif::GetDependency (char *& Buffer, size_t &Size, const TCHAR * FileExtensi
 	Buffer = (char *) LockResource (LoadResource (hInstLib, res));
 
 	return DependencyWasResource;
-#elif defined(__ANDROID__)
-	if (_tcsicmp(FileExtension, _T("json")))
-		return DependencyNotFound;
-
-	Buffer = (char *)(void *) darkExtJSON;
-	Size = darkExtJSONSize;
-	return DependencyWasResource;
-#elif defined(__APPLE__)
-	if (_tcsicmp(FileExtension, _T("json")))
-		return DependencyNotFound;
-
-#define COMBINE2(a,b) a ## b
-#define COMBINE(a,b) COMBINE2(a,b)
-	Buffer = (char *)(void *)COMBINE(PROJECT_NAME_RAW, _darkExtJSON);
-	Size = COMBINE(PROJECT_NAME_RAW, _darkExtJSONSize);
-	return DependencyWasResource;
-	// A start at reading JSON from file.
-#if 0
-	// https://stackoverflow.com/questions/25559996/using-resource-files-in-ndk/25560443#25560443
-	// https://developer.android.com/ndk/reference/asset__manager_8h.html
-	// https://stackoverflow.com/questions/13317387/how-to-get-file-in-assets-from-android-ndk
-	// --> https://stackoverflow.com/a/40935331
-
-
-	// https://en.wikibooks.org/wiki/OpenGL_Programming/Android_GLUT_Wrapper#Accessing_assets
-	JavaVM* vm = state_param->activity->vm;
-	AAssetManager_fromJava(threadEnv, assetManager);
-	// https://stackoverflow.com/a/40935331
-	AssetManager * mgr = app->activity->assetManager;
-	AAssetDir* assetDir = AAssetManager_openDir(mgr, "");
-	const char* filename = (const char*)NULL;
-	while ((filename = AAssetDir_getNextFileName(assetDir)) != NULL) {
-		AAsset* asset = AAssetManager_open(mgr, filename, AASSET_MODE_STREAMING);
-		char buf[BUFSIZ];
-		int nb_read = 0;
-		FILE* out = fopen(filename, "w");
-		while ((nb_read = AAsset_read(asset, buf, BUFSIZ)) > 0)
-			fwrite(buf, nb_read, 1, out);
-		fclose(out);
-		AAsset_close(asset);
-	}
-	AAssetDir_close(assetDir);
-	return DependencyWasFile;
-#endif // File reading
-
-#elif defined(__wasi__)
-	if (_tcsicmp(FileExtension, _T("json")))
-		return DependencyNotFound;
-
-	Buffer = (char *)(void *) darkExtJSON;
-	Size = darkExtJSON_len;
-	return DependencyWasResource;
+#elif defined(__ANDROID__) || defined(__APPLE__) || defined(__wasi__)
+	return DependencyNotFound;
 #else
     #error Unsupported platform.
 #endif
