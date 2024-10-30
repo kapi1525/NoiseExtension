@@ -15,7 +15,7 @@
 	#include "..\Windows\MMFWindowsMasterHeader.hpp"
 	extern HINSTANCE hInstLib;
 #elif defined (__ANDROID__)
-	#include "..\Android\MMFAndroidMasterHeader.hpp"
+	#include "../Android/MMFAndroidMasterHeader.hpp"
 #elif defined (__APPLE__)
     #if MacBuild == 0
         #include "../iOS/MMFiOSMasterHeader.hpp"
