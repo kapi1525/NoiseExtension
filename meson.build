@@ -3,7 +3,7 @@ project(
     'cpp', 'c',
     version: '1.2.0',
     license: 'MIT',
-    default_options: ['warning_level=1', 'cpp_std=c++17', 'c_std=c11'],
+    default_options: ['warning_level=1', 'cpp_std=c++17', 'c_std=c11', 'prefix=' + meson.project_source_root()],
     meson_version: '>=1.1',
 )
 
@@ -11,6 +11,9 @@ project(
 ext_author = 'Kacper Bugla'
 ext_company = 'Kacper Bugla'
 ext_build = 22
+
+ext_examples_path = meson.current_source_dir() / 'Examples'
+ext_help_path = meson.current_source_dir() + '/Help'
 
 
 
@@ -98,7 +101,7 @@ if host_machine.system() == 'wasi'
 
     # javascript wrapper that loads the webassembly
     npm = find_program('npm')
-    ext_js = custom_target(meson.project_name() + '_js',
+    ext = custom_target(meson.project_name() + '_js',
         build_by_default: true,
         input: [ext_wasm, files('Lib/Html/Noise.ts')],  # meson uses this to determine if this needs to be run.
         output: meson.project_name() + '.js',
@@ -106,29 +109,10 @@ if host_machine.system() == 'wasi'
     )
 endif
 
+copy = find_program('cp', 'xcopy')          # TODO: xcopy on windows requires /y flag
+tar = find_program('tar', required: false)  # TODO: use tar to append files to zip for android
 
-
-# TODO: custom script that installs build extension to correct directory in a fusion install
-#       this will make meson install work
-# meson.add_install_script()
-
-
-# if(host_machine.system() == 'wasi')
-#     wasm_wasi_target = '--target=wasm32-wasi'
-
-#     runtime_ext = static_library(
-#         meson.project_name(),
-#         ext_source,
-#         sdk_source,
-#         darkext_json,
-#         acecalltable,
-#         cpp_args: [wasm_wasi_target, '-fno-exceptions', '-fvisibility=hidden', defines],
-#         include_directories: ext_includes,
-#         name_prefix: '',
-#         # name_suffix: 'wasm',
-#         dependencies: deps,
-#     )
-
-
-
-# endif
+install_emptydir(install_prefix / ext_install_path)
+meson.add_install_script(copy, ext.full_path(), install_prefix / ext_install_path)
+install_subdir('Help', install_dir: install_prefix)
+install_subdir('Examples', install_dir: install_prefix)

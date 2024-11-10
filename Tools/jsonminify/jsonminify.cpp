@@ -42,7 +42,7 @@ int main(int argc, char const *argv[]) {
     bool inside_comment = false;
 
     for(;;) {
-        int c = fgetc(in);
+        int c = std::fgetc(in);
 
         if(c == EOF) {
             break;

@@ -41,14 +41,14 @@ jobs:
         run: meson setup bin --buildtype release -Deditor_build=${{ matrix.editor_build }}
 
       - name: Compile
-        run: meson compile -C bin
+        run: meson install -C bin
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           # TODO: currently only to test
-          name: Noise_editor_build=${{ matrix.editor_build }}
-          path: bin/Noise.mfx
+          name: Noise-editor_build=${{ matrix.editor_build }}
+          path: MFX
           if-no-files-found: error
 
   build-android:
@@ -82,14 +82,14 @@ jobs:
         run: meson setup bin --buildtype release --cross-file cross/android-${{ matrix.target }}.ini --cross-file cross/android-ndk.ini
 
       - name: Compile
-        run: meson compile -C bin
+        run: meson install -C bin
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           # TODO: currently only to test
-          name: Noise_android-${{ matrix.target }}
-          path: bin/libNoise.so
+          name: Noise-android-${{ matrix.target }}
+          path: MFX
           if-no-files-found: error
 
   build-wasm:
@@ -132,12 +132,12 @@ jobs:
         run: meson setup bin --buildtype release --cross-file cross/wasm-wasi.ini --cross-file cross/wasi-sdk.ini
 
       - name: Compile
-        run: meson compile -C bin
+        run: meson install -C bin
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           # TODO: currently only to test
-          name: Noise_wasm
-          path: bin/Noise.js
+          name: Noise-wasm
+          path: MFX
           if-no-files-found: error

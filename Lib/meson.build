@@ -269,3 +269,33 @@ darkedif_sdk = declare_dependency(
     compile_args: sdk_args,
     link_args: sdk_link_args,
 )
+
+
+
+# INSTALLING
+
+install_prefix = get_option('prefix')
+
+if install_prefix == meson.project_source_root()
+    # TODO: Look for a fusion install in windows registry and use it.
+    #       Create a mfx folder only if not found
+    install_prefix = install_prefix / 'MFX'
+endif
+
+ext_install_path = ''
+
+if host_machine.system() == 'windows'
+    if editor_build
+        ext_install_path = 'Extensions'
+    else
+        ext_install_path = 'Data' / 'Runtime'
+    endif
+
+    if unicode_build
+        ext_install_path = ext_install_path / 'Unicode'
+    endif
+elif host_machine.system() == 'android'
+    ext_install_path = 'Data' / 'Runtime' / 'Android'
+elif host_machine.system() == 'wasi'
+    ext_install_path = 'Data' / 'Runtime' / 'Html5'
+endif
