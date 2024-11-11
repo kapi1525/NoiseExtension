@@ -2,6 +2,7 @@
 import wasm_file from "Noise.wasm"
 import {WASI, File, OpenFile, ConsoleStdout} from "@bjorn3/browser_wasi_shim";
 
+// FIXME: This should be generated from a template or something at build time
 
 interface CppLand {
     memory: WebAssembly.Memory;

@@ -295,7 +295,23 @@ if host_machine.system() == 'windows'
         ext_install_path = ext_install_path / 'Unicode'
     endif
 elif host_machine.system() == 'android'
+    # Android zip file contents:
+    # Extname/app/src/main
+    # |- java/Extensions/CRunExtname.java
+    # |- jniLibs/arch/libExtname.so
+
     ext_install_path = 'Data' / 'Runtime' / 'Android'
+
+    if host_machine.cpu_family() == 'aarch64'
+        ext_android_arch = 'arm64-v8a'
+    elif host_machine.cpu_family() == 'arm'
+        ext_android_arch = 'armeabi-v7a'
+    elif host_machine.cpu_family() == 'x86'
+        ext_android_arch = 'x86'
+    elif host_machine.cpu_family() == 'x86_64'
+        ext_android_arch = 'x86_64'
+    endif
+
 elif host_machine.system() == 'wasi'
     ext_install_path = 'Data' / 'Runtime' / 'Html5'
 endif

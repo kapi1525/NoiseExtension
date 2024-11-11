@@ -113,6 +113,16 @@ copy = find_program('cp', 'xcopy')          # TODO: xcopy on windows requires /y
 tar = find_program('tar', required: false)  # TODO: use tar to append files to zip for android
 
 install_emptydir(install_prefix / ext_install_path)
-meson.add_install_script(copy, ext.full_path(), install_prefix / ext_install_path)
-install_subdir('Help', install_dir: install_prefix)
-install_subdir('Examples', install_dir: install_prefix)
+
+if host_machine.system() != 'android'
+    meson.add_install_script(copy, ext.full_path(), install_prefix / ext_install_path)
+else
+    # i hope windows version of tar supports this...
+    # --transform repleaces the path inside the archive
+    meson.add_install_script(tar, '--transform=s|^.*/|' + meson.project_name() / 'app' / 'src' / 'main' / 'java' / 'Extensions' + '/|', '-avrf', install_prefix / ext_install_path / meson.project_name() + '.zip', meson.project_source_root() / 'Lib' / 'Android' / 'CRun' + meson.project_name() + '.java')
+    meson.add_install_script(tar, '--transform=s|^.*/|' + meson.project_name() / 'app' / 'src' / 'main' / 'jniLibs' / ext_android_arch + '/|', '-avrf', install_prefix / ext_install_path / meson.project_name() + '.zip', ext.full_path())
+endif
+
+install_subdir(ext_examples_path, install_dir: install_prefix)
+install_subdir(ext_help_path, install_dir: install_prefix)
+
