@@ -124,7 +124,7 @@ else
 
     # Before adding a new file, the existing ones need to be deleted, 7zip can create duplicates for some reason
     meson.add_install_script(p7zip, 'd', target_zip, meson.project_name() / 'app' / 'src' / 'main' / 'java' / 'Extensions' / '*')
-    meson.add_install_script(p7zip, 'd', meson.project_name() + '.zip', meson.project_name() / 'app' / 'src' / 'main' / 'jniLibs' / ext_android_arch / '*')
+    meson.add_install_script(p7zip, 'd', target_zip, meson.project_name() / 'app' / 'src' / 'main' / 'jniLibs' / ext_android_arch / '*')
 
     # Add java and build native files to archive, then move them into correct paths
     meson.add_install_script(p7zip, 'a', target_zip, meson.project_source_root() / 'Lib' / 'Android' / ext_android_java_filename, ext.full_path())
