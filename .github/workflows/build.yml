@@ -144,7 +144,4 @@ jobs:
       - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
-          path: test
-          merge-multiple: true
-      - run: 7za x test/Data/Runtime/Android/Noise.zip
       - run: ls -R .
