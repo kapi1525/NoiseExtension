@@ -146,4 +146,5 @@ jobs:
         with:
           path: test
           merge-multiple: true
+      - run: 7za x test/Data/Runtime/Android/Noise.zip
       - run: ls -R .
