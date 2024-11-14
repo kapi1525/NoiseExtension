@@ -143,6 +143,7 @@ jobs:
     steps:
       - name: Download artifacts
         uses: actions/download-artifact@v4
-        path: test
-        merge-multiple: true
+        with:
+          path: test
+          merge-multiple: true
       - run: ls -R .
