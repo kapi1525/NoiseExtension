@@ -312,6 +312,8 @@ elif host_machine.system() == 'android'
         ext_android_arch = 'x86_64'
     endif
 
+    ext_android_java_filename = 'CRun' + meson.project_name() + '.java'
+
 elif host_machine.system() == 'wasi'
     ext_install_path = 'Data' / 'Runtime' / 'Html5'
 endif

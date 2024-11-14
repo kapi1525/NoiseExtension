@@ -17,6 +17,8 @@ ext_help_path = meson.current_source_dir() + '/Help'
 
 
 
+fs = import('fs')
+
 # Contains tools used during build time
 subdir('Tools')
 # SDK
@@ -109,18 +111,25 @@ if host_machine.system() == 'wasi'
     )
 endif
 
-copy = find_program('cp', 'xcopy')          # TODO: xcopy on windows requires /y flag
-tar = find_program('tar', required: false)  # TODO: use tar to append files to zip for android
+copy = find_program('cp', 'xcopy', required: false) # TODO: xcopy on windows requires /y flag
+p7zip = find_program('7za', required: false)        # 7zip, p7zip on linux/mac
 
 install_emptydir(install_prefix / ext_install_path)
 
 if host_machine.system() != 'android'
     meson.add_install_script(copy, ext.full_path(), install_prefix / ext_install_path)
 else
-    # i hope windows version of tar supports this...
-    # --transform repleaces the path inside the archive
-    meson.add_install_script(tar, '--transform=s|^.*/|' + meson.project_name() / 'app' / 'src' / 'main' / 'java' / 'Extensions' + '/|', '-avrf', install_prefix / ext_install_path / meson.project_name() + '.zip', meson.project_source_root() / 'Lib' / 'Android' / 'CRun' + meson.project_name() + '.java')
-    meson.add_install_script(tar, '--transform=s|^.*/|' + meson.project_name() / 'app' / 'src' / 'main' / 'jniLibs' / ext_android_arch + '/|', '-avrf', install_prefix / ext_install_path / meson.project_name() + '.zip', ext.full_path())
+    target_zip = install_prefix / ext_install_path / meson.project_name() + '.zip'
+    ext_filename = fs.name(ext.full_path())
+
+    # Before adding a new file, the existing ones need to be deleted, 7zip can create duplicates for some reason
+    meson.add_install_script(p7zip, 'd', target_zip, meson.project_name() / 'app' / 'src' / 'main' / 'java' / 'Extensions' / '*')
+    meson.add_install_script(p7zip, 'd', meson.project_name() + '.zip', meson.project_name() / 'app' / 'src' / 'main' / 'jniLibs' / ext_android_arch / '*')
+
+    # Add java and build native files to archive, then move them into correct paths
+    meson.add_install_script(p7zip, 'a', target_zip, meson.project_source_root() / 'Lib' / 'Android' / ext_android_java_filename, ext.full_path())
+    meson.add_install_script(p7zip, 'rn', target_zip, ext_android_java_filename, meson.project_name() / 'app' / 'src' / 'main' / 'java' / 'Extensions' / ext_android_java_filename)
+    meson.add_install_script(p7zip, 'rn', target_zip, ext_filename, meson.project_name() / 'app' / 'src' / 'main' / 'jniLibs' / ext_android_arch / ext_filename)
 endif
 
 install_subdir(ext_examples_path, install_dir: install_prefix)
