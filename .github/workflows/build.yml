@@ -40,7 +40,6 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          # TODO: currently only to test
           name: Noise-editor_build=${{ matrix.editor_build }}
           path: MFX
           if-no-files-found: error
@@ -81,7 +80,6 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          # TODO: currently only to test
           name: Noise-android-${{ matrix.target }}
           path: MFX
           if-no-files-found: error
@@ -131,7 +129,6 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          # TODO: currently only to test
           name: Noise-wasm
           path: MFX
           if-no-files-found: error
@@ -143,4 +140,37 @@ jobs:
     steps:
       - name: Download artifacts
         uses: actions/download-artifact@v4
+        
       - run: ls -R .
+
+      - name: Combine all artifacts into one
+        run: |
+          ext_name="Noise"
+
+          for dir_entry in *; do
+              echo $dir_entry
+
+              zip_file="$dir_entry/Data/Runtime/Android/$ext_name.zip"
+
+              if [[ -f $zip_file ]]; then
+                  echo $zip_file
+
+                  7za x $zip_file -aoa
+              fi
+
+              mkdir -p MFX
+              cp $dir_entry/* MFX -r
+
+          done
+
+          rm -f MFX/Data/Runtime/Android/$ext_name.zip
+          7za a MFX/Data/Runtime/Android/$ext_name.zip app -sdel
+
+      - run: ls -R .
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Noise
+          path: MFX
+          if-no-files-found: error
