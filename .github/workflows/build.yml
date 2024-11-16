@@ -8,7 +8,7 @@ jobs:
   build-windows:
     strategy:
       matrix:
-        editor_build: ["true", "false"]
+        config: ["editor", "runtime"]
 
     runs-on: windows-latest
 
@@ -32,7 +32,7 @@ jobs:
           arch: x86
 
       - name: Configure
-        run: meson setup bin --buildtype release -Deditor_build=${{ matrix.editor_build }}
+        run: meson setup bin --buildtype release -Deditor_build=${{ matrix.config == "editor" }}
 
       - name: Compile
         run: meson install -C bin
@@ -40,7 +40,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Noise-editor_build=${{ matrix.editor_build }}
+          name: Noise-windows-${{ matrix.config }}
           path: MFX
           if-no-files-found: error
 
@@ -129,7 +129,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Noise-wasm
+          name: Noise-html
           path: MFX
           if-no-files-found: error
 
@@ -140,7 +140,7 @@ jobs:
     steps:
       - name: Download artifacts
         uses: actions/download-artifact@v4
-        
+
       - run: ls -R .
 
       - name: Combine all artifacts into one
