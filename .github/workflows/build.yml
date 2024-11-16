@@ -32,7 +32,7 @@ jobs:
           arch: x86
 
       - name: Configure
-        run: meson setup bin --buildtype release -Deditor_build=${{ matrix.config == "editor" }}
+        run: meson setup bin --buildtype release -Deditor_build=${{ matrix.config == 'editor' }}
 
       - name: Compile
         run: meson install -C bin
