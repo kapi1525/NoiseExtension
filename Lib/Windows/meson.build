@@ -1,0 +1,118 @@
+# Only windows
+
+sdk_ext_name_suffix = 'mfx'
+
+
+if editor_build and host_machine.system() != 'windows'
+    error('Editor .mfx can only target windows!')
+endif
+
+if not editor_build and host_machine.system() == 'windows' and get_option('debug')
+    error('Runtime windows builds cant be debug')
+endif
+
+if host_machine.system() == 'windows' and host_machine.cpu_family() != 'x86'
+    error('All windows fusion extensions currently should be 32bit, but compiler is for: ' + host_machine.cpu_family())
+endif
+
+
+# Source files
+
+if editor_build
+    sdk_source += files(
+        'Windows/Edif.Edittime.cpp',
+    )
+endif
+
+
+# Dependencies
+
+sdk_deps += meson.get_compiler('cpp').find_library(
+    'mmfs2',
+    dirs: meson.project_source_root() / 'Lib/Windows',
+    required: true
+)
+
+
+# Defines
+
+sdk_defines += [
+    '_WINDLL',
+    'NOMINMAX',
+    'WIN32_LEAN_AND_MEAN',
+    'STRICT',
+    'COXSDK',
+    'HWABETA',
+    '_CRT_SECURE_NO_WARNINGS',
+    '_CRT_SECURE_NO_DEPRECATE',
+]
+
+sdk_defines_unicode = [
+    '_UNICODE',
+    'UNICODE',
+]
+
+sdk_defines_project_rc = [
+    'KPX_MAGICNUMBER=200',
+    'PROJECT_NAME=asStr(' + meson.project_name() + ')',
+    'PROJECT_NAME_UNDERSCORES=asStr(' + meson.project_name().underscorify() + ')',
+    'AUTHOR_NAME=asStr(' + ext_author + ')',
+    'COMPANY_NAME=asStr(' + ext_company + ')',
+    'YEAR=asStr(2024)',                        # TODO
+    'BUILD_DATE=asStr(2024-10-09T18:14:24.1939030+00:00)',  # todo
+]
+
+sdk_defines_rc = []
+sdk_defines_rc += sdk_defines_common
+sdk_defines_rc += sdk_defines_project_rc
+
+if unicode_build
+    sdk_defines += sdk_defines_unicode
+    sdk_defines_rc += sdk_defines_unicode
+endif
+
+if get_option('editor_build')
+    sdk_defines_rc += sdk_defines_editor
+else
+    sdk_defines_rc += sdk_defines_runtime
+endif
+
+
+# Additional build arguments
+
+if meson.get_compiler('cpp').get_id() == 'msvc'
+    sdk_cpp_args += [
+        '/Zc:__cplusplus',
+    ]
+endif
+
+
+# Linker arguments
+
+if meson.get_compiler('cpp').get_linker_id() == 'link'
+    sdk_link_args += [
+        '/LARGEADDRESSAWARE',
+        '/NOIMPLIB',                # This breaks when useing default meson install, they should add a native way to disable implib.
+    ]
+endif
+
+
+# rc arguments
+
+sdk_rc_args = []
+foreach def : sdk_defines_rc
+    sdk_rc_args += '/D' + def
+endforeach
+
+
+# Installing
+
+if editor_build
+    ext_install_path = 'Extensions'
+else
+    ext_install_path = 'Data' / 'Runtime'
+endif
+
+if unicode_build
+    ext_install_path = ext_install_path / 'Unicode'
+endif

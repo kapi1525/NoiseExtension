@@ -102,7 +102,6 @@ if host_machine.system() == 'wasi'
     )
 
     # javascript wrapper that loads the webassembly
-    npm = find_program('npm')
     ext = custom_target(meson.project_name() + '_js',
         build_by_default: true,
         input: [ext_wasm, files('Lib/Html/Noise.ts')],  # meson uses this to determine if this needs to be run.

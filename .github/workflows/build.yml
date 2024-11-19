@@ -110,10 +110,6 @@ jobs:
           fileName: 'wasi-sdk-*-x86_64-linux.tar.gz'
           extract: true
 
-      - name: Install npm packages
-        working-directory: "./Lib/Html"
-        run: npm i
-
       - name: Create a custom cross file with correct wasi sdk path
         run: |
           mv wasi-sdk-*-x86_64-linux wasi-sdk-x86_64-linux

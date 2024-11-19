@@ -1,23 +1,13 @@
+# Common
+
+
+# Build config
+
 # Only windows builds are unicode
 unicode_build = host_machine.system() == 'windows'
 
 editor_build = get_option('editor_build')
 runtime_build = not editor_build
-
-if editor_build and host_machine.system() != 'windows'
-    error('Editor .mfx can only target windows!')
-endif
-
-if not editor_build and host_machine.system() == 'windows' and get_option('debug')
-    error('Runtime windows builds cant be debug')
-endif
-
-
-if host_machine.system() == 'windows' and host_machine.cpu_family() != 'x86'
-    error('All windows fusion extensions currently should be 32bit, but compiler is for: ' + host_machine.cpu_family())
-endif
-
-
 
 config = 'Runtime'
 if editor_build
@@ -29,26 +19,9 @@ if unicode_build
 endif
 
 
+# Source files
 
-sdk_ext_target_type = 'shared_module'
-
-if host_machine.system() == 'wasi'
-    # hack
-    sdk_ext_target_type = 'static_library'
-endif
-
-
-
-sdk_ext_name_suffix = 'mfx'
-if host_machine.system() == 'android'
-    sdk_ext_name_suffix = 'so'
-elif host_machine.system() == 'wasi'
-    sdk_ext_name_suffix = 'wasm'
-endif
-
-
-
-sdk_source_shared = files(
+sdk_source = files(
     'Shared/DarkEdif.cpp',
     'Shared/Edif.cpp',
     'Shared/Edif.General.cpp',
@@ -57,41 +30,24 @@ sdk_source_shared = files(
     'Shared/ObjectSelection.cpp',
 )
 
-sdk_source_windows = files(
-    'Windows/Edif.Edittime.cpp',
-)
 
-sdk_source = sdk_source_shared
-
-if host_machine.system() == 'windows'
-    sdk_source += sdk_source_windows
-endif
-
+# Includes
 
 sdk_include = include_directories(
     'Shared',
-    '../Inc',
-    '../Inc/Shared',
+    '..' / 'Inc',
+    '..' / 'Inc' / 'Shared',
 )
 
 
+# Dependencies
 
 sdk_deps = [
     dependency('threads'),
 ]
 
-if host_machine.system() == 'windows'
-    sdk_deps += meson.get_compiler('cpp').find_library(
-        'mmfs2',
-        dirs: meson.project_source_root() / 'Lib/Windows',
-        required: true
-    )
-endif
 
-
-
-sdk_defines = []
-sdk_defines_rc = []
+# Defines
 
 sdk_defines_common = [
     'CONFIG=' + config,
@@ -102,31 +58,16 @@ sdk_defines_common = [
     'EXTENSION_VERSION=' + ext_build.to_string(),
 ]
 
+if not get_option('debug')
+    sdk_defines_common += 'NDEBUG'
+endif
+
 sdk_defines_project = [
     'PROJECT_NAME=STRIFY(' + meson.project_name() + ')',
     'PROJECT_NAME_UNDERSCORES=STRIFY(' + meson.project_name().underscorify() + ')',
     'AUTHOR_NAME=STRIFY(' + ext_author + ')',
     'COMPANY_NAME=STRIFY(' + ext_company + ')',
     'YEAR=STRIFY(2024)',                        # TODO
-]
-
-sdk_defines_project_rc = [
-    'KPX_MAGICNUMBER=200',
-    'PROJECT_NAME=asStr(' + meson.project_name() + ')',
-    'PROJECT_NAME_UNDERSCORES=asStr(' + meson.project_name().underscorify() + ')',
-    'AUTHOR_NAME=asStr(' + ext_author + ')',
-    'COMPANY_NAME=asStr(' + ext_company + ')',
-    'YEAR=asStr(2024)',                        # TODO
-    'BUILD_DATE=asStr(2024-10-09T18:14:24.1939030+00:00)',  # todo
-]
-
-if not get_option('debug')
-    sdk_defines_common += 'NDEBUG'
-endif
-
-sdk_defines_unicode = [
-    '_UNICODE',
-    'UNICODE',
 ]
 
 sdk_defines_editor = [
@@ -143,107 +84,33 @@ sdk_defines_runtime = [
     'USE_DARKEDIF_UC_TAGGING=0',
 ]
 
-sdk_defines_windows = [
-    '_WINDLL',
-    'NOMINMAX',
-    'WIN32_LEAN_AND_MEAN',
-    'STRICT',
-    'COXSDK',
-    'HWABETA',
-    '_CRT_SECURE_NO_WARNINGS',
-    '_CRT_SECURE_NO_DEPRECATE',
-]
 
-
+sdk_defines = []
 sdk_defines += sdk_defines_common
 sdk_defines += sdk_defines_project
-sdk_defines_rc += sdk_defines_common
-sdk_defines_rc += sdk_defines_project_rc
 
-if unicode_build
-    sdk_defines += sdk_defines_unicode
-    sdk_defines_rc += sdk_defines_unicode
-endif
-
-if get_option('editor_build') and host_machine.system() == 'windows'
+if get_option('editor_build')
     sdk_defines += sdk_defines_editor
-    sdk_defines_rc += sdk_defines_editor
 else
     sdk_defines += sdk_defines_runtime
-    sdk_defines_rc += sdk_defines_runtime
-endif
-
-if host_machine.system() == 'windows'
-    sdk_defines += sdk_defines_windows
 endif
 
 
+# Additional build arguments
 
-sdk_args = []
-
-sdk_args_windows_msvc = [
-    '/Zc:__cplusplus',
-]
-
-sdk_args_android_clang = [
-    '-fvisibility=hidden',
-    '-fsigned-char',
-    '-fPIC',
-    '-fasm-blocks',
-    '-Wno-unknown-pragmas',
-    '-Wno-unused-const-variable',
-    '-Wno-missing-braces',
-]
-
-sdk_args_wasi_clang = [
-]
-
-
-if host_machine.system() == 'windows' and meson.get_compiler('cpp').get_id() == 'msvc'
-    sdk_args += sdk_args_windows_msvc
-endif
-
-if host_machine.system() == 'android' and meson.get_compiler('cpp').get_id() == 'clang'
-    sdk_args += sdk_args_android_clang
-endif
-
-if host_machine.system() == 'wasi' and meson.get_compiler('cpp').get_id() == 'clang'
-    sdk_args += sdk_args_wasi_clang
-endif
+sdk_cpp_args = []
 
 foreach def : sdk_defines
-    sdk_args += '-D' + def
+    sdk_cpp_args += '-D' + def
 endforeach
 
+
+# Linker arguments
 
 sdk_link_args = []
 
-sdk_link_args_windows_link = [
-    '/LARGEADDRESSAWARE',
-    '/NOIMPLIB',                # This breaks when useing default meson install, they should add a native way to disable implib.
-]
 
-sdk_link_wasi_wasmld = [
-    '--no-entry'
-]
-
-
-if host_machine.system() == 'windows' and meson.get_compiler('cpp').get_linker_id() == 'link'
-    sdk_link_args += sdk_link_args_windows_link
-endif
-
-if host_machine.system() == 'wasi'
-    sdk_link_args += sdk_link_wasi_wasmld
-endif
-
-
-sdk_args_rc = []
-
-foreach def : sdk_defines_rc
-    sdk_args_rc += '/D' + def
-endforeach
-
-
+# Ace call table
 
 if host_machine.system() != 'windows'
     acecalltable = custom_target('ACECallTable_Macro.hpp',
@@ -262,17 +129,7 @@ if host_machine.system() != 'windows'
 endif
 
 
-darkedif_sdk = declare_dependency(
-    sources: sdk_source,
-    include_directories: sdk_include,
-    dependencies: sdk_deps,
-    compile_args: sdk_args,
-    link_args: sdk_link_args,
-)
-
-
-
-# INSTALLING
+# Installing
 
 install_prefix = get_option('prefix')
 
@@ -284,36 +141,30 @@ endif
 
 ext_install_path = ''
 
+
+# Platform specific stuff
 if host_machine.system() == 'windows'
-    if editor_build
-        ext_install_path = 'Extensions'
-    else
-        ext_install_path = 'Data' / 'Runtime'
-    endif
-
-    if unicode_build
-        ext_install_path = ext_install_path / 'Unicode'
-    endif
+    subdir('Windows')
 elif host_machine.system() == 'android'
-    # Android zip file contents:
-    # Extname/app/src/main
-    # |- java/Extensions/CRunExtname.java
-    # |- jniLibs/arch/libExtname.so
-
-    ext_install_path = 'Data' / 'Runtime' / 'Android'
-
-    if host_machine.cpu_family() == 'aarch64'
-        ext_android_arch = 'arm64-v8a'
-    elif host_machine.cpu_family() == 'arm'
-        ext_android_arch = 'armeabi-v7a'
-    elif host_machine.cpu_family() == 'x86'
-        ext_android_arch = 'x86'
-    elif host_machine.cpu_family() == 'x86_64'
-        ext_android_arch = 'x86_64'
-    endif
-
-    ext_android_java_filename = 'CRun' + meson.project_name() + '.java'
-
+    subdir('Android')
 elif host_machine.system() == 'wasi'
-    ext_install_path = 'Data' / 'Runtime' / 'Html5'
+    subdir('Html')
+else
+    error('Unsuported system!')
 endif
+
+
+# hack, need to use static_library so meson doesnt start the linker. meson currently doesnt support wasm-ld and passes unrecognized arguments.
+sdk_ext_target_type = 'shared_module'
+if host_machine.system() == 'wasi'
+    sdk_ext_target_type = 'static_library'
+endif
+
+
+darkedif_sdk = declare_dependency(
+    sources: sdk_source,
+    include_directories: sdk_include,
+    dependencies: sdk_deps,
+    compile_args: sdk_cpp_args,
+    link_args: sdk_link_args,
+)
