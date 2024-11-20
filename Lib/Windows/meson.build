@@ -20,7 +20,7 @@ endif
 
 if editor_build
     sdk_source += files(
-        'Windows/Edif.Edittime.cpp',
+        'Edif.Edittime.cpp',
     )
 endif
 
