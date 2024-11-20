@@ -100,10 +100,6 @@ endif
 
 sdk_cpp_args = []
 
-foreach def : sdk_defines
-    sdk_cpp_args += '-D' + def
-endforeach
-
 
 # Linker arguments
 
@@ -152,6 +148,12 @@ elif host_machine.system() == 'wasi'
 else
     error('Unsuported system!')
 endif
+
+
+# Add all defines to build arguments
+foreach def : sdk_defines
+    sdk_cpp_args += '-D' + def
+endforeach
 
 
 # hack, need to use static_library so meson doesnt start the linker. meson currently doesnt support wasm-ld and passes unrecognized arguments.
