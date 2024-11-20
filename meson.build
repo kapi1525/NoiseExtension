@@ -70,7 +70,7 @@ ext_source += custom_target('embed_json',
 if host_machine.system() == 'windows'
     ext_source += import('windows').compile_resources(
         'Noise\Ext.rc',
-        args: sdk_args_rc,
+        args: sdk_rc_args,
         depend_files: [
             'Noise\Resource.h',
             'Noise\Icon.png',
