@@ -2,17 +2,18 @@
     "name": "extension-wrapper",
     "version": "1.0.0",
     "description": "",
-    "main": "Noise.js",
-    "scripts": {
-        "build": "tsc --noEmit && esbuild Noise.ts --bundle --target=es2020 --outfile=dist/test.js --loader:.wasm=binary --alias:Noise.wasm=./Noise.wasm"
-    },
     "author": "",
     "license": "MIT",
+    "main": "Noise.js",
+    "scripts": {
+        "build": "tsc --noEmit",
+        "postbuild": "esbuild js/Noise.ts --bundle --target=es2020 --loader:.wasm=binary --alias:Extension.wasm=$EXTWASMPATH --outfile=$OUTJSPATH"
+    },
     "dependencies": {
-        "@bjorn3/browser_wasi_shim": "^0.3.0",
-        "esbuild": "^0.23.1"
+        "@bjorn3/browser_wasi_shim": "^0.3.0"
     },
     "devDependencies": {
+        "esbuild": "^0.23.1",
         "typescript": "^5.6.2"
     }
 }

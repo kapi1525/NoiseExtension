@@ -1,5 +1,6 @@
 // Wasm gets embeded into .js file by esbuild, its stored in base64 and gets converted to UInt8Array.
-import wasm_file from "Noise.wasm"
+// @ts-ignore
+import wasm_file from "Extension.wasm"
 import {WASI, File, OpenFile, ConsoleStdout} from "@bjorn3/browser_wasi_shim";
 
 // FIXME: This should be generated from a template or something at build time
