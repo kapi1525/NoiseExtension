@@ -41,8 +41,13 @@ int main(int argc, char const *argv[]) {
     bool escape_sequence = false;
     bool inside_comment = false;
 
-    for(;;) {
+    for(int i = 0;;i++) {
         int c = std::fgetc(in);
+
+        // Remove utf-8 BOM. sdk doesnt expect it to be there.
+        if((i == 0 && c == 0xEF) || (i == 1 && c == 0xBB) || (i == 2 && c == 0xBF)) {
+            continue;
+        }
 
         if(c == EOF) {
             break;
