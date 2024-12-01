@@ -112,6 +112,21 @@ jobs:
           fileName: 'wasi-sdk-*-x86_64-linux.tar.gz'
           extract: true
 
+      - name: Download wit-bindgen
+        id: download
+        uses: robinraju/release-downloader@v1
+        with:
+          repository: 'bytecodealliance/wit-bindgen'
+          latest: true
+          fileName: 'wit-bindgen-*-x86_64-linux.tar.gz'
+          extract: true
+
+      - name: Install wit-bindgen
+        run: |
+          mv wit-bindgen-*-x86_64-linux/wit-bindgen ~/.local/bin/
+
+      - run: ls -R
+
       - name: Create a custom cross file with correct wasi sdk path
         run: |
           mv wasi-sdk-*-x86_64-linux wasi-sdk-x86_64-linux
