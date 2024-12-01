@@ -113,7 +113,6 @@ jobs:
           extract: true
 
       - name: Download wit-bindgen
-        id: download
         uses: robinraju/release-downloader@v1
         with:
           repository: 'bytecodealliance/wit-bindgen'
