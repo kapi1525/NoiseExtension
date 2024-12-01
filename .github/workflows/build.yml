@@ -101,15 +101,6 @@ jobs:
       - name: Install meson and ninja
         run: pip install meson ninja
 
-      - name: Download wasi-sdk
-        id: download
-        uses: robinraju/release-downloader@v1
-        with:
-          repository: 'WebAssembly/wasi-sdk'
-          latest: true
-          fileName: 'wasi-sdk-*-x86_64-linux.tar.gz'
-          extract: true
-
       - name: Download wit-bindgen
         uses: robinraju/release-downloader@v1
         with:
@@ -118,12 +109,17 @@ jobs:
           fileName: 'wit-bindgen-*-x86_64-linux.tar.gz'
           extract: true
 
-      - run: ls -R
-
       - name: Install wit-bindgen
         run: |
           mv wit-bindgen-*-x86_64-linux/wit-bindgen /usr/local/bin/
 
+      - name: Download wasi-sdk
+        uses: robinraju/release-downloader@v1
+        with:
+          repository: 'WebAssembly/wasi-sdk'
+          latest: true
+          fileName: 'wasi-sdk-*-x86_64-linux.tar.gz'
+          extract: true
 
       - name: Create a custom cross file with correct wasi sdk path
         run: |
