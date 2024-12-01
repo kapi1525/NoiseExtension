@@ -22,18 +22,18 @@ run_command(npm, '--prefix', npm_package_root, 'i', '--save-dev',
 # C bindings for imports/exports from/into js land
 
 # Used to create a C header with all wasm imports and exports defined in .wit file.
-# wit_bindgen = find_program('wit-bindgen')
+wit_bindgen = find_program('wit-bindgen')
 
-# sdk_source += custom_target('wit_c_bindings',
-#     input: meson.project_source_root() / 'Lib' / 'Html' / 'sdk.wit',
-#     output: [
-#         'wasm_ext.c',
-#         'wasm_ext.h',
-#         'wasm_ext_component_type.o',
-#     ],
-#     command: [wit_bindgen, 'c', '@INPUT@', '--out-dir', meson.current_build_dir()],
-#     build_by_default: true,
-# )
+sdk_source += custom_target('wit_c_bindings',
+    input: 'sdk.wit',
+    output: [
+        'wasm_ext.c',
+        'wasm_ext.h',
+        'wasm_ext_component_type.o',
+    ],
+    command: [wit_bindgen, 'c', '@INPUT@', '--out-dir', meson.current_build_dir()],
+    build_by_default: true,
+)
 
 
 # Installing

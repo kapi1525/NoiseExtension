@@ -98,10 +98,8 @@ if host_machine.system() == 'wasi'
         build_by_default: true,
         input: ext.extract_all_objects(recursive: true),
         output: 'Extension.wasm',
-        command: [cpp_compiler, '--target=wasm32-wasip1', '-Wl,--no-entry', '@INPUT@', '-o', '@OUTPUT@'],
+        command: [cpp_compiler, '--target=wasm32-wasip2', '-Wl,--no-entry', '@INPUT@', '-o', '@OUTPUT@'],
     )
-
-    npm_prefix = meson.current_source_dir() / 'Lib' / 'Html'
 
     # javascript wrapper that loads the webassembly
     ext = custom_target(meson.project_name() + '_js',
@@ -112,7 +110,7 @@ if host_machine.system() == 'wasi'
             'EXTWASMPATH': ext_wasm.full_path(),
             'OUTJSPATH': meson.current_build_dir() / 'Noise.js',
         },
-        command: [npm, '--prefix', npm_prefix, 'run', 'build'],
+        command: [npm, '--prefix', npm_package_root, 'run', 'build'],
     )
 endif
 

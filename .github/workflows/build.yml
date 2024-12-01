@@ -101,6 +101,9 @@ jobs:
       - name: Install meson and ninja
         run: pip install meson ninja
 
+      - name: Setup wit-bindgen
+        uses: jcbhmr/setup-wit-bindgen@v1
+        
       - name: Download wasi-sdk
         id: download
         uses: robinraju/release-downloader@v1

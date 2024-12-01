@@ -6,14 +6,16 @@
     "license": "MIT",
     "main": "Noise.js",
     "scripts": {
+        "prebuild": "jco transpile $EXTWASMPATH --name WasmExt --instantiation sync --no-typescript --no-nodejs-compat -o temp",
         "build": "tsc --noEmit",
         "postbuild": "esbuild js/Noise.ts --bundle --target=es2020 --loader:.wasm=binary --alias:Extension.wasm=$EXTWASMPATH --outfile=$OUTJSPATH"
     },
     "dependencies": {
-        "@bjorn3/browser_wasi_shim": "^0.3.0"
+        "@bytecodealliance/preview2-shim": "~0.17.1"
     },
     "devDependencies": {
-        "esbuild": "^0.23.1",
-        "typescript": "^5.6.2"
+        "@bytecodealliance/jco": "~1.8.1",
+        "esbuild": "~0.24.0",
+        "typescript": "~5.7.2"
     }
 }
