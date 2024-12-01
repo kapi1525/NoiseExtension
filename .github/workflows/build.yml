@@ -93,6 +93,8 @@ jobs:
         with:
           submodules: true
 
+      - uses: jcbhmr/setup-wit-bindgen@v1
+
       - name: Setup python
         uses: actions/setup-python@v5
         with:
@@ -101,9 +103,6 @@ jobs:
       - name: Install meson and ninja
         run: pip install meson ninja
 
-      - name: Setup wit-bindgen
-        uses: jcbhmr/setup-wit-bindgen@v1
-        
       - name: Download wasi-sdk
         id: download
         uses: robinraju/release-downloader@v1
