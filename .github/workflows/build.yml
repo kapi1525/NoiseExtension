@@ -92,7 +92,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           submodules: true
-          
+
       - name: Setup python
         uses: actions/setup-python@v5
         with:
@@ -118,11 +118,12 @@ jobs:
           fileName: 'wit-bindgen-*-x86_64-linux.tar.gz'
           extract: true
 
+      - run: ls -R
+
       - name: Install wit-bindgen
         run: |
-          mv wit-bindgen-*-x86_64-linux/wit-bindgen ~/.local/bin/
+          mv wit-bindgen-*-x86_64-linux/wit-bindgen /usr/local/bin/
 
-      - run: ls -R
 
       - name: Create a custom cross file with correct wasi sdk path
         run: |
