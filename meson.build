@@ -10,7 +10,7 @@ project(
 # Used by SDK meson.build file
 ext_author = 'Kacper Bugla'
 ext_company = 'Kacper Bugla'
-ext_build = 22
+ext_build = 23
 
 ext_examples_path = meson.current_source_dir() / 'Examples'
 ext_help_path = meson.current_source_dir() + '/Help'
