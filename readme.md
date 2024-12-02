@@ -36,4 +36,42 @@ To install Noise Object, just download [latest release](https://github.com/kapi1
 
 ## Building
 
-:)
+### Why no msbuild?
+
+This is probably the first extension thats not built with msbuild (or visual studio) but with [mesonbuild](https://mesonbuild.com/) instead.
+While porting to html/webassembly i didnt know if it would be easily posible to use a custom compiler with msbuild, so i switched to something i knew, and something i could use on linux.
+
+### Build dependencies
+
+- all platforms:
+  - mesonbuild
+  - ninja
+- windows
+  - visual studio c++ build tools
+- android
+  - android ndk
+  - 7zip (optional)
+- html/webassembly
+  - wasi-sdk
+  - wasm-bindgen
+  - npm (node.js)
+
+### Actualy building
+
+Configure:
+- windows
+  ```console
+  meson setup bin -Deditor_build=<true or false>
+  ```
+- any other platform
+
+  First update the cross file you will use in `cross` folder with correct paths to compilers on your system.
+  ```console
+  meson setup bin --cross-file cross/<cross file>
+  ```
+note: You can add `--buildtype release`, to make optimized release builds.
+
+Compile:
+```console
+meson compile bin
+```
