@@ -24,7 +24,7 @@ I recently finaly created Noise Object [wiki on github](https://github.com/kapi1
 
 ## Help file
 
-I wanted to automaticaly convert github wiki to help file, but in the end it was too complicated and buggy so i scrapped it. Currently help button in Noise object about properties just redirects you to the github wiki.
+Github wiki is converted automaticaly to a help file and is bundled with noise, so you can read it offline.
 
 
 ## Installing
