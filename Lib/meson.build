@@ -1,0 +1,172 @@
+# Common
+
+
+# Build config
+
+# Only windows builds are unicode
+unicode_build = host_machine.system() == 'windows'
+
+editor_build = get_option('editor_build')
+runtime_build = not editor_build
+
+config = 'Runtime'
+if editor_build
+    config = 'Edittime'
+endif
+
+if unicode_build
+    config += ' Unicode'
+endif
+
+
+# Source files
+
+sdk_source = files(
+    'Shared/DarkEdif.cpp',
+    'Shared/Edif.cpp',
+    'Shared/Edif.General.cpp',
+    'Shared/Edif.Runtime.cpp',
+    'Shared/json.cpp',
+    'Shared/ObjectSelection.cpp',
+)
+
+
+# Includes
+
+sdk_include = include_directories(
+    'Shared',
+    '..' / 'Inc',
+    '..' / 'Inc' / 'Shared',
+)
+
+
+# Dependencies
+
+sdk_deps = [
+    dependency('threads'),
+]
+
+
+# Defines
+
+sdk_defines_common = [
+    'CONFIG=' + config,
+    'EditorBuild=' + editor_build.to_int().to_string(),
+    'RuntimeBuild=' + runtime_build.to_int().to_string(),
+    'UniBuild=' + unicode_build.to_int().to_string(),
+    'MacBuild=0',
+    'EXTENSION_VERSION=' + ext_build.to_string(),
+]
+
+if not get_option('debug')
+    sdk_defines_common += 'NDEBUG'
+endif
+
+sdk_defines_project = [
+    'PROJECT_NAME=STRIFY(' + meson.project_name() + ')',
+    'PROJECT_NAME_UNDERSCORES=STRIFY(' + meson.project_name().underscorify() + ')',
+    'AUTHOR_NAME=STRIFY(' + ext_author + ')',
+    'COMPANY_NAME=STRIFY(' + ext_company + ')',
+    'YEAR=STRIFY(2024)',                        # TODO
+]
+
+sdk_defines_editor = [
+    'EDITOR',
+    'USE_DARKEDIF_UPDATE_CHECKER=1',            # TODO
+    'USE_DARKEDIF_FUSION_DEBUGGER=0',           # TODO
+    'USE_DARKEDIF_UC_TAGGING=1',                # TODO
+]
+
+sdk_defines_runtime = [
+    'RUN_ONLY',
+    'USE_DARKEDIF_UPDATE_CHECKER=0',
+    'USE_DARKEDIF_FUSION_DEBUGGER=0',
+    'USE_DARKEDIF_UC_TAGGING=0',
+]
+
+
+sdk_defines = []
+sdk_defines += sdk_defines_common
+sdk_defines += sdk_defines_project
+
+if get_option('editor_build')
+    sdk_defines += sdk_defines_editor
+else
+    sdk_defines += sdk_defines_runtime
+endif
+
+
+# Additional build arguments
+
+sdk_cpp_args = []
+
+
+# Linker arguments
+
+sdk_link_args = []
+
+
+# Ace call table
+
+if host_machine.system() != 'windows'
+    acecalltable = custom_target('ACECallTable_Macro.hpp',
+        input: files(
+            # Order matters!
+            meson.project_source_root() / 'Lib' / 'Shared' / 'ACECallTable_Macro.hpp',
+            meson.project_source_root() / meson.project_name() / 'Extension.cpp',
+            meson.project_source_root() / meson.project_name() / 'Extension.hpp',
+        ),
+        output: 'Temp_ACECallTable.hpp',
+        command: [acecalltablegen, '@INPUT@', '@OUTPUT@'],
+        build_by_default: true,
+    )
+
+    sdk_source += acecalltable
+endif
+
+
+# Installing
+
+install_prefix = get_option('prefix')
+
+if install_prefix == meson.project_source_root()
+    # TODO: Look for a fusion install in windows registry and use it.
+    #       Create a mfx folder only if not found
+    install_prefix = install_prefix / 'MFX'
+endif
+
+ext_install_path = ''
+
+
+# Platform specific stuff
+if host_machine.system() == 'windows'
+    subdir('Windows')
+elif host_machine.system() == 'android'
+    subdir('Android')
+elif host_machine.system() == 'wasi'
+    subdir('Html')
+else
+    error('Unsuported system!')
+endif
+
+
+# Add all defines to build arguments
+foreach def : sdk_defines
+    sdk_cpp_args += '-D' + def
+endforeach
+
+
+# hack, need to use static_library so meson doesnt start the linker. meson currently doesnt support wasm-ld and passes unrecognized arguments.
+sdk_ext_target_type = 'shared_module'
+if host_machine.system() == 'wasi'
+    sdk_ext_target_type = 'static_library'
+endif
+
+
+darkedif_sdk = declare_dependency(
+    sources: sdk_source,
+    include_directories: sdk_include,
+    dependencies: sdk_deps,
+    compile_args: sdk_cpp_args,
+    link_args: sdk_link_args,
+)

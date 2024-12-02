@@ -3,6 +3,11 @@
 #include "DarkEdif.hpp"
 #include "Edif.hpp"
 
+#ifdef __wasi__
+    #include "wasm_ext.h"
+    #include <deque>
+#endif
+
 // Used for Win32 resource ID numbers
 #include "Resource.h"
 
@@ -295,7 +300,10 @@ int Edif::Init(mv * mV, bool fusionStartupScreen)
 	// We want DarkEdif::MsgBox::XX as soon as possible.
 	// Main thread ID is used to prevent crashes from message boxes not being task-modal.
 	// Since we're initializing this, might as well set all the DarkEdif mV variables.
+
+    #ifndef __wasi__
 	DarkEdif::MainThreadID = std::this_thread::get_id();
+    #endif
 #ifdef _WIN32
 	DarkEdif::IsFusion25 = ((mV->GetVersion() & MMFVERSION_MASK) == CFVERSION_25);
 	DarkEdif::Internal_WindowHandle = mV->HMainWin;
@@ -604,7 +612,7 @@ Edif::SDK::SDK(mv * mV, json_value &_json) : json (_json)
 			!_stricmp(about["URL"], "https://www.example.com/");
 		if (!unchangedPropsFound)
 		{
-			std::string copy = about["Copyright"];
+			std::string copy = about["Copyright"].u.string.ptr;
 			std::transform(copy.begin(), copy.end(), copy.begin(),
 				[](unsigned char c) { return std::tolower(c); });
 			unchangedPropsFound = copy.rfind("by your name"sv) != std::string::npos;
@@ -780,7 +788,7 @@ long ActionOrCondition(void * Function, int ID, Extension * ext, const ACEInfo *
 		switch (ID)
 		{
 			#define DARKEDIF_ACE_CALL_TABLE_INDEX 0
-			#include "Temp_ACECallTable.cpp"
+			#include "Temp_ACECallTable.hpp"
 
 			default:
 				DarkEdif::MsgBox::Error(_T("ActionOrCondition error"), _T("Error calling condition ID %i, not found."), ID);
@@ -793,7 +801,7 @@ long ActionOrCondition(void * Function, int ID, Extension * ext, const ACEInfo *
 		{
 			#undef DARKEDIF_ACE_CALL_TABLE_INDEX
 			#define DARKEDIF_ACE_CALL_TABLE_INDEX 1
-			#include "Temp_ACECallTable.cpp"
+			#include "Temp_ACECallTable.hpp"
 
 			default:
 				DarkEdif::MsgBox::Error(_T("ActionOrCondition error"), _T("Error calling action ID %i, not found."), ID);
@@ -1061,7 +1069,7 @@ jmethodID ConditionOrActionManager_Android::getActOrCondParamInt,
 	ConditionOrActionManager_Android::getCndParamString, ConditionOrActionManager_Android::getCndParamFloat, ConditionOrActionManager_Android::getCndParamObject,
 	ConditionOrActionManager_Android::setCndRetInt, ConditionOrActionManager_Android::setCndRetFloat, ConditionOrActionManager_Android::setCndRetString;
 jfieldID ConditionOrActionManager_Android::getRH;
-#else
+#elif defined(__APPLE__)
 
 extern "C"
 {
@@ -1148,6 +1156,54 @@ struct ConditionOrActionManager_iOS : ACEParamReader
 	{
 	}
 };
+#elif defined(__wasi__)
+
+struct ConditionOrActionManager_Html : ACEParamReader {
+    wasm_ext_borrow_condition_or_action_manager_t wasm_manager;
+
+    ConditionOrActionManager_Html() = delete;
+    ConditionOrActionManager_Html(wasm_ext_borrow_condition_or_action_manager_t wasm_manager)
+        : wasm_manager(wasm_manager)
+    {
+    }
+
+
+    // Inherited via ACEParamReader
+    virtual std::int32_t GetInteger(int index, Params type) {
+        std::int32_t ret = wasm_ext_method_condition_or_action_manager_get_integer(wasm_manager, index);
+        LOGV(PROJECT_NAME _T(" param index: %d, type: integer, value: %d.\n"), index, ret);
+        return ret;
+    }
+
+    virtual float GetFloat(int index) {
+        float ret = wasm_ext_method_condition_or_action_manager_get_float(wasm_manager, index);
+        LOGV(PROJECT_NAME _T(" param index: %d, type: float, value: %f.\n"), index, ret);
+        return ret;
+    }
+
+    virtual const TCHAR* GetString(int index) {
+        wasm_ext_string_t wasm_str;
+        wasm_ext_method_condition_or_action_manager_get_string(wasm_manager, index, &wasm_str);
+        strings_to_free.emplace_back((const TCHAR*)wasm_str.ptr, wasm_str.len);
+        wasm_ext_string_free(&wasm_str);
+        LOGV(PROJECT_NAME _T(" param index: %d, type: string, value: %s.\n"), index, strings_to_free.back().c_str());
+        return strings_to_free.back().c_str();
+    }
+
+    virtual long GetObject(int index) {
+        // FIXME: STUB
+        DarkEdif::Log(DARKEDIF_LOG_ERROR, "Object action/condition parameter is not supported in webassembly!");
+        return 0;
+    }
+
+    ~ConditionOrActionManager_Html() = default;
+
+protected:
+    // deque since the memory address cant change
+    std::deque<std::tstring> strings_to_free;
+};
+#else
+    #error Unsupported platform.
 #endif
 
 #ifdef _WIN32
@@ -1163,12 +1219,18 @@ ProjectFunc jlong conditionJump(JNIEnv *, jobject, jlong extPtr, int ID, CCndExt
 	ConditionOrActionManager_Android params(true, ext, (jobject)cndExt);
 	global<jobject> lastCEvent = ext->Runtime.curCEvent.swap_out(); // prevent subfunctions causing this variable to be incorrect
 	ext->Runtime.curCEvent = global((jobject)cndExt, "Current Cnd ext");
-#else
+#elif defined(__APPLE__)
 ProjectFunc long PROJ_FUNC_GEN(PROJECT_NAME_RAW, _conditionJump(void * cppExtPtr, int ID, void * cndExt))
 {
 	Extension* const ext = (Extension*)cppExtPtr;
 	ConditionOrActionManager_iOS params(true, ext, cndExt);
 	ext->Runtime.curCEvent = cndExt;
+#elif defined(__wasi__)
+int32_t wasm_ext_condition_jump(wasm_ext_extension_t cpp_ext, int32_t ID, wasm_ext_own_condition_or_action_manager_t manager) {
+    Extension* const ext = (Extension*)cpp_ext;
+    ConditionOrActionManager_Html params(wasm_ext_borrow_condition_or_action_manager(manager));
+#else
+    #error Unsupported platform.
 #endif
 	LOGV(PROJECT_NAME _T(" Condition ID %i start.\n"), ID);
 
@@ -1225,7 +1287,7 @@ ProjectFunc void actionJump(JNIEnv *, jobject, jlong extPtr, jint ID, CActExtens
 	const jobject lastAct = ext->Runtime.curRH4ActBasedOnCEventOnly;
 	ext->Runtime.curRH4ActBasedOnCEventOnly = ext->Runtime.curCEvent.ref;
 #define actreturn /* void */
-#else
+#elif defined(__APPLE__)
 ProjectFunc void PROJ_FUNC_GEN(PROJECT_NAME_RAW, _actionJump(void * cppExtPtr, int ID, void * act))
 {
 	Extension* ext = (Extension*)cppExtPtr;
@@ -1233,6 +1295,13 @@ ProjectFunc void PROJ_FUNC_GEN(PROJECT_NAME_RAW, _actionJump(void * cppExtPtr, i
 	auto lastCEvent = ext->Runtime.curCEvent;
 	ext->Runtime.curCEvent = act;
 #define actreturn /* void */
+#elif defined(__wasi__)
+void wasm_ext_action_jump(wasm_ext_extension_t cpp_ext, int32_t ID, wasm_ext_own_condition_or_action_manager_t manager) {
+    Extension* const ext = (Extension*)cpp_ext;
+    ConditionOrActionManager_Html params(wasm_ext_borrow_condition_or_action_manager(manager));
+#define actreturn /* void */
+#else
+    #error Unsupported platform.
 #endif
 	LOGV(PROJECT_NAME _T(" Action ID %i start.\n"), ID);
 
@@ -1421,7 +1490,7 @@ struct ExpressionManager_Windows : ACEParamReader {
 	}
 
 };
-#else
+#elif defined(__APPLE__)
 struct ExpressionManager_iOS : ACEParamReader {
 	Extension* const ext;
 
@@ -1477,6 +1546,73 @@ struct ExpressionManager_iOS : ACEParamReader {
 	~ExpressionManager_iOS() {
 	}
 };
+#elif defined(__wasi__)
+struct ExpressionManager_Html : ACEParamReader {
+    wasm_ext_borrow_expression_manager_t wasm_manager;
+
+	ExpressionManager_Html() = delete;
+    ExpressionManager_Html(wasm_ext_borrow_expression_manager_t wasm_manager)
+        : wasm_manager(wasm_manager)
+    {
+    }
+
+	void SetValue(int val) {
+        LOGV(PROJECT_NAME _T(" expression return, type: integer, value: %d.\n"), val);
+        wasm_ext_method_expression_manager_set_integer(wasm_manager, val);
+	}
+
+	void SetValue(float val) {
+        LOGV(PROJECT_NAME _T(" expression return, type: float, value: %f.\n"), val);
+        wasm_ext_method_expression_manager_set_float(wasm_manager, val);
+	}
+
+	void SetValue(const char* str) {
+        LOGV(PROJECT_NAME _T(" expression return, type: string, value: %s.\n"), str);
+        wasm_ext_string_t wasm_str{};
+        wasm_ext_string_dup(&wasm_str, str);
+        wasm_ext_method_expression_manager_set_string(wasm_manager, &wasm_str);
+        wasm_ext_string_free(&wasm_str);
+	}
+
+    // Inherited via ACEParamReader
+    virtual std::int32_t GetInteger(int index, Params type) {
+        float ret = wasm_ext_method_expression_manager_get_integer(wasm_manager, index);
+        LOGV(PROJECT_NAME _T(" param index: %d, type: integer, value: %d.\n"), index, ret);
+        return ret;
+    }
+
+    virtual float GetFloat(int index) {
+        float ret = wasm_ext_method_expression_manager_get_float(wasm_manager, index);
+        LOGV(PROJECT_NAME _T(" param index: %d, type: float, value: %f.\n"), index, ret);
+        return ret;
+    }
+
+    virtual const TCHAR* GetString(int index) {
+        wasm_ext_string_t wasm_str;
+        wasm_ext_method_expression_manager_get_string(wasm_manager, index, &wasm_str);
+        strings_to_free.emplace_back((const TCHAR*)wasm_str.ptr, wasm_str.len);
+        wasm_ext_string_free(&wasm_str);
+        LOGV(PROJECT_NAME _T(" param index: %d, type: string, value: %s.\n"), index, strings_to_free.back().c_str());
+        return strings_to_free.back().c_str();
+    }
+
+	virtual long GetObject(int) {
+        // Expressions can't use object parameters
+		return 0;
+	}
+
+	void SetReturnType(ExpReturnType rt) {
+		// Do nothing. We only care on Windows.
+	}
+
+	~ExpressionManager_Html() = default;
+
+protected:
+    // deque since the memory address cant change
+    std::deque<std::tstring> strings_to_free;
+};
+#else
+    #error Unsupported platform.
 #endif
 
 #ifdef _WIN32
@@ -1485,7 +1621,6 @@ long FusionAPI Edif::ExpressionJump(RUNDATA * rdPtr, long param)
 	const int ID = ForbiddenInternals::GetEventNumber((RunObject*)rdPtr);
 	Extension * const ext = ((RunObject*)rdPtr)->GetExtension();
 	ExpressionManager_Windows params((RunObject*)rdPtr);
-	LOGV(PROJECT_NAME _T(" Expression ID %i start.\n"), ID);
 #elif defined(__ANDROID__)
 ProjectFunc void expressionJump(JNIEnv *, jobject, jlong extPtr, jint ID, CNativeExpInstance expU)
 {
@@ -1496,12 +1631,19 @@ ProjectFunc void expressionJump(JNIEnv *, jobject, jlong extPtr, jint ID, CNativ
 	// whereas an expresssion is a sub-variable of a CEvent.
 	//if (ext->Runtime.curCEvent.invalid())
 	//	ext->Runtime.curCEvent = global((jobject)expU, "Current Exp ext");
-#else
+#elif defined(__APPLE__)
 ProjectFunc void PROJ_FUNC_GEN(PROJECT_NAME_RAW, _expressionJump(void * cppExtPtr, int ID))
 {
 	Extension* ext = (Extension*)cppExtPtr;
 	ExpressionManager_iOS params(ext);
+#elif defined(__wasi__)
+void wasm_ext_expression_jump(wasm_ext_extension_t cpp_ext, int32_t ID, wasm_ext_own_expression_manager_t manager) {
+    Extension* const ext = (Extension*)cpp_ext;
+    ExpressionManager_Html params(wasm_ext_borrow_expression_manager(manager));
+#else
+    #error Unsupported platform.
 #endif
+	LOGV(PROJECT_NAME _T(" Expression ID %i.\n"), ID);
 
 	if (Edif::SDK->ExpressionFunctions.size() < (unsigned int)ID)
 		return params.SetValue((int)ext->UnlinkedExpression(ID));
@@ -1643,7 +1785,6 @@ endFunc:
 	// Must set return type after the expression func is evaluated, as sub-expressions inside the
 	// expression func (e.g. from generating events) could change it to something else
 	params.SetReturnType(ExpressionRet);
-	LOGV(PROJECT_NAME _T(" Expression ID %i end.\n"), ID);
 	return Result;
 
 	// if you add back old ARM ASM, remember to increment paramInc
@@ -1654,7 +1795,7 @@ endFunc:
 		#ifndef __INTELLISENSE__
 		#undef DARKEDIF_ACE_CALL_TABLE_INDEX
 		#define DARKEDIF_ACE_CALL_TABLE_INDEX 2
-		#include "Temp_ACECallTable.cpp"
+		#include "Temp_ACECallTable.hpp"
 		#endif // __INTELLISENSE__
 		default:
 			DarkEdif::MsgBox::Error(_T("Expression error"), _T("Error calling expression: expression ID %i not found."), ID);
@@ -1682,8 +1823,17 @@ endFunc:
 #endif
 }
 
-int Edif::GetDependency (char *& Buffer, size_t &Size, const TCHAR * FileExtension, int Resource)
-{
+// DarkExt.json
+#include "DarkExt.json.h"
+
+int Edif::GetDependency (char *& Buffer, size_t &Size, const TCHAR * FileExtension, int Resource) {
+    // PLatform independent, file bytes are stored inside a generated c header
+	if (_tcsicmp(FileExtension, _T("json")) == 0) {
+        Buffer = (char*)DarkExtJSON;
+        Size = DarkExtJSON_len;
+        return DependencyWasResource;
+    }
+
 #ifdef _WIN32
 	TCHAR Filename [MAX_PATH];
 	GetSiblingPath (Filename, FileExtension);
@@ -1723,51 +1873,11 @@ int Edif::GetDependency (char *& Buffer, size_t &Size, const TCHAR * FileExtensi
 	Buffer = (char *) LockResource (LoadResource (hInstLib, res));
 
 	return DependencyWasResource;
-#elif defined(__ANDROID__)
-	if (_tcsicmp(FileExtension, _T("json")))
-		return DependencyNotFound;
-
-	Buffer = (char *)(void *) darkExtJSON;
-	Size = darkExtJSONSize;
-	return DependencyWasResource;
+#elif defined(__ANDROID__) || defined(__APPLE__) || defined(__wasi__)
+	return DependencyNotFound;
 #else
-	if (_tcsicmp(FileExtension, _T("json")))
-		return DependencyNotFound;
-
-#define COMBINE2(a,b) a ## b
-#define COMBINE(a,b) COMBINE2(a,b)
-	Buffer = (char *)(void *)COMBINE(PROJECT_NAME_RAW, _darkExtJSON);
-	Size = COMBINE(PROJECT_NAME_RAW, _darkExtJSONSize);
-	return DependencyWasResource;
-	// A start at reading JSON from file.
-#if 0
-	// https://stackoverflow.com/questions/25559996/using-resource-files-in-ndk/25560443#25560443
-	// https://developer.android.com/ndk/reference/asset__manager_8h.html
-	// https://stackoverflow.com/questions/13317387/how-to-get-file-in-assets-from-android-ndk
-	// --> https://stackoverflow.com/a/40935331
-
-
-	// https://en.wikibooks.org/wiki/OpenGL_Programming/Android_GLUT_Wrapper#Accessing_assets
-	JavaVM* vm = state_param->activity->vm;
-	AAssetManager_fromJava(threadEnv, assetManager);
-	// https://stackoverflow.com/a/40935331
-	AssetManager * mgr = app->activity->assetManager;
-	AAssetDir* assetDir = AAssetManager_openDir(mgr, "");
-	const char* filename = (const char*)NULL;
-	while ((filename = AAssetDir_getNextFileName(assetDir)) != NULL) {
-		AAsset* asset = AAssetManager_open(mgr, filename, AASSET_MODE_STREAMING);
-		char buf[BUFSIZ];
-		int nb_read = 0;
-		FILE* out = fopen(filename, "w");
-		while ((nb_read = AAsset_read(asset, buf, BUFSIZ)) > 0)
-			fwrite(buf, nb_read, 1, out);
-		fclose(out);
-		AAsset_close(asset);
-	}
-	AAssetDir_close(assetDir);
-	return DependencyWasFile;
-#endif // File reading
-#endif // _WIN32
+    #error Unsupported platform.
+#endif
 }
 
 #ifdef _WIN32
@@ -2046,6 +2156,7 @@ void Edif::recursive_mutex::unlock(edif_lock_debugParams)
 
 #else // Not debug
 
+#ifndef __wasi__
 Edif::recursive_mutex::recursive_mutex()
 {
 }
@@ -2064,5 +2175,6 @@ void Edif::recursive_mutex::unlock(edif_lock_debugParams)
 {
 	this->intern.unlock();
 }
+#endif
 
 #endif // _DEBUG

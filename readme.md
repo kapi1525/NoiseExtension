@@ -36,21 +36,42 @@ To install Noise Object, just download [latest release](https://github.com/kapi1
 
 ## Building
 
-To build Noise Object yourself you need Visual Studio 2022 with C/C++ toolkit and Android toolkit, if you want to compile for Android.
+### Why no msbuild?
 
-You can open Noise.sln solution in Visual Studio and compile it from VS or if you don't like VS like me, use build.bat script.
+This is probably the first extension thats not built with msbuild (or visual studio) but with [mesonbuild](https://mesonbuild.com/) instead.
+While porting to html/webassembly i didnt know if it would be easily posible to use a custom compiler with msbuild, so i switched to something i knew, and something i could use on linux.
 
-Using this command will build entire Noise Object and install it onto your Fusion installation (It should find it automaticaly using fusionpath.exe tool).
-```cmd
-build.bat --install --full --release
+### Build dependencies
+
+- all platforms:
+  - mesonbuild
+  - ninja
+- windows
+  - visual studio c++ build tools
+- android
+  - android ndk
+  - 7zip (optional)
+- html/webassembly
+  - wasi-sdk
+  - wasm-bindgen
+  - npm (node.js)
+
+### Actualy building
+
+Configure:
+- windows
+  ```console
+  meson setup bin -Deditor_build=<true or false>
+  ```
+- any other platform
+
+  First update the cross file you will use in `cross` folder with correct paths to compilers on your system.
+  ```console
+  meson setup bin --cross-file cross/<cross file>
+  ```
+note: You can add `--buildtype release`, to make optimized release builds.
+
+Compile:
+```console
+meson compile bin
 ```
-
-Other *usefull* build.bat flags:
-
-- `--run` Launch Fusion (steam version) after compilation has finished.
-- `--full` Build all targets (Windows and Android) (only Windows is built by default).
-- `--release` Build using release configurations (Debug configurations are used by default).
-- `--clean` Clean the build directory before building.
-- `--bundle` Bundle Noise Object, help file and examples into single zip file.
-- `--sdkconfig` Create "FusionSDKConfig.ini" file with default settings inside, in parent directory.
-- `--verbose` Enables more msbuild logging

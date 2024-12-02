@@ -51,10 +51,14 @@ std::vector<short> qualToOi::HalfVector(std::size_t first)
 		get_OiList(0);
 	for (std::size_t i = first; i < OiAndOiListLength; i += 2)
 		list.push_back(OiAndOiList[i]);
-#else // apple
+#elif defined(__APPLE__) // apple
 	const short* const qoiList = ((CQualToOiList*)this)->qoiList;
 	for (std::size_t i = first; qoiList[i] != -1; i += 2)
 		list.push_back(qoiList[i]);
+#elif defined(__wasi__)
+    // FIXME: STUB
+#else
+    #error Unsupported platform.
 #endif
 	return list;
 }
@@ -70,7 +74,7 @@ CRunAppMultiPlat* CRunAppMultiPlat::get_ParentApp() {
 	return ParentApp;
 #elif defined(__APPLE__)
 	return (CRunAppMultiPlat*)((CRunApp*)this)->parentApp;
-#else // Android
+#elif defined(__ANDROID__) // Android
 	if (!parentApp && !parentAppIsNull)
 	{
 		// Application/CRunApp parentApp
@@ -84,6 +88,11 @@ CRunAppMultiPlat* CRunAppMultiPlat::get_ParentApp() {
 			parentAppIsNull = true;
 	}
 	return parentApp.get();
+#elif defined(__wasi__)
+    // FIXME: STUB
+    return nullptr;
+#else
+    #error Unsupported platform.
 #endif
 }
 
@@ -92,7 +101,7 @@ std::size_t CRunAppMultiPlat::GetNumFusionFrames() {
 	return hdr.NbFrames;
 #elif defined(__APPLE__)
 	return (std::size_t)((CRunApp*)this)->gaNbFrames;
-#else // Android
+#elif defined(__ANDROID__) // Android
 	if (numTotalFrames == 0)
 	{
 		jfieldID fieldID = threadEnv->GetFieldID(meClass, "gaNbFrames", "I");
@@ -102,6 +111,11 @@ std::size_t CRunAppMultiPlat::GetNumFusionFrames() {
 		numTotalFrames = (std::size_t)totalFrames;
 	}
 	return numTotalFrames;
+#elif defined(__wasi__)
+    // FIXME: STUB
+    return 0;
+#else
+    #error Unsupported platform.
 #endif
 }
 
@@ -342,14 +356,18 @@ std::size_t AltVals::GetAltValueCount() const {
 #ifdef _WIN32
 	return DarkEdif::IsFusion25 ? CF25.NumAltValues : 26;
 #else
+#ifndef __wasi__ // exceptions are currently not supported by wasi
 throw std::runtime_error("not implemented");
+#endif
 #endif
 }
 std::size_t AltVals::GetAltStringCount() const {
 #ifdef _WIN32
 	return DarkEdif::IsFusion25 ? CF25.NumAltStrings : 26;
 #else
+#ifndef __wasi__ // exceptions are currently not supported by wasi
 	throw std::runtime_error("not implemented");
+#endif
 #endif
 }
 const TCHAR* AltVals::GetAltStringAtIndex(const std::size_t i) const {
@@ -361,7 +379,9 @@ const TCHAR* AltVals::GetAltStringAtIndex(const std::size_t i) const {
 		c = nullptr;
 #else
 	const TCHAR* c = nullptr;
+#ifndef __wasi__ // exceptions are currently not supported by wasi
 	throw std::runtime_error("not implemented");
+#endif
 #endif
 	return c;
 }
@@ -369,7 +389,9 @@ const CValueMultiPlat* AltVals::GetAltValueAtIndex(const std::size_t i) const {
 #ifdef _WIN32
 	return DarkEdif::IsFusion25 ? &CF25.Values[i] : &MMF2.rvpValues[i];
 #else
+#ifndef __wasi__ // exceptions are currently not supported by wasi
 	throw std::runtime_error("Not implemented");
+#endif
 #endif
 }
 
@@ -391,7 +413,9 @@ void AltVals::SetAltStringAtIndex(const std::size_t i, const std::tstring_view& 
 		*(void **)&CF25.Strings = v; // TODO: Simplify
 		CF25.NumAltStrings = (int)i;
 #else
+#ifndef __wasi__ // exceptions are currently not supported by wasi
 		throw std::runtime_error("Not implemented");
+#endif
 #endif
 	}
 #ifdef _WIN32
@@ -409,22 +433,30 @@ void AltVals::SetAltStringAtIndex(const std::size_t i, const std::tstring_view& 
 		*c = t;
 	}
 #else
+#ifndef __wasi__ // exceptions are currently not supported by wasi
 	throw std::runtime_error("Not implemented");
+#endif
 #endif
 }
 void AltVals::SetAltValueAtIndex(const std::size_t, const double)
 {
+#ifndef __wasi__ // exceptions are currently not supported by wasi
 	throw std::runtime_error("Not implemented");
+#endif
 }
 void AltVals::SetAltValueAtIndex(const std::size_t, const int)
 {
+#ifndef __wasi__ // exceptions are currently not supported by wasi
 	throw std::runtime_error("Not implemented");
+#endif
 }
 std::uint32_t AltVals::GetInternalFlags() const {
 #ifdef _WIN32
 	return DarkEdif::IsFusion25 ? CF25.InternalFlags : MMF2.rvValueFlags;
 #else
+#ifndef __wasi__ // exceptions are currently not supported by wasi
 	throw std::runtime_error("not implemented");
+#endif
 #endif
 }
 void AltVals::SetInternalFlags(const std::uint32_t nf) {
@@ -434,7 +466,9 @@ void AltVals::SetInternalFlags(const std::uint32_t nf) {
 	else
 		MMF2.rvValueFlags = nf;
 #else
+#ifndef __wasi__ // exceptions are currently not supported by wasi
 	throw std::runtime_error("not implemented");
+#endif
 #endif
 }
 
@@ -2693,7 +2727,7 @@ eventGroup::eventGroup(jobject me, Edif::Runtime * runtime) :
 	}
 }
 
-#else // iOS
+#elif defined(__APPLE__) // iOS
 
 #include "MMF2Lib/CRunExtension.h"
 #include "MMF2Lib/CRun.h"
@@ -3114,6 +3148,255 @@ event2* eventGroup::GetCAByIndex(size_t index)
 	return ret;
 }
 
-#endif // APPLE
+#elif defined(__wasi__)
 
-#endif // Apple or Android
+// FIXME: STUB
+Edif::Runtime::Runtime(Extension * ext)
+{
+}
+
+Edif::Runtime::~Runtime()
+{
+}
+
+
+void Edif::Runtime::Rehandle(){
+}
+
+void Edif::Runtime::GenerateEvent(int EventID){
+}
+
+void Edif::Runtime::PushEvent(int EventID){
+}
+
+void * Edif::Runtime::Allocate(size_t size){
+}
+
+// Dummy functions.
+char * Edif::Runtime::CopyStringEx(const char * String) {
+	return CopyString(String);
+}
+wchar_t * Edif::Runtime::CopyStringEx(const wchar_t * String) {
+#ifndef __wasi__ // exceptions are currently not supported by wasi
+	throw std::runtime_error("Do not use wchar_t in iOS!");
+#endif
+	return (wchar_t *)String;
+}
+
+void Edif::Runtime::Pause(){
+}
+
+void Edif::Runtime::Resume(){
+}
+
+void Edif::Runtime::Redisplay(){
+}
+
+void Edif::Runtime::GetApplicationDrive(TCHAR * Buffer){
+}
+
+void Edif::Runtime::GetApplicationDirectory(TCHAR * Buffer){
+}
+
+void Edif::Runtime::GetApplicationPath(TCHAR * Buffer){
+}
+
+void Edif::Runtime::GetApplicationName(TCHAR * Buffer){
+}
+
+void Edif::Runtime::GetApplicationTempPath(TCHAR * Buffer){
+}
+
+void Edif::Runtime::Redraw(){
+}
+
+void Edif::Runtime::Destroy(){
+}
+
+void Edif::Runtime::CallMovement(int ID, long Parameter){
+}
+
+void Edif::Runtime::SetPosition(int X, int Y){
+}
+
+// static EdifGlobal * staticEdifGlobal; // LB says static/global values are functionally equivalent to getUserExtData, so... yay.
+
+void Edif::Runtime::WriteGlobal(const TCHAR * name, void * Value)
+{
+	// EdifGlobal * Global = (EdifGlobal *)staticEdifGlobal;
+
+	// if (!Global)
+	// {
+	// 	Global = new EdifGlobal;
+
+	// 	_tcscpy(Global->name, name);
+	// 	Global->Value = Value;
+	// 	Global->Next = NULL;
+
+	// 	staticEdifGlobal = Global;
+
+	// 	return;
+	// }
+
+	// while (Global)
+	// {
+	// 	if (!_tcsicmp(Global->name, name))
+	// 	{
+	// 		Global->Value = Value;
+	// 		return;
+	// 	}
+
+	// 	if (!Global->Next)
+	// 		break;
+
+	// 	Global = Global->Next;
+	// }
+
+	// Global->Next = new EdifGlobal;
+	// Global = Global->Next;
+
+	// _tcscpy(Global->name, name);
+
+	// Global->Value = Value;
+	// Global->Next = 0;
+}
+
+void * Edif::Runtime::ReadGlobal(const TCHAR * name){
+}
+
+short Edif::Runtime::GetOIFromObjectParam(std::size_t paramIndex){
+}
+int Edif::Runtime::GetCurrentFusionFrameNumber(){
+}
+
+CRunAppMultiPlat* RunHeader::get_App() {
+}
+
+// Gets the RH2 event count, used in object selection
+int RunHeader::GetRH2EventCount(){
+}
+// Gets the RH4 event count for OR, used in object selection in OR-related events.
+int RunHeader::GetRH4EventCountOR(){
+}
+
+// objectsList* RunHeader::get_ObjectList() {
+// }
+
+objInfoList* RunHeader::GetOIListByIndex(std::size_t index)
+{
+}
+event2* RunHeader::GetRH4ActionStart() {
+}
+eventGroup* RunHeader::get_EventGroup() {
+}
+
+std::size_t RunHeader::GetNumberOi() {
+}
+qualToOi* RunHeader::GetQualToOiListByOffset(std::size_t byteOffset) {
+}
+RunObjectMultiPlatPtr RunHeader::GetObjectListOblOffsetByIndex(std::size_t index) {
+}
+
+EventGroupFlags RunHeader::GetEVGFlags() {
+}
+std::size_t RunHeader::get_MaxObjects() {
+}
+std::size_t RunHeader::get_NObjects() {
+}
+
+
+short HeaderObject::get_NextSelected() {
+}
+unsigned short HeaderObject::get_CreationId() {
+}
+short HeaderObject::get_Number() {
+}
+short HeaderObject::get_NumNext() {
+}
+short HeaderObject::get_Oi() {
+}
+objInfoList* HeaderObject::get_OiList() {
+}
+bool HeaderObject::get_SelectedInOR() {
+}
+HeaderObjectFlags HeaderObject::get_Flags() {
+}
+RunHeader* HeaderObject::get_AdRunHeader() {
+}
+
+void HeaderObject::set_NextSelected(short ns) {
+}
+void HeaderObject::set_SelectedInOR(bool b) {
+}
+short event2::get_evtNum() {
+}
+OINUM event2::get_evtOi() {
+}
+// short event2::get_evtSize() {
+// }
+std::int8_t event2::get_evtFlags() {
+}
+void event2::set_evtFlags(std::int8_t evtF) {
+}
+std::unique_ptr<event2> event2::Next() {
+}
+int event2::GetIndex() {
+}
+
+HeaderObject* RunObject::get_rHo() {
+}
+rCom* RunObject::get_roc() {
+}
+rMvt* RunObject::get_rom() {
+}
+rAni* RunObject::get_roa() {
+}
+Sprite* RunObject::get_ros() {
+}
+AltVals* RunObject::get_rov() {
+}
+RunObjectMultiPlatPtr objectsList::GetOblOffsetByIndex(std::size_t index) {
+}
+
+int objInfoList::get_EventCount() /*const FIXME: why?*/ {
+}
+int objInfoList::get_EventCountOR() /*const FIXME: why?*/ {
+}
+short objInfoList::get_ListSelected() /*const FIXME: why?*/ {
+}
+int objInfoList::get_NumOfSelected() /*const FIXME: why?*/ {
+}
+short objInfoList::get_Oi() /*const FIXME: why?*/ {
+}
+int objInfoList::get_NObjects() /*const FIXME: why?*/ {
+}
+short objInfoList::get_Object() /*const FIXME: why?*/ {
+}
+const TCHAR* objInfoList::get_name() {
+}
+void objInfoList::set_NumOfSelected(int ns) {
+}
+void objInfoList::set_ListSelected(short sh) {
+}
+void objInfoList::set_EventCount(int ec) {
+}
+void objInfoList::set_EventCountOR(int ec) {
+}
+short objInfoList::get_QualifierByIndex(std::size_t index) /*const FIXME: why?*/ {
+}
+
+std::uint8_t eventGroup::get_evgNCond() /*const FIXME: why?*/ {
+}
+std::uint8_t eventGroup::get_evgNAct() /*const FIXME: why?*/ {
+}
+std::int16_t eventGroup::get_evgIdentifier() /*const FIXME: why?*/ {
+}
+// std::uint16_t eventGroup::get_evgInhibit() /*const FIXME: why?*/ {
+// }
+
+std::unique_ptr<event2> eventGroup::GetCAByIndex(size_t index){
+}
+
+
+#endif // Apple, Android or WASI
+#endif

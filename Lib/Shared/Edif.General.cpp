@@ -843,7 +843,7 @@ ProjectFunc void JNICALL JNI_OnUnload(JavaVM * vm, void * reserved)
 #endif
 }
 
-#else // iOS
+#elif defined(__APPLE__) // iOS
 #include "Extension.hpp"
 
 // Raw creation func
@@ -883,4 +883,56 @@ ProjectFunc void PROJ_FUNC_GEN(PROJECT_NAME_RAW, _destroyRunObject)(void * cppEx
 	delete ((Extension *)cppExt);
 }
 
+#elif defined(__wasi__)
+
+#include "wasm_ext.h"
+
+void wasm_ext_init(void) {
+    mv* mV = nullptr;
+    if (!Edif::SDK) {
+        LOGV("The SDK is being initialized.\n");
+        Edif::Init(mV, false);
+    }
+}
+
+void wasm_ext_dealloc(void) {
+    LOGV("The SDK is being freed.\n");
+}
+
+uint32_t wasm_ext_get_number_of_conditions(void) {
+    return CurLang["Conditions"].u.array.length;
+}
+
+wasm_ext_extension_t wasm_ext_create_run_object(wasm_ext_editdata_t* ed, wasm_ext_create_object_info_t cob, uint32_t version) {
+    assert(version == Extension::Version);
+
+    Extension* ext = new Extension((EDITDATA*)ed->ptr, nullptr);
+
+    return (wasm_ext_extension_t)ext;
+}
+
+void wasm_ext_destroy_run_object(wasm_ext_extension_t cpp_ext, bool fast) {
+	delete (Extension*)cpp_ext;
+}
+
+int16_t wasm_ext_handle_run_object(wasm_ext_extension_t cpp_ext) {
+	return (int16_t)((Extension*)cpp_ext)->Handle();
+}
+
+int16_t wasm_ext_display_run_object(wasm_ext_extension_t cpp_ext) {
+	return (int16_t)((Extension*)cpp_ext)->Display();
+}
+
+int16_t wasm_ext_pause_run_object(wasm_ext_extension_t cpp_ext) {
+	return ((Extension*)cpp_ext)->FusionRuntimePaused();
+}
+
+int16_t wasm_ext_continue_run_object(wasm_ext_extension_t cpp_ext) {
+	return ((Extension*)cpp_ext)->FusionRuntimeContinued();
+}
+
+
+
+#else
+    #error Unsupported platform.
 #endif

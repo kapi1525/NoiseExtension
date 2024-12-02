@@ -1,6 +1,9 @@
 #pragma once
 #include <vector>
-#include <thread>
+#ifndef __wasi__
+    // Currently not fully supported
+    #include <thread>
+#endif
 #include <mutex>
 #include <algorithm>
 #include <chrono>
@@ -12,13 +15,15 @@
 	#include "..\Windows\MMFWindowsMasterHeader.hpp"
 	extern HINSTANCE hInstLib;
 #elif defined (__ANDROID__)
-	#include "..\Android\MMFAndroidMasterHeader.hpp"
+	#include "../Android/MMFAndroidMasterHeader.hpp"
 #elif defined (__APPLE__)
-#if MacBuild == 0
-	#include "../iOS/MMFiOSMasterHeader.hpp"
-#else
-	#include "../Mac/MMFMacMasterHeader.hpp"
-#endif
+    #if MacBuild == 0
+        #include "../iOS/MMFiOSMasterHeader.hpp"
+    #else
+        #include "../Mac/MMFMacMasterHeader.hpp"
+    #endif
+#elif defined(__wasi__)
+    #include "../Html/MMFHtmlMasterHeader.hpp"
 #endif
 
 class Extension;
@@ -185,9 +190,14 @@ namespace Edif
 		static void DetachJVMAccessForThisThread();
 		// Gets JNIEnv * for this thread, or null.
 		static JNIEnv * GetJNIEnvForThisThread();
-#else
+#elif defined(__APPLE__)
 		Runtime(Extension* ext, void * const objCExtPtr);
 		void * curCEvent;
+
+#elif defined(__wasi__)
+		Runtime(Extension* ext);
+#else
+    #error Unsupported platform.
 #endif
 
 		~Runtime();
@@ -252,7 +262,10 @@ namespace Edif
 
 		bool IsUnicode();
 
+// FIXME
+#ifndef __wasi__
 		DarkEdif::ObjectSelection ObjectSelection;
+#endif
 
 		void WriteGlobal(const TCHAR * name, void * Value);
 		void * ReadGlobal(const TCHAR * name);
@@ -323,6 +336,7 @@ namespace Edif
 
 	// A cross-platform, recursion-allowed, single thread exclusive mutex.
 	// Use mutexvar.edif_lock() and mutexvar.edif_unlock() macros to track locks and find any poor coding.
+#ifndef __wasi__
 	class recursive_mutex {
 #ifdef _DEBUG
 		std::recursive_timed_mutex intern;
@@ -347,6 +361,7 @@ namespace Edif
 #define edif_try_lock() try_lock(edif_lock_debugParamDefs)
 #define edif_unlock() unlock(edif_lock_debugParamDefs)
 	};
+#endif
 
 };
 

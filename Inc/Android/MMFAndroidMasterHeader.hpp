@@ -15,7 +15,7 @@
 #include "../Shared/AllPlatformDefines.hpp"
 #include "../Shared/NonWindowsDefines.hpp"
 
-#include <asm-generic\posix_types.h>
+#include <asm-generic/posix_types.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <iomanip>
@@ -534,9 +534,9 @@ struct CEventProgram {
 	int get_rh4CurToken();
 	// Sets the current expression token number.
 	void set_rh4CurToken(int newCurToken);
-	// Gets the current expression token array; relevant in Android only. 
+	// Gets the current expression token array; relevant in Android only.
 	jobject get_rh4Tokens();
-	// Sets the current expression token array; relevant in Android only. 
+	// Sets the current expression token array; relevant in Android only.
 	void set_rh4Tokens(jobject newTokensArray);
 
 	eventGroup* get_eventGroup();

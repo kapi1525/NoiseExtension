@@ -2,35 +2,182 @@ name: Build
 
 on:
   push:
-  pull_request:
-  release:
-    types: published
+  workflow_dispatch:
 
 jobs:
-  Build:
-    runs-on: windows-2022
+  build-windows:
+    strategy:
+      matrix:
+        config: ["editor", "runtime"]
+
+    runs-on: windows-latest
 
     steps:
-    - name: Checkout
-      uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: true
 
-    - name: Setup msbuild
-      uses: microsoft/setup-msbuild@v2
+      - name: Setup python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 'pypy3.9'
 
-    - name: Build
-      working-directory: ${{env.GITHUB_WORKSPACE}}
-      run: ./build.bat --bundle --sdkconfig --full --release --failonerr --verbose
+      - name: Install meson and ninja
+        run: pip install meson ninja
 
-    - name: Upload artifact
-      uses: actions/upload-artifact@v4
-      if: github.event_name != 'release'
-      with:
-        name: Noise
-        path: ./MFX/
-    
-    - name: Upload release
-      uses: AButler/upload-release-assets@v3.0
-      if: github.event_name == 'release'
-      with:
-        files: 'Noise.zip'
-        repo-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Setup MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x86
+
+      - name: Configure
+        run: meson setup bin --buildtype release -Deditor_build=${{ matrix.config == 'editor' }}
+
+      - name: Compile
+        run: meson install -C bin
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Noise-windows-${{ matrix.config }}
+          path: MFX
+          if-no-files-found: error
+
+  build-android:
+    strategy:
+      matrix:
+        target: ["armv7a", "aarch64", "i686", "x86_64"]
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - name: Setup python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 'pypy3.9'
+
+      - name: Install meson and ninja
+        run: pip install meson ninja
+
+      - name: Create a custom cross file with correct android ndk path
+        run: |
+          echo [constants] > cross/android-ndk.ini
+          echo android_ndk = \'$ANDROID_NDK\' >> cross/android-ndk.ini
+          echo android_ndk_host_tag = \'linux-x86_64\' >> cross/android-ndk.ini
+
+      - name: Configure
+        run: meson setup bin --buildtype release --cross-file cross/android-${{ matrix.target }}.ini --cross-file cross/android-ndk.ini
+
+      - name: Compile
+        run: meson install -C bin
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Noise-android-${{ matrix.target }}
+          path: MFX
+          if-no-files-found: error
+
+  build-wasm:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - name: Setup python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 'pypy3.9'
+
+      - name: Install meson and ninja
+        run: pip install meson ninja
+
+      - name: Download wit-bindgen
+        uses: robinraju/release-downloader@v1
+        with:
+          repository: 'bytecodealliance/wit-bindgen'
+          latest: true
+          fileName: 'wit-bindgen-*-x86_64-linux.tar.gz'
+          extract: true
+
+      - name: Install wit-bindgen
+        run: |
+          mv wit-bindgen-*-x86_64-linux/wit-bindgen /usr/local/bin/
+
+      - name: Download wasi-sdk
+        uses: robinraju/release-downloader@v1
+        with:
+          repository: 'WebAssembly/wasi-sdk'
+          latest: true
+          fileName: 'wasi-sdk-*-x86_64-linux.tar.gz'
+          extract: true
+
+      - name: Create a custom cross file with correct wasi sdk path
+        run: |
+          mv wasi-sdk-*-x86_64-linux wasi-sdk-x86_64-linux
+          echo [constants] > cross/wasi-sdk.ini
+          echo wasi_sdk = \'${{ github.workspace }}/wasi-sdk-x86_64-linux\' >> cross/wasi-sdk.ini
+
+      - name: Configure
+        run: meson setup bin --buildtype release --cross-file cross/wasm-wasi.ini --cross-file cross/wasi-sdk.ini
+
+      - name: Compile
+        run: meson install -C bin
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Noise-html
+          path: MFX
+          if-no-files-found: error
+
+  create-release-bundle:
+    runs-on: ubuntu-latest
+    needs: [build-windows, build-android, build-wasm]
+
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+
+      - run: ls -R .
+
+      - name: Combine all artifacts into one
+        run: |
+          ext_name="Noise"
+
+          for dir_entry in *; do
+              echo $dir_entry
+
+              zip_file="$dir_entry/Data/Runtime/Android/$ext_name.zip"
+
+              if [[ -f $zip_file ]]; then
+                  echo $zip_file
+
+                  7za x $zip_file -aoa
+              fi
+
+              mkdir -p MFX
+              cp $dir_entry/* MFX -r
+
+          done
+
+          rm -f MFX/Data/Runtime/Android/$ext_name.zip
+          7za a MFX/Data/Runtime/Android/$ext_name.zip app -sdel
+
+      - run: ls -R .
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Noise
+          path: MFX
+          if-no-files-found: error

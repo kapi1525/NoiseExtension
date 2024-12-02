@@ -1,0 +1,6 @@
+option(
+    'editor_build',
+    type: 'boolean',
+    value: false,
+    description: 'Only windows if enabled a editor .mfx will be built',
+)

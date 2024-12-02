@@ -989,26 +989,29 @@ int json_clean_comments (const json_char ** json_input, json_state * state, char
 	// and all items not used at runtime stripped. It starts with a one-liner comment with a UTC timestamp,
 	// indicating the latest change time of Extension.h, Extension.cpp, or DarkExt.json; whichever is latest.
 	// It has no BOM.
-	const char* json = *json_input;
-	size_t size = *_size;
 
-	// Max Int64 is 20 digits
-	const char* newlineAt = size < 2 + 20 + 1 ? NULL : (const char*)memchr(&json[2], '\n', size);
+	// const char* json = *json_input;
+	// size_t size = *_size;
 
-	if (json[0] != '/' || json[1] != '/' || !newlineAt)
-		goto WrongFormat;
 
-	for (const char* j = &json[2]; j < newlineAt; j++)
-		if (!isdigit(*j))
-			goto WrongFormat;
+	// // Max Int64 is 20 digits
+	// const char* newlineAt = size < 2 + 20 + 1 ? NULL : (const char*)memchr(&json[2], '\n', size);
 
-	*_size = size - ((newlineAt + 1) - (*json_input));
-	*json_input = newlineAt + 1;
+	// if (json[0] != '/' || json[1] != '/' || !newlineAt)
+	// 	goto WrongFormat;
+
+	// for (const char* j = &json[2]; j < newlineAt; j++)
+	// 	if (!isdigit(*j))
+	// 		goto WrongFormat;
+
+	// *_size = size - ((newlineAt + 1) - (*json_input));
+	// *json_input = newlineAt + 1;
+
 	return 1;
 
-	WrongFormat:
-	strcpy_s(error, error_len, "JSON was not minified; does not start with //.");
-	return 0;
+	// WrongFormat:
+	// strcpy_s(error, error_len, "JSON was not minified; does not start with //.");
+	// return 0;
 #endif
 
 }

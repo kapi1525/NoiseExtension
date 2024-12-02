@@ -1930,7 +1930,7 @@ HGLOBAL DarkEdif::DLL::DLL_UpdateEditStructure(mv * mV, EDITDATA * oldEdPtr)
 				smartPropertyReader.SmartPropertyReader::SmartPropertyReader();
 				jsonPropertyReader.JSONPropertyReader::JSONPropertyReader();
 			}
-			
+
 			preSmartPropertyReader.Initialise(convState, &retState);
 			if (retStateAdmin.convRetType == Properties::ConvReturnType::OK)
 				readers.push_back({ &preSmartPropertyReader, "PreSmartPropertyReader" });
@@ -2133,7 +2133,7 @@ HGLOBAL DarkEdif::DLL::DLL_UpdateEditStructure(mv * mV, EDITDATA * oldEdPtr)
 			// for reset only, once - as above, but once for a MFA, not every frame with ext
 			// never				- never makes popup
 			// Default: for reset only, once
-			// 
+			//
 			// Worth noting that property upgrade errors will always create an error popup box - this is not affected by this setting.
 
 			std::string upgradeBox = DarkEdif::GetIniSetting("SmartPropertiesUpgradeBox"sv);
@@ -2922,11 +2922,13 @@ std::uint16_t DarkEdif::GetEventNumber(eventGroup * evg) {
 /// <summary> If error, -1 is returned. </summary>
 int DarkEdif::GetCurrentFusionEventNum(const Extension * const ext)
 {
+    #ifndef __wasi__
 	// Reading Fusion's internals requires the main runtime to not be editing them
 	if (MainThreadID != std::this_thread::get_id()) {
 		LOGE(_T("Read GetCurrentFusionEventNum from non-main thread. Returning -1.\n"));
 		return -1;
 	}
+    #endif
 
 #ifdef _WIN32
 	// Can we read current event?
@@ -2951,8 +2953,13 @@ int DarkEdif::GetCurrentFusionEventNum(const Extension * const ext)
 	}
 
 	return threadEnv->CallIntMethod(ext->javaExtPtr, getEventIDMethod);
-#else // iOS
+#elif defined(__APPLE__)
 	return DarkEdifObjCFunc(PROJECT_NAME_RAW, getCurrentFusionEventNum)(ext->objCExtPtr);
+#elif defined(__wasi__)
+    // FIXME: STUB
+    return 0;
+#else
+    #error Unsupported platform.
 #endif
 }
 
@@ -2990,8 +2997,13 @@ std::tstring DarkEdif::MakePathUnembeddedIfNeeded(const Extension * ext, const s
 
 	threadEnv->DeleteLocalRef(pathJava);
 	threadEnv->DeleteLocalRef((jobject)str.ctx);
-#else
+#elif defined(__APPLE__)
 	const std::string truePath = DarkEdifObjCFunc(PROJECT_NAME_RAW, makePathUnembeddedIfNeeded)(ext->objCExtPtr, std::string(filePath).c_str());
+#elif defined(__wasi__)
+    // FIXME: STUB
+    const std::string truePath = "";
+#else
+    #error Unsupported platform.
 #endif
 	if (filePath != truePath)
 		LOGV(_T("File path extracted from \"%s\" to \"%s\".\n"), std::tstring(filePath).c_str(), truePath.c_str());
@@ -3252,7 +3264,7 @@ void DarkEdif::LOGFInternal(PrintFHintInside const TCHAR * x, ...)
 	DarkEdif::MsgBox::Error(_T("Fatal error"), _T("%s"), buf);
 	std::abort();
 }
-#else // APPLE
+#elif defined(__APPLE__) // APPLE
 void DarkEdif::BreakIfDebuggerAttached()
 {
 	__builtin_trap();
@@ -3273,6 +3285,29 @@ void DarkEdif::LOGFInternal(PrintFHintInside const TCHAR * x, ...)
 	vsprintf(buf, x, va);
 	va_end(va);
 }
+#elif defined(__wasi__)
+void DarkEdif::BreakIfDebuggerAttached()
+{
+    // FIXME: STUB
+}
+
+int DarkEdif::MessageBoxA(WindowHandleType hwnd, const TCHAR * text, const TCHAR * caption, int iconAndButtons)
+{
+	::DarkEdif::Log(iconAndButtons, "Message box \"%s\" absorbed: \"%s\".", caption, text);
+	DarkEdif::BreakIfDebuggerAttached();
+	return 0;
+}
+
+void DarkEdif::LOGFInternal(PrintFHintInside const TCHAR * x, ...)
+{
+	char buf[2048];
+	va_list va;
+	va_start(va, x);
+	vsprintf(buf, x, va);
+	va_end(va);
+}
+#else
+    #error Unsupported platform.
 #endif
 
 
@@ -3559,7 +3594,9 @@ bool DarkEdif::FileExists(const std::tstring_view path)
 	const DWORD fileAttr = GetFileAttributes(pathSafe.c_str());
 	return fileAttr != INVALID_FILE_ATTRIBUTES && (fileAttr & FILE_ATTRIBUTE_DIRECTORY) != FILE_ATTRIBUTE_DIRECTORY;
 #else
+#ifndef __wasi__ // exceptions are currently not supported by wasi
 	throw std::runtime_error("Function not implemented in non-Windows");
+#endif
 #endif
 }
 
@@ -3689,11 +3726,15 @@ std::tstring_view DarkEdif::GetMFXRelativeFolder(GetFusionFolderType type)
 #else
 std::tstring_view DarkEdif::GetRunningApplicationPath(DarkEdif::GetRunningApplicationPathType type)
 {
+#ifndef __wasi__ // exceptions are currently not supported by wasi
 	throw std::runtime_error("GetRunningApplicationPath function not implemented on non-Windows.");
+#endif
 }
 std::tstring_view DarkEdif::GetMFXRelativeFolder(GetFusionFolderType type)
 {
+#ifndef __wasi__ // exceptions are currently not supported by wasi
 	throw std::runtime_error("GetMFXRelativeFolder function not implemented on non-Windows.");
+#endif
 }
 #endif // _WIN32
 
@@ -4666,7 +4707,9 @@ DWORD WINAPI DarkEdifUpdateThread(void *)
 
 // Define it
 std::tstring DarkEdif::ExtensionName(_T("" PROJECT_NAME ""s));
+#ifndef __wasi__
 std::thread::id DarkEdif::MainThreadID;
+#endif
 WindowHandleType DarkEdif::Internal_WindowHandle;
 DarkEdif::MFXRunMode DarkEdif::RunMode = DarkEdif::MFXRunMode::Unset;
 
@@ -4792,6 +4835,9 @@ void DarkEdif::LogV(int logLevel, PrintFHintInside const TCHAR* msgFormat, va_li
 	printf("%-9s", logLevels[logLevel]);
 	vprintf(msgFormat, v);
 #endif
+#ifdef __wasi__
+    fflush(stdout);
+#endif
 }
 
 #if (defined(__ANDROID__) || defined(__APPLE__)) && DARKEDIF_LOG_MIN_LEVEL <= DARKEDIF_LOG_INFO
@@ -4818,63 +4864,12 @@ void DarkEdif::OutputDebugStringAInternal(const char * debugString)
 // To get the Windows-like behaviour
 void DarkEdif::Sleep(unsigned int milliseconds)
 {
+#ifndef __wasi__
 	if (milliseconds == 0)
 		std::this_thread::yield();
 	else
 		std::this_thread::sleep_for(std::chrono::milliseconds(milliseconds));
+#endif
 }
 
 #endif
-
-
-
-// =====
-// Embed the minified JSON file in Android and iOS
-// =====
-
-// Causes the produced extension to include DarkExt.PostMinify.json.
-// Hat tip: https://stackoverflow.com/a/4910421
-// Also note https://github.com/graphitemaster/incbin/blob/master/incbin.h
-
-#ifdef __ANDROID__
-__asm__(".section .rodata				\n\
-	.global darkExtJSON					\n\
-	.type   darkExtJSON, %object		\n\
-	.align  4							\n\
-darkExtJSON:							\n\
-	.incbin \"DarkExt.PostMinify.json\"	\n\
-darkExtJSON_end:						\n\
-	.global darkExtJSONSize				\n\
-	.type   darkExtJSONSize, %object	\n\
-	.align  4							\n\
-darkExtJSONSize:						\n\
-	.int	darkExtJSON_end - darkExtJSON");
-#elif defined(__APPLE__)
-/**
- * @file incbin.h
- * @author Dale Weiler
- * @brief Utility for including binary files
- *
- * Facilities for including binary files into the current translation unit and
- * making use from them externally in other translation units.
- */
-
-INCBIN(PROJECT_NAME_RAW, _darkExtJSON, "DarkExt.PostMinify.json");
-
-// See https://stackoverflow.com/a/19725269
-// Note the file will NOT be transmitted to Mac unless it's set as a C/C++ header file.
-/*__asm__(".const_data					\n\
-	.global darkExtJSON					\n\
-	.align  4							\n\
-darkExtJSON:							\n\
-	.incbin \"DarkExt.PostMinify.json\"	\n\
-__asm__("darkExtJSON_end:						\n\
-	.global darkExtJSONSize				\n\
-	.align  4							\n\
-darkExtJSONSize:						\n\
-	.int	darkExtJSON_end - darkExtJSON");*/
-
-#endif
-// These are caused by the above ASM block. (these are also declared in the Android/iOS master header)
-// char darkExtJSON[];
-// unsigned darkExtJSONSize;
