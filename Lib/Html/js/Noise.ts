@@ -180,7 +180,6 @@ class CRunNoise extends CRunExtension {
         }
 
         this.cppExtPtr = cppLand.createRunObject(editdata, 0, version);
-        console.log("createRunObject cppExtPtr: " + this.cppExtPtr);
 
         // CRunNoise.cppLand.wasm_free(edPtr);
         return false;
@@ -296,7 +295,6 @@ class CRunNoise extends CRunExtension {
         let manager = new ConditionOrActionManager(this.rh!, act);
 
         cppLand.actionJump(this.cppExtPtr!, num, manager);
-        console.log("createRunObject cppExtPtr: " + this.cppExtPtr);
     }
 
     // Expression entry
