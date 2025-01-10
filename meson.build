@@ -115,7 +115,7 @@ if host_machine.system() == 'wasi'
 endif
 
 copy = find_program('cp', 'xcopy', required: false) # TODO: xcopy on windows requires /y flag
-p7zip = find_program('7za', required: false)        # 7zip, p7zip on linux/mac
+p7zip = find_program('7za', '7z', required: false)        # 7zip, p7zip on linux/mac
 
 install_emptydir(install_prefix / ext_install_path)
 

@@ -70,6 +70,7 @@ Configure:
   meson setup bin --cross-file cross/<cross file>
   ```
 note: You can add `--buildtype release`, to make optimized release builds.
+another note: wasm builds dont behave correctly in release builds, so compile them with `--buildtype plain` for now instead.
 
 Compile:
 ```console
