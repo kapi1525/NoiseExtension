@@ -1226,7 +1226,7 @@ ProjectFunc long PROJ_FUNC_GEN(PROJECT_NAME_RAW, _conditionJump(void * cppExtPtr
 	ConditionOrActionManager_iOS params(true, ext, cndExt);
 	ext->Runtime.curCEvent = cndExt;
 #elif defined(__wasi__)
-int32_t wasm_ext_condition_jump(wasm_ext_extension_t cpp_ext, int32_t ID, wasm_ext_own_condition_or_action_manager_t manager) {
+int32_t exports_wasm_ext_condition_jump(wasm_ext_extension_t cpp_ext, int32_t ID, wasm_ext_own_condition_or_action_manager_t manager) {
     Extension* const ext = (Extension*)cpp_ext;
     ConditionOrActionManager_Html params(wasm_ext_borrow_condition_or_action_manager(manager));
 #else
@@ -1296,7 +1296,7 @@ ProjectFunc void PROJ_FUNC_GEN(PROJECT_NAME_RAW, _actionJump(void * cppExtPtr, i
 	ext->Runtime.curCEvent = act;
 #define actreturn /* void */
 #elif defined(__wasi__)
-void wasm_ext_action_jump(wasm_ext_extension_t cpp_ext, int32_t ID, wasm_ext_own_condition_or_action_manager_t manager) {
+void exports_wasm_ext_action_jump(wasm_ext_extension_t cpp_ext, int32_t ID, wasm_ext_own_condition_or_action_manager_t manager) {
     Extension* const ext = (Extension*)cpp_ext;
     ConditionOrActionManager_Html params(wasm_ext_borrow_condition_or_action_manager(manager));
 #define actreturn /* void */
@@ -1637,7 +1637,7 @@ ProjectFunc void PROJ_FUNC_GEN(PROJECT_NAME_RAW, _expressionJump(void * cppExtPt
 	Extension* ext = (Extension*)cppExtPtr;
 	ExpressionManager_iOS params(ext);
 #elif defined(__wasi__)
-void wasm_ext_expression_jump(wasm_ext_extension_t cpp_ext, int32_t ID, wasm_ext_own_expression_manager_t manager) {
+void exports_wasm_ext_expression_jump(wasm_ext_extension_t cpp_ext, int32_t ID, wasm_ext_own_expression_manager_t manager) {
     Extension* const ext = (Extension*)cpp_ext;
     ExpressionManager_Html params(wasm_ext_borrow_expression_manager(manager));
 #else

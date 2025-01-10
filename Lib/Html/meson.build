@@ -22,7 +22,7 @@ run_command(npm, '--prefix', npm_package_root, 'i', '--save-dev',
 # C bindings for imports/exports from/into js land
 
 # Used to create a C header with all wasm imports and exports defined in .wit file.
-wit_bindgen = find_program('wit-bindgen')
+wit_bindgen = find_program('wit-bindgen', version: '>=0.37.0')
 
 sdk_source += custom_target('wit_c_bindings',
     input: 'sdk.wit',
