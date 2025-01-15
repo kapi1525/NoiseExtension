@@ -2,6 +2,7 @@
 #include <vector>
 #include <utility>
 #include <string>
+#include <string_view>
 #include <fstream>
 #include <iostream>
 #include <regex>
@@ -54,6 +55,30 @@ std::string get_ace_call_arguments(const func_def* def) {
     return ret;
 }
 
+std::string get_ace_call_arguments2(std::string_view indent, const func_def* def) {
+    std::string ret;
+
+    for (size_t i = 0; i < def->arg_types.size(); i++) {
+        ret += indent;
+        ret += "    long arg" + std::to_string(i) + " = Parameters[" + std::to_string(i) + "];\n";
+    }
+
+    return ret;
+}
+
+std::string get_ace_call_arguments3(const func_def* def) {
+    std::string ret;
+
+    for (size_t i = 0; i < def->arg_types.size(); i++) {
+                ret += "*(" + def->arg_types[i] + " *)&arg" + std::to_string(i) + "";
+
+        if(i + 1 < def->arg_types.size()) {
+            ret += " ,";
+        }
+    }
+
+    return ret;
+}
 
 
 
@@ -208,10 +233,18 @@ int main(int argc, char const *argv[]) {
                         continue;
                     }
 
-                    out << indent << "case " << i.first << ":\n";
+                    // FIXME: The compiler does something weird when building to wasm with optimizations (-O2, -O3)
+                    // instead of loading all parameters from memory it loads only the first one and the rest are set to 0.
+                    // but when the params are first saved in a variable and then later casted to the correct type it magicaly works.
+                    // old code works fine with msvc so this feels like a compiler bug.
+                    // tested with wasi-sdk 25.
+                    // TODO: recheck later with a more recent compiler. maybe find a minimal code to reproduce and submit an issue to llvm-project.
+                    // TODO: check if this bug happens for actions and conditions.
+                    out << indent << "case " << i.first << ": {\n";
+                    out << get_ace_call_arguments2(indent, def) << "\n";
                     out << indent << "    *((" << def->return_type << " *)&Result) = ext->" << def->name << "(";
-                    out << get_ace_call_arguments(def) << ");\n";
-                    out << indent << "    break;\n";
+                    out << get_ace_call_arguments3(def) << ");\n";
+                    out << indent << "    } break;\n";
                 }
 
             } else {

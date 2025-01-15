@@ -128,7 +128,7 @@ jobs:
           echo wasi_sdk = \'${{ github.workspace }}/wasi-sdk-x86_64-linux\' >> cross/wasi-sdk.ini
 
       - name: Configure
-        run: meson setup bin --buildtype plain --cross-file cross/wasm-wasi.ini --cross-file cross/wasi-sdk.ini
+        run: meson setup bin --buildtype release --cross-file cross/wasm-wasi.ini --cross-file cross/wasi-sdk.ini
 
       - name: Compile
         run: meson install -C bin
