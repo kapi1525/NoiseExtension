@@ -65,9 +65,9 @@ endif
 sdk_defines_project = [
     'PROJECT_NAME=STRIFY(' + meson.project_name() + ')',
     'PROJECT_NAME_UNDERSCORES=STRIFY(' + meson.project_name().underscorify() + ')',
+    'EXTENSION_FANCY_VERSION=STRIFY(' + meson.project_version() + ')',
     'AUTHOR_NAME=STRIFY(' + ext_author + ')',
     'COMPANY_NAME=STRIFY(' + ext_company + ')',
-    'YEAR=STRIFY(2024)',                        # TODO
 ]
 
 sdk_defines_editor = [

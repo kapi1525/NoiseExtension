@@ -36,7 +36,7 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 //
 
 1 VERSIONINFO
- FILEVERSION 1,0,0,EXTENSION_VERSION
+ FILEVERSION EXTENSION_FANCY_VERSION_MAJOR,EXTENSION_FANCY_VERSION_MINOR,EXTENSION_FANCY_VERSION_PATCH,EXTENSION_VERSION
  PRODUCTVERSION 1,0,0,EXTENSION_VERSION
  FILEFLAGSMASK VS_FFI_FILEFLAGSMASK
 #ifdef _DEBUG
@@ -54,12 +54,12 @@ BEGIN
 		BEGIN
 			VALUE "ProductName", PROJECT_NAME "\0"
 			VALUE "CompanyName", COMPANY_NAME "\0"
-			VALUE "FileDescription", PROJECT_NAME ", " asStr(CONFIG) " build " asStr(EXTENSION_VERSION) ".\0"
+			VALUE "FileDescription", PROJECT_NAME ", " asStr(CONFIG) ", v" EXTENSION_FANCY_VERSION ", build " asStr(EXTENSION_VERSION) ".\0"
 			VALUE "FileVersion", "2.00" "\0"
 			VALUE "InternalName", PROJECT_NAME ".mfx\0"
-			VALUE "LegalCopyright", "Copyright © " YEAR " " COMPANY_NAME "\0"
+			VALUE "LegalCopyright", "Copyright © 2025 " COMPANY_NAME "\0"
 			VALUE "OriginalFilename", PROJECT_NAME ".mfx\0"
-			VALUE "ProductVersion", "Build " asStr(EXTENSION_VERSION) ", date " BUILD_DATE ".\0"
+			VALUE "ProductVersion", "v" EXTENSION_FANCY_VERSION ", build " asStr(EXTENSION_VERSION) ".\0"
 		END
 	END
 	BLOCK "VarFileInfo"
@@ -78,7 +78,7 @@ END
 
 // All new extensions should use this! Don't set it to 0!
 // Pre-existing extensions that are already in MFAs (i.e. pre 8th Nov 2019) should use 0!
-// 
+//
 // Some backstory:
 // KPX_MAGICNUMBER is normally 200. The magic number in the KPX_MAGICNUMBER resource
 // is stored in the MFA, normally as below: 0x2516, 0x5908.

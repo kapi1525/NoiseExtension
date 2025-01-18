@@ -56,10 +56,12 @@ sdk_defines_project_rc = [
     'KPX_MAGICNUMBER=200',
     'PROJECT_NAME=asStr(' + meson.project_name() + ')',
     'PROJECT_NAME_UNDERSCORES=asStr(' + meson.project_name().underscorify() + ')',
+    'EXTENSION_FANCY_VERSION=asStr(' + meson.project_version() + ')',
+    'EXTENSION_FANCY_VERSION_MAJOR=' + meson.project_version().split('.')[0],
+    'EXTENSION_FANCY_VERSION_MINOR=' + meson.project_version().split('.')[1],
+    'EXTENSION_FANCY_VERSION_PATCH=' + meson.project_version().split('.')[2],
     'AUTHOR_NAME=asStr(' + ext_author + ')',
     'COMPANY_NAME=asStr(' + ext_company + ')',
-    'YEAR=asStr(2024)',                        # TODO
-    'BUILD_DATE=asStr(2024-10-09T18:14:24.1939030+00:00)',  # todo
 ]
 
 sdk_defines_rc = []
