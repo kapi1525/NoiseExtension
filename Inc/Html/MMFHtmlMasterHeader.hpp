@@ -33,8 +33,7 @@ void Sleep(unsigned int milliseconds);
 // Used to make the DLL function be visible externally, and in C function signature, not C++
 // FIXME: Due to a bug in llvm --export-dynamic exports not only functions marked with visibility(default) but other internal functions as well creating bloat.
 // Created WASM_FUNC_EXPORT macro to adress this temporarily.
-// #define ProjectFunc extern "C" __attribute__((visibility ("default")))
-#define ProjectFunc
+#define ProjectFunc extern "C" //__attribute__((visibility ("default")))
 #define FusionAPI /* no declarator */
 #include <fcntl.h>
 #include <errno.h>

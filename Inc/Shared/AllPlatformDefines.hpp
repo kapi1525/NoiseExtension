@@ -137,7 +137,9 @@ namespace DarkEdif {
 }
 
 #ifndef DARKEDIF_LOG_MIN_LEVEL
-	#ifdef _DEBUG
+	#ifdef __wasi__
+		#define DARKEDIF_LOG_MIN_LEVEL DARKEDIF_LOG_VERBOSE
+	#elif defined(_DEBUG)
 		#define DARKEDIF_LOG_MIN_LEVEL DARKEDIF_LOG_INFO
 	#else
 		#define DARKEDIF_LOG_MIN_LEVEL DARKEDIF_LOG_WARN

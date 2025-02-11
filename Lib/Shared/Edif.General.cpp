@@ -4,8 +4,10 @@
 // be modified.
 // ============================================================================
 
+#include "Edif.hpp"
 #include "Common.hpp"
 #include "DarkEdif.hpp"
+#include <cstdlib>
 
 #ifdef _WIN32
 
@@ -885,9 +887,17 @@ ProjectFunc void PROJ_FUNC_GEN(PROJECT_NAME_RAW, _destroyRunObject)(void * cppEx
 
 #elif defined(__wasi__)
 
-#include "wasm_ext.h"
 
-void exports_wasm_ext_init(void) {
+ProjectFunc void* WASM_FUNC_EXPORT(wasm_malloc)(int size) {
+    return malloc(size);
+}
+
+ProjectFunc void WASM_FUNC_EXPORT(wasm_free)(void* ptr) {
+    free(ptr);
+}
+
+
+ProjectFunc void WASM_FUNC_EXPORT(init)() {
     mv* mV = nullptr;
     if (!Edif::SDK) {
         LOGV("The SDK is being initialized.\n");
@@ -895,40 +905,40 @@ void exports_wasm_ext_init(void) {
     }
 }
 
-void exports_wasm_ext_dealloc(void) {
+ProjectFunc void WASM_FUNC_EXPORT(dealloc)() {
     LOGV("The SDK is being freed.\n");
 }
 
-uint32_t exports_wasm_ext_get_number_of_conditions(void) {
+ProjectFunc int WASM_FUNC_EXPORT(get_number_of_conditions)() {
     return CurLang["Conditions"].u.array.length;
 }
 
-wasm_ext_extension_t exports_wasm_ext_create_run_object(wasm_ext_editdata_t* ed, wasm_ext_create_object_info_t cob, uint32_t version) {
+ProjectFunc Extension* WASM_FUNC_EXPORT(create_run_object)(EDITDATA* edPtr, CreateObjectInfo* cob, int version) {
     assert(version == Extension::Version);
 
-    Extension* ext = new Extension((EDITDATA*)ed->ptr, nullptr);
+    Extension* extPtr = new Extension(edPtr, cob);
 
-    return (wasm_ext_extension_t)ext;
+    return extPtr;
 }
 
-void exports_wasm_ext_destroy_run_object(wasm_ext_extension_t cpp_ext, bool fast) {
-	delete (Extension*)cpp_ext;
+ProjectFunc void WASM_FUNC_EXPORT(destroy_run_object)(Extension* extPtr, bool fast) {
+	delete extPtr;
 }
 
-int16_t exports_wasm_ext_handle_run_object(wasm_ext_extension_t cpp_ext) {
-	return (int16_t)((Extension*)cpp_ext)->Handle();
+ProjectFunc int16_t WASM_FUNC_EXPORT(handle_run_object)(Extension* extPtr) {
+	return (int16_t)extPtr->Handle();
 }
 
-int16_t exports_wasm_ext_display_run_object(wasm_ext_extension_t cpp_ext) {
-	return (int16_t)((Extension*)cpp_ext)->Display();
+ProjectFunc int16_t WASM_FUNC_EXPORT(display_run_object)(Extension* extPtr) {
+	return (int16_t)extPtr->Display();
 }
 
-int16_t exports_wasm_ext_pause_run_object(wasm_ext_extension_t cpp_ext) {
-	return ((Extension*)cpp_ext)->FusionRuntimePaused();
+ProjectFunc int16_t WASM_FUNC_EXPORT(pause_run_object)(Extension* extPtr) {
+	return extPtr->FusionRuntimePaused();
 }
 
-int16_t exports_wasm_ext_continue_run_object(wasm_ext_extension_t cpp_ext) {
-	return ((Extension*)cpp_ext)->FusionRuntimeContinued();
+ProjectFunc int16_t WASM_FUNC_EXPORT(continue_run_object)(Extension* extPtr) {
+	return extPtr->FusionRuntimeContinued();
 }
 
 

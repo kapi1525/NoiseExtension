@@ -1,5 +1,12 @@
 // Typescript type declarations for clickteam's html runtime Extensions.js
 
+// wasm file binary data
+declare module "Extension.wasm" {
+    let uint8array: Uint8Array;
+    export default uint8array;
+}
+
+
 // FIXME: Stubs from Objects.js
 declare class CRun {};
 declare class CObject {

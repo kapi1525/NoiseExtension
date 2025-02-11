@@ -3,11 +3,6 @@
 #include "DarkEdif.hpp"
 #include "Edif.hpp"
 
-#ifdef __wasi__
-    #include "wasm_ext.h"
-    #include <deque>
-#endif
-
 // Used for Win32 resource ID numbers
 #include "Resource.h"
 
@@ -1158,36 +1153,45 @@ struct ConditionOrActionManager_iOS : ACEParamReader
 };
 #elif defined(__wasi__)
 
+namespace JSImports {
+    // For all ACEs, js implementation gets switched before calling x_jump().
+    ProjectFunc float WASM_FUNC_IMPORT(ace_params, get_integer)(int index);
+    ProjectFunc float WASM_FUNC_IMPORT(ace_params, get_float)(int index);
+    // if buffer == null, returns the required buffer size, otherwise fills the buffer with the string and returns the amount of bytes written.
+    ProjectFunc size_t WASM_FUNC_IMPORT(ace_params, get_string)(char* buffer, size_t buffer_size, int index);
+
+    // Only for expressions
+    ProjectFunc void WASM_FUNC_IMPORT(ace_params, set_integer)(int value);
+    ProjectFunc void WASM_FUNC_IMPORT(ace_params, set_float)(float value);
+    ProjectFunc void WASM_FUNC_IMPORT(ace_params, set_string)(const char* string, size_t string_size);
+}
+
+
 struct ConditionOrActionManager_Html : ACEParamReader {
-    wasm_ext_borrow_condition_or_action_manager_t wasm_manager;
-
-    ConditionOrActionManager_Html() = delete;
-    ConditionOrActionManager_Html(wasm_ext_borrow_condition_or_action_manager_t wasm_manager)
-        : wasm_manager(wasm_manager)
-    {
-    }
-
+    ConditionOrActionManager_Html() = default;
 
     // Inherited via ACEParamReader
     virtual std::int32_t GetInteger(int index, Params type) {
-        std::int32_t ret = wasm_ext_method_condition_or_action_manager_get_integer(wasm_manager, index);
-        LOGV(PROJECT_NAME _T(" param index: %d, type: integer, value: %d.\n"), index, ret);
-        return ret;
+        std::int32_t value = JSImports::get_integer(index);
+        LOGV(PROJECT_NAME _T(" param index: %d, type: integer, value: %d.\n"), index, value);
+        return value;
     }
 
     virtual float GetFloat(int index) {
-        float ret = wasm_ext_method_condition_or_action_manager_get_float(wasm_manager, index);
-        LOGV(PROJECT_NAME _T(" param index: %d, type: float, value: %f.\n"), index, ret);
-        return ret;
+        float value = JSImports::get_float(index);
+        LOGV(PROJECT_NAME _T(" param index: %d, type: float, value: %f.\n"), index, value);
+        return value;
     }
 
     virtual const TCHAR* GetString(int index) {
-        wasm_ext_string_t wasm_str;
-        wasm_ext_method_condition_or_action_manager_get_string(wasm_manager, index, &wasm_str);
-        strings_to_free.emplace_back((const TCHAR*)wasm_str.ptr, wasm_str.len);
-        wasm_ext_string_free(&wasm_str);
-        LOGV(PROJECT_NAME _T(" param index: %d, type: string, value: %s.\n"), index, strings_to_free.back().c_str());
-        return strings_to_free.back().c_str();
+        size_t buffer_size = JSImports::get_string(nullptr, 0, index);
+        char* string = new char[buffer_size];
+
+        assert(JSImports::get_string(string, buffer_size, index) == buffer_size);
+        strings_to_free.push_back(string);
+
+        LOGV(PROJECT_NAME _T(" param index: %d, type: string, value: %s.\n"), index, string);
+        return string;
     }
 
     virtual long GetObject(int index) {
@@ -1196,11 +1200,15 @@ struct ConditionOrActionManager_Html : ACEParamReader {
         return 0;
     }
 
-    ~ConditionOrActionManager_Html() = default;
+    ~ConditionOrActionManager_Html() {
+        // clean up memory after strings.
+        for (auto str : strings_to_free) {
+            delete str;
+        }
+    };
 
 protected:
-    // deque since the memory address cant change
-    std::deque<std::tstring> strings_to_free;
+    std::vector<const char*> strings_to_free;
 };
 #else
     #error Unsupported platform.
@@ -1226,9 +1234,8 @@ ProjectFunc long PROJ_FUNC_GEN(PROJECT_NAME_RAW, _conditionJump(void * cppExtPtr
 	ConditionOrActionManager_iOS params(true, ext, cndExt);
 	ext->Runtime.curCEvent = cndExt;
 #elif defined(__wasi__)
-int32_t exports_wasm_ext_condition_jump(wasm_ext_extension_t cpp_ext, int32_t ID, wasm_ext_own_condition_or_action_manager_t manager) {
-    Extension* const ext = (Extension*)cpp_ext;
-    ConditionOrActionManager_Html params(wasm_ext_borrow_condition_or_action_manager(manager));
+ProjectFunc int32_t WASM_FUNC_EXPORT(condition_jump)(Extension* ext, int32_t ID) {
+    ConditionOrActionManager_Html params;
 #else
     #error Unsupported platform.
 #endif
@@ -1296,9 +1303,8 @@ ProjectFunc void PROJ_FUNC_GEN(PROJECT_NAME_RAW, _actionJump(void * cppExtPtr, i
 	ext->Runtime.curCEvent = act;
 #define actreturn /* void */
 #elif defined(__wasi__)
-void exports_wasm_ext_action_jump(wasm_ext_extension_t cpp_ext, int32_t ID, wasm_ext_own_condition_or_action_manager_t manager) {
-    Extension* const ext = (Extension*)cpp_ext;
-    ConditionOrActionManager_Html params(wasm_ext_borrow_condition_or_action_manager(manager));
+ProjectFunc void WASM_FUNC_EXPORT(action_jump)(Extension* ext, int32_t ID) {
+    ConditionOrActionManager_Html params;
 #define actreturn /* void */
 #else
     #error Unsupported platform.
@@ -1548,52 +1554,45 @@ struct ExpressionManager_iOS : ACEParamReader {
 };
 #elif defined(__wasi__)
 struct ExpressionManager_Html : ACEParamReader {
-    wasm_ext_borrow_expression_manager_t wasm_manager;
+	ExpressionManager_Html() = default;
 
-	ExpressionManager_Html() = delete;
-    ExpressionManager_Html(wasm_ext_borrow_expression_manager_t wasm_manager)
-        : wasm_manager(wasm_manager)
-    {
-    }
-
-	void SetValue(int val) {
-        LOGV(PROJECT_NAME _T(" expression return, type: integer, value: %d.\n"), val);
-        wasm_ext_method_expression_manager_set_integer(wasm_manager, val);
+	void SetValue(int value) {
+        LOGV(PROJECT_NAME _T(" expression return, type: integer, value: %d.\n"), value);
+        JSImports::set_integer(value);
 	}
 
-	void SetValue(float val) {
-        LOGV(PROJECT_NAME _T(" expression return, type: float, value: %f.\n"), val);
-        wasm_ext_method_expression_manager_set_float(wasm_manager, val);
+	void SetValue(float value) {
+        LOGV(PROJECT_NAME _T(" expression return, type: float, value: %f.\n"), value);
+        JSImports::set_float(value);
 	}
 
-	void SetValue(const char* str) {
-        LOGV(PROJECT_NAME _T(" expression return, type: string, value: %s.\n"), str);
-        wasm_ext_string_t wasm_str{};
-        wasm_ext_string_dup(&wasm_str, str);
-        wasm_ext_method_expression_manager_set_string(wasm_manager, &wasm_str);
-        wasm_ext_string_free(&wasm_str);
+	void SetValue(const char* string) {
+        LOGV(PROJECT_NAME _T(" expression return, type: string, value: %s.\n"), string);
+        JSImports::set_string(string, strlen(string));
 	}
 
     // Inherited via ACEParamReader
     virtual std::int32_t GetInteger(int index, Params type) {
-        float ret = wasm_ext_method_expression_manager_get_integer(wasm_manager, index);
-        LOGV(PROJECT_NAME _T(" param index: %d, type: integer, value: %d.\n"), index, ret);
-        return ret;
+        std::int32_t value = JSImports::get_integer(index);
+        LOGV(PROJECT_NAME _T(" param index: %d, type: integer, value: %d.\n"), index, value);
+        return value;
     }
 
     virtual float GetFloat(int index) {
-        float ret = wasm_ext_method_expression_manager_get_float(wasm_manager, index);
-        LOGV(PROJECT_NAME _T(" param index: %d, type: float, value: %f.\n"), index, ret);
-        return ret;
+        float value = JSImports::get_float(index);
+        LOGV(PROJECT_NAME _T(" param index: %d, type: float, value: %f.\n"), index, value);
+        return value;
     }
 
     virtual const TCHAR* GetString(int index) {
-        wasm_ext_string_t wasm_str;
-        wasm_ext_method_expression_manager_get_string(wasm_manager, index, &wasm_str);
-        strings_to_free.emplace_back((const TCHAR*)wasm_str.ptr, wasm_str.len);
-        wasm_ext_string_free(&wasm_str);
-        LOGV(PROJECT_NAME _T(" param index: %d, type: string, value: %s.\n"), index, strings_to_free.back().c_str());
-        return strings_to_free.back().c_str();
+        size_t buffer_size = JSImports::get_string(nullptr, 0, index);
+        char* string = new char[buffer_size];
+
+        assert(JSImports::get_string(string, buffer_size, index) == buffer_size);
+        strings_to_free.push_back(string);
+
+        LOGV(PROJECT_NAME _T(" param index: %d, type: string, value: %s.\n"), index, string);
+        return string;
     }
 
 	virtual long GetObject(int) {
@@ -1605,11 +1604,15 @@ struct ExpressionManager_Html : ACEParamReader {
 		// Do nothing. We only care on Windows.
 	}
 
-	~ExpressionManager_Html() = default;
+	~ExpressionManager_Html() {
+        // clean up memory after strings.
+        for (auto str : strings_to_free) {
+            delete str;
+        }
+    };
 
 protected:
-    // deque since the memory address cant change
-    std::deque<std::tstring> strings_to_free;
+    std::vector<const char*> strings_to_free;
 };
 #else
     #error Unsupported platform.
@@ -1637,9 +1640,8 @@ ProjectFunc void PROJ_FUNC_GEN(PROJECT_NAME_RAW, _expressionJump(void * cppExtPt
 	Extension* ext = (Extension*)cppExtPtr;
 	ExpressionManager_iOS params(ext);
 #elif defined(__wasi__)
-void exports_wasm_ext_expression_jump(wasm_ext_extension_t cpp_ext, int32_t ID, wasm_ext_own_expression_manager_t manager) {
-    Extension* const ext = (Extension*)cpp_ext;
-    ExpressionManager_Html params(wasm_ext_borrow_expression_manager(manager));
+ProjectFunc void WASM_FUNC_EXPORT(expression_jump)(Extension* ext, int32_t ID) {
+    ExpressionManager_Html params;
 #else
     #error Unsupported platform.
 #endif

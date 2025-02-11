@@ -53,7 +53,6 @@ While porting to html/webassembly i didnt know if it would be easily posible to 
   - 7zip (optional)
 - html/webassembly
   - wasi-sdk
-  - wasm-bindgen
   - npm (node.js)
 
 ### Actualy building
@@ -70,7 +69,6 @@ Configure:
   meson setup bin --cross-file cross/<cross file>
   ```
 note: You can add `--buildtype release`, to make optimized release builds.
-another note: wasm builds dont behave correctly in release builds, so compile them with `--buildtype plain` for now instead.
 
 Compile:
 ```console

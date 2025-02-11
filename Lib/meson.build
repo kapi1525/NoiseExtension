@@ -19,6 +19,10 @@ if unicode_build
 endif
 
 
+# All platforms except wasm are built as shared_module.
+sdk_ext_target_type = 'shared_module'
+
+
 # Source files
 
 sdk_source = files(
@@ -42,9 +46,12 @@ sdk_include = include_directories(
 
 # Dependencies
 
-sdk_deps = [
-    dependency('threads'),
-]
+sdk_deps = []
+
+# Threads are not supported by wasi yet
+if host_machine.system() != 'wasi'
+    sdk_deps += dependency('threads')
+endif
 
 
 # Defines
@@ -156,11 +163,6 @@ foreach def : sdk_defines
 endforeach
 
 
-# hack, need to use static_library so meson doesnt start the linker. meson currently doesnt support wasm-ld and passes unrecognized arguments.
-sdk_ext_target_type = 'shared_module'
-if host_machine.system() == 'wasi'
-    sdk_ext_target_type = 'static_library'
-endif
 
 
 darkedif_sdk = declare_dependency(

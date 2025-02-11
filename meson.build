@@ -90,27 +90,17 @@ ext = build_target(
 )
 
 if host_machine.system() == 'wasi'
-    # Hack: Manualy start the linker because meson uses arguments not recognized by wasm-ld
-    # https://github.com/mesonbuild/meson/pull/11862
-    cpp_compiler = find_program('cpp', 'clang++')
-
-    ext_wasm = custom_target('ext_wasm',
-        build_by_default: true,
-        input: ext.extract_all_objects(recursive: true),
-        output: 'Extension.wasm',
-        command: [cpp_compiler, '--target=wasm32-wasip2', '-Wl,--no-entry', '@INPUT@', '-o', '@OUTPUT@'],
-    )
-
     # javascript wrapper that loads the webassembly
+
     ext = custom_target(meson.project_name() + '_js',
-        build_by_default: true,
-        input: [ext_wasm, files('Lib/Html/js/Noise.ts')],  # meson uses this to determine if this needs to be run.
+        input: [ext, sdk_js_files],
         output: meson.project_name() + '.js',
         env: {
-            'EXTWASMPATH': ext_wasm.full_path(),
+            'EXTWASMPATH': ext.full_path(),
             'OUTJSPATH': meson.current_build_dir() / 'Noise.js',
         },
         command: [npm, '--prefix', npm_package_root, 'run', 'build'],
+        build_by_default: true,
     )
 endif
 

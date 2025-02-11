@@ -1,136 +1,90 @@
 // Wasm gets embeded into .js file by esbuild, its stored in base64 and gets converted to UInt8Array.
-
-// import wasm_file from "Extension.wasm"
-// import {WASI, File, OpenFile, ConsoleStdout} from "@bjorn3/browser_wasi_shim";
-
-// Typescript support is currently borked both for --instantiation sync and wit resources
-// @ts-ignore
-import * as WasmExt from "WasmExt";
-
-import { environment, exit as exit$1, stderr, stdin, stdout, terminalInput, terminalOutput, terminalStderr, terminalStdin, terminalStdout } from '@bytecodealliance/preview2-shim/cli';
-import { preopens, types } from '@bytecodealliance/preview2-shim/filesystem';
-import { error, streams, poll } from '@bytecodealliance/preview2-shim/io';
-import { tcp, udp } from '@bytecodealliance/preview2-shim/sockets';
-
-// @ts-ignore
-import CoreWasm1 from "../temp/WasmExt.core.wasm";
-// @ts-ignore
-import CoreWasm2 from "../temp/WasmExt.core2.wasm";
-// @ts-ignore
-import CoreWasm3 from "../temp/WasmExt.core3.wasm";
-// @ts-ignore
-import CoreWasm4 from "../temp/WasmExt.core4.wasm";
+import extWasm from "Extension.wasm";
+import {WASI, File, OpenFile, ConsoleStdout} from "@bjorn3/browser_wasi_shim";
 
 // FIXME: This should be generated from a template or something at build time
 
-class ConditionOrActionManager {
-    rh: CRun;
-    cndOrAct: CCndExtension | CActExtension;
 
-    constructor(rh: CRun, cndOrAct: CCndExtension | CActExtension) {
-        this.rh = rh;
-        this.cndOrAct = cndOrAct;
-    }
 
-    getInteger(index: number): number {
-        return this.cndOrAct.getParamExpression(this.rh, index) as number;
-    }
-
-    getFloat(index: number): number {
-        return this.cndOrAct.getParamExpression(this.rh, index) as number;
-    }
-
-    getString(index: number): string {
-        return this.cndOrAct.getParamExpression(this.rh, index) as string;
-    }
-
-    getObject(index: number): number {
-        return 0;   // stub
-    }
+interface WasmCallbacks {
+    // For ace param lookup:
+    getNumber: (index: number) => number,
+    getString: (bufferPtr: number, bufferSize: number, index: number) => number,
+    // For setting expression return value:
+    setNumber: (value: number) => void,
+    setString: (cStrPtr: number, cStrSize: number) => void,
 }
 
-class ExpressionManager {
-    ho: CExtension;
-    retValue: number | string | null = null;
-
-    constructor(ho: CExtension) {
-        this.ho = ho;
+function getBlankWasmCallbacks(): WasmCallbacks {
+    return {
+        getNumber: () => { console.warn("Called uninitialized callback!"); return 0; },
+        getString: () => { console.warn("Called uninitialized callback!"); return 0; },
+        setNumber: () => { console.warn("Called uninitialized callback!"); },
+        setString: () => { console.warn("Called uninitialized callback!"); },
     }
+};
 
-    setInteger(val: number) {
-        this.retValue = val;
-    }
+// Currently you cant pass JS callback functions to wasm as a function parameter.
+// imported js functions will call into functions stored in this object.
+let wasmCallbacks: WasmCallbacks = getBlankWasmCallbacks();
 
-    setFloat(val: number) {
-        this.retValue = val;
-    }
 
-    setString(val: string) {
-        this.retValue = val;
-    }
 
-    getInteger(index: number): number {
-        return this.ho.getExpParam() as number;
-    }
+// Used to pass strings between wasm and js
+// Required for utf16 -> utf8 conversion.
+// TODO: Maybe build the extension as UNICODE so no conversion would be required?
+const encoder = new TextEncoder;
+const decoder = new TextDecoder;
 
-    getFloat(index: number): number {
-        return this.ho.getExpParam() as number;
-    }
 
-    getString(index: number): string {
-        return this.ho.getExpParam() as string;
-    }
 
-    getObject(index: number): number {
-        return 0;   // stub
-    }
+// We only use wasi apis implementation.
+const wasi = new WASI(
+    [], // args
+    [], // env
+    [   // open fds
+        new OpenFile(new File([])),                                                     // stdin
+        new ConsoleStdout(msg => console.log(decoder.decode(msg).replace("\n", ""))),   // stdout
+        new ConsoleStdout(msg => console.warn(decoder.decode(msg)))                     // stderr
+    ]
+);
 
-    getReturnValue(): number | string {
-        return this.retValue!;
+// Init wasm module
+const extModule = new WebAssembly.Module(extWasm);
+const extInstance = new WebAssembly.Instance(extModule, {
+    "wasi_snapshot_preview1": wasi.wasiImport,
+    "ace_params": {
+        "get_integer": (index: number) =>                                        { return wasmCallbacks.getNumber(index); },
+        "get_float":   (index: number) =>                                        { return wasmCallbacks.getNumber(index); },
+        "get_string":  (bufferPtr: number, bufferSize: number, index: number) => { return wasmCallbacks.getString(bufferPtr, bufferSize, index); },
+        "set_integer": (value: number) =>                                        { wasmCallbacks.setNumber(value); },
+        "set_float":   (value: number) =>                                        { wasmCallbacks.setNumber(value); },
+        "set_string":  (cStrPtr: number, cStrSize: number) =>                    { wasmCallbacks.setString(cStrPtr, cStrSize); },
     }
+});
+
+wasi.initialize(extInstance as any);
+
+let cppLand = {
+    memory:                 extInstance.exports["memory"]                   as WebAssembly.Memory,
+    malloc:                 extInstance.exports["wasm_malloc"]              as (size: number) => number,
+    free:                   extInstance.exports["wasm_free"]                as (ptr: number) => void,
+    init:                   extInstance.exports["init"]                     as () => void,
+    dealloc:                extInstance.exports["dealloc"]                  as () => void,
+    getNumberOfConditions:  extInstance.exports["get_number_of_conditions"] as () => number,
+    createRunObject:        extInstance.exports["create_run_object"]        as (edPtr: number, cobPtr: number, version: number) => number,
+    destroyRunObject:       extInstance.exports["destroy_run_object"]       as (extPtr: number, fast: boolean) => void,
+    handleRunObject:        extInstance.exports["handle_run_object"]        as (extPtr: number) => number,
+    displayRunObject:       extInstance.exports["display_run_object"]       as (extPtr: number) => number,
+    pauseRunObject:         extInstance.exports["pause_run_object"]         as (extPtr: number) => number,
+    continueRunObject:      extInstance.exports["continue_run_object"]      as (extPtr: number) => number,
+    conditionJump:          extInstance.exports["condition_jump"]           as (extPtr: number, id: number) => number,
+    actionJump:             extInstance.exports["action_jump"]              as (extPtr: number, id: number) => void,
+    expressionJump:         extInstance.exports["expression_jump"]          as (extPtr: number, id: number) => void,
 }
-
-const imports: WasmExt.ImportObject = {
-    'wasi:cli/environment': environment,
-    'wasi:cli/exit': exit$1,
-    'wasi:cli/stderr': stderr,
-    'wasi:cli/stdin': stdin,
-    'wasi:cli/stdout': stdout,
-    'wasi:cli/terminal-input': terminalInput,
-    'wasi:cli/terminal-output': terminalOutput,
-    'wasi:cli/terminal-stderr': terminalStderr,
-    'wasi:cli/terminal-stdin': terminalStdin,
-    'wasi:cli/terminal-stdout': terminalStdout,
-    'wasi:clocks/wall-clock': {},
-    'wasi:filesystem/preopens': preopens,
-    'wasi:filesystem/types': types,
-    'wasi:io/error': error,
-    'wasi:io/poll': poll,
-    'wasi:io/streams': streams,
-    'wasi:sockets/tcp': tcp,
-    'wasi:sockets/udp': udp,
-    'condition-or-action-manager' : { default: ConditionOrActionManager },
-    'expression-manager' : { default: ExpressionManager },
-} as any;
-
-let cppLand = WasmExt.instantiate(
-    (path: string) => {
-        switch (path) {
-        case "WasmExt.core.wasm":
-            return new WebAssembly.Module(CoreWasm1);
-        case "WasmExt.core2.wasm":
-            return new WebAssembly.Module(CoreWasm2);
-        case "WasmExt.core3.wasm":
-            return new WebAssembly.Module(CoreWasm3);
-        case "WasmExt.core4.wasm":
-            return new WebAssembly.Module(CoreWasm4);
-        }
-        throw "for some reason jco generates multiple core wasm modules from one wasm component, but with --instantiation sync it doesnt load them and embed them for me. WHY?????";
-    },
-    imports
-)
 
 cppLand.init();
+
 
 // Prototype definition
 // -----------------------------------------------------------------
@@ -139,8 +93,8 @@ cppLand.init();
 // the parent class to the new class when it is created.
 // As all the necessary functions are defined in the parent class,
 // you only need to keep the ones that you actually need in your code.
-class CRunNoise extends CRunExtension {
-    cppExtPtr: WasmExt.Extension | null = null;
+class CRunWasmExtWrapper extends CRunExtension {
+    cppExtPtr: number = 0;
 
     constructor() {
         super();
@@ -165,10 +119,12 @@ class CRunNoise extends CRunExtension {
         const edSize = file.readAInt();         // Fixme: should be unsigned
         file.seek(fileStart);                   // go back to the begining
 
-        let editdata = new Uint8Array(edSize);
-        const edView = new DataView(editdata.buffer);
+        // TODO: refactor to not require malloc export
+        const edPtr = cppLand.malloc(edSize);
 
-        // extHeader
+        const edView = new DataView(cppLand.memory.buffer, edPtr, edSize);
+
+        // Recreate extHeader as its not saved but needed on c++ side.
         edView.setUint32(0, edSize, true);
         edView.setUint32(4, edSize, true);
         edView.setUint32(8, version, true);
@@ -179,9 +135,10 @@ class CRunNoise extends CRunExtension {
             edView.setUint8(i, file.readAByte());
         }
 
-        this.cppExtPtr = cppLand.createRunObject(editdata, 0, version);
+        this.cppExtPtr = cppLand.createRunObject(edPtr, 0, version);
 
-        // CRunNoise.cppLand.wasm_free(edPtr);
+        cppLand.free(edPtr);
+
         return false;
     }
 
@@ -195,7 +152,7 @@ class CRunNoise extends CRunExtension {
     //      In this case, call the this.reHandle(); function of the base class
     //      to have it called again.
     handleRunObject(): number {
-        return cppLand.handleRunObject(this.cppExtPtr!);
+        return cppLand.handleRunObject(this.cppExtPtr);
     }
 
     // Destruction of the object
@@ -204,7 +161,7 @@ class CRunNoise extends CRunExtension {
     // after the main game loop, and out of the actions processing : the
     // destroy process is queued until the very end of the game loop.
     destroyRunObject(bFast: boolean) {
-        cppLand.destroyRunObject(this.cppExtPtr!, bFast);
+        cppLand.destroyRunObject(this.cppExtPtr, bFast);
     }
 
     // Displays the object
@@ -216,7 +173,7 @@ class CRunNoise extends CRunExtension {
     // This function will only be called if the object's flags in the C code
     // indicate that this is a displayable object (OEFLAG_SPRITE)
     displayRunObject(renderer: Renderer, xDraw: number, yDraw: number) {
-        cppLand.displayRunObject(this.cppExtPtr!);
+        cppLand.displayRunObject(this.cppExtPtr);
         // Example of display of an image, taking the layer and frame position
         // into account
         // var x = this.ho.hoX - this.rh.rhWindowX + this.ho.pLayer.x + xDraw;
@@ -228,14 +185,14 @@ class CRunNoise extends CRunExtension {
     // ----------------------------------------------------------------
     // Called when the game enters pause mode.
     pauseRunObject() {
-        cppLand.pauseRunObject(this.cppExtPtr!);
+        cppLand.pauseRunObject(this.cppExtPtr);
     }
 
     // Get the object out of pause mode
     // -----------------------------------------------------------------
     // Called when the game quits pause mode.
     continueRunObject() {
-        cppLand.continueRunObject(this.cppExtPtr!);
+        cppLand.continueRunObject(this.cppExtPtr);
     }
 
     // Returns the current font of the object
@@ -278,9 +235,27 @@ class CRunNoise extends CRunExtension {
     // Return value :
     //    true or false
     condition(num: number, cnd: CCndExtension): boolean {
-        let manager = new ConditionOrActionManager(this.rh!, cnd);
+        wasmCallbacks.getNumber = (index: number) => {
+            return cnd.getParamExpression(this.rh!, index) as number;
+        };
 
-        const ret = cppLand.conditionJump(this.cppExtPtr!, num, manager);
+        wasmCallbacks.getString = (bufferPtr: number, bufferSize: number, index: number) => {
+            const string = cnd.getParamExpression(this.rh!, index) as string;
+
+            if(bufferPtr == 0 || bufferSize == 0) {
+                return (string.length * 3) + 1; // Not sure if +1 is required for the null terminator TODO: check.
+            }
+
+            const memory_view = new Uint8Array(cppLand.memory.buffer, bufferPtr, bufferSize);
+            memory_view.fill(0);
+
+            return encoder.encodeInto(string, memory_view).written;
+        };
+
+        const ret = cppLand.conditionJump(this.cppExtPtr!, num);
+
+        // reset callbacks
+        wasmCallbacks = getBlankWasmCallbacks();
 
         return (ret == 1);
     }
@@ -292,9 +267,27 @@ class CRunNoise extends CRunExtension {
     //   - act : a CActExtension object, allowing you to retreive the parameters
     //           of the action
     action(num: number, act: CActExtension) {
-        let manager = new ConditionOrActionManager(this.rh!, act);
+        wasmCallbacks.getNumber = (index: number) => {
+            return act.getParamExpression(this.rh!, index) as number;
+        };
 
-        cppLand.actionJump(this.cppExtPtr!, num, manager);
+        wasmCallbacks.getString = (bufferPtr: number, bufferSize: number, index: number) => {
+            const string = act.getParamExpression(this.rh!, index) as string;
+
+            if(bufferPtr == 0 || bufferSize == 0) {
+                return (string.length * 3) + 1; // Not sure if +1 is required for the null terminator TODO: check.
+            }
+
+            const memory_view = new Uint8Array(cppLand.memory.buffer, bufferPtr, bufferSize);
+            memory_view.fill(0);
+
+            return encoder.encodeInto(string, memory_view).written;
+        };
+
+        cppLand.actionJump(this.cppExtPtr!, num);
+
+        // reset callbacks
+        wasmCallbacks = getBlankWasmCallbacks();
     }
 
     // Expression entry
@@ -306,12 +299,53 @@ class CRunNoise extends CRunExtension {
     // called. The runtime will crash if you miss parameters.
     // Return value :
     //    - The result of the calculation, a number or a string
-    expression(num: number): (number | string) {
-        let manager = new ExpressionManager(this.ho!);
+    expression(num: number): number | string {
+        // getExpParam doesnt take in the index, so store the params as the same index may be needed multiple times.
+        let params: (number | string)[] = [];
 
-        cppLand.expressionJump(this.cppExtPtr!, num, manager);
 
-        return manager.getReturnValue();
+        wasmCallbacks.getNumber = (index: number) => {
+            while(params.length <= index) {
+                params.push(this.ho?.getExpParam()!);
+            }
+            return params[index] as number;
+        };
+
+        wasmCallbacks.getString = (bufferPtr: number, bufferSize: number, index: number) => {
+            while(params.length <= index) {
+                params.push(this.ho?.getExpParam()!);
+            }
+
+            const string = params[index] as string;
+
+            if(bufferPtr == 0 || bufferSize == 0) {
+                return (string.length * 3) + 1; // Not sure if +1 is required for the null terminator TODO: check.
+            }
+
+            const memory_view = new Uint8Array(cppLand.memory.buffer, bufferPtr, bufferSize);
+            memory_view.fill(0);
+
+            return encoder.encodeInto(string, memory_view).written;
+        };
+
+
+        let expressionReturn: number | string = 0;
+
+        wasmCallbacks.setNumber = (value: number) => {
+            expressionReturn = value;
+        };
+
+        wasmCallbacks.setString = (cStrPtr: number, cStrSize: number) => {
+            const memory_view = new Uint8Array(cppLand.memory.buffer, cStrPtr, cStrSize);
+
+            expressionReturn = decoder.decode(memory_view);
+        };
+
+        cppLand.expressionJump(this.cppExtPtr, num);
+
+        // reset callbacks
+        wasmCallbacks = getBlankWasmCallbacks();
+        return expressionReturn;
     }
 }
 
@@ -322,4 +356,4 @@ class CRunNoise extends CRunExtension {
 
 // esbuild bundles everything in a way that nothing gets exposed to outside and nothing can conflict
 // Expose extension class globaly.
-(globalThis as any)["CRunNoise"] = CRunNoise;
+export default CRunWasmExtWrapper;
