@@ -3,7 +3,14 @@ project(
     'cpp', 'c',
     version: '1.2.0',
     license: 'MIT',
-    default_options: ['warning_level=1', 'cpp_std=c++17', 'c_std=c11', 'prefix=' + meson.project_source_root()],
+    default_options: [
+        'warning_level=1',
+        'cpp_std=c++17',
+        'c_std=c11',
+        'prefix=' + meson.project_source_root(),    # Install prefix
+        'b_lto=true',                               # Enable lto
+        'b_lto_mode=thin',                          # thin lto apparently is better
+    ],
     meson_version: '>=1.1',
 )
 
