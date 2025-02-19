@@ -1187,7 +1187,9 @@ struct ConditionOrActionManager_Html : ACEParamReader {
         size_t buffer_size = JSImports::get_string(nullptr, 0, index);
         char* string = new char[buffer_size];
 
-        assert(JSImports::get_string(string, buffer_size, index) == buffer_size);
+        if(JSImports::get_string(string, buffer_size, index) >= buffer_size) {
+            LOGE("get_string from js land returned more bytes than the buffer size, expect problems.");
+        }
         strings_to_free.push_back(string);
 
         LOGV(PROJECT_NAME _T(" param index: %d, type: string, value: %s.\n"), index, string);
@@ -1588,7 +1590,9 @@ struct ExpressionManager_Html : ACEParamReader {
         size_t buffer_size = JSImports::get_string(nullptr, 0, index);
         char* string = new char[buffer_size];
 
-        assert(JSImports::get_string(string, buffer_size, index) == buffer_size);
+        if(JSImports::get_string(string, buffer_size, index) >= buffer_size) {
+            LOGE("get_string from js land returned more bytes than the buffer size, expect problems.");
+        }
         strings_to_free.push_back(string);
 
         LOGV(PROJECT_NAME _T(" param index: %d, type: string, value: %s.\n"), index, string);
