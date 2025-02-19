@@ -1,4 +1,6 @@
 #include "Common.hpp"
+#include <cctype>
+#include <charconv>
 
 #ifdef PI
 	#undef PI
@@ -11,24 +13,76 @@ int Extension::current_noise_seed() {
 	return noise.seed;
 }
 
-int Extension::string_to_seed(const TCHAR* String) {
-	std::string Text = DarkEdif::TStringToANSI(std::tstring(String));
+int Extension::string_to_seed(const TCHAR* string) {
+    #if UniBuild == 1
+    // on windows unicode builds, string first has to be converted from utf16 to utf8
+    auto converted_text = DarkEdif::TStringToUTF8(std::tstring_view(string));
+    auto text = std::string_view(converted_text);
+    #else
+    // android and wasm, no conversion needed.
+    auto text = std::string_view(string);
+    #endif
 
-	unsigned int Seed = 0;
+    // Trim whitespace
+    size_t start = 0;
+    size_t end = 0;
 
-	for (size_t i = 0; i < Text.length(); i++) {
-		if (Text.at(i) >= '0' && Text.at(i) <= '9') {
-			Seed = Seed * 10;
-			Seed = Seed + (Text.at(i) - 48);
-		}
-		else {
-			Seed = Seed * 100;
-			srand((int)Text.at(i) + i);
-			Seed = Seed + rand() % 99;
-		}
-	}
+    for (size_t i = 0; i < text.size(); i++) {
+        if(!std::isspace(text[i])) {
+            start = i;
+            break;
+        }
+    }
 
-	return Seed;
+    for (size_t i = text.size() - 1; i > 0; i--) {
+        if(!std::isspace(text[i])) {
+            end = i;
+            break;
+        }
+    }
+
+    text = text.substr(start, start - end);
+
+    bool is_number = true;
+
+    for (size_t i = 0; i < text.size(); i++) {
+        if(!std::isdigit(text[i]) && !(i == 0 && (text[i] == '-' || text[i] == '+'))) {
+            is_number = false;
+            break;
+        }
+    }
+
+    if(is_number) {
+        int seed = 0;
+
+        // on error assumbe the number is to big for conversion.
+        auto result = std::from_chars(text.data(), text.data() + text.size(), seed);
+
+        if(result.ec == std::errc{}) {
+            // no error
+            return seed;
+        }
+    }
+
+    // either its not a number or the number is too big to be converted
+    // crc32
+    uint32_t divisor = 0xEDB88320;
+    uint32_t data = 0xffffffff;
+
+    for (size_t i = 0; i < text.size(); i++) {
+        data ^= text[i];
+        for (uint_fast8_t j = 0; j < 8; j++) {
+            if (data & 1) {
+                data = (data >> 1) ^ divisor;
+            } else {
+                data >>= 1;
+            }
+        }
+    }
+
+    data ^= 0xffffffff;
+
+    return data;
 }
 
 
