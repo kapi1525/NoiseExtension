@@ -169,20 +169,6 @@ void Extension::set_warp_fractal_gain(float gain) {
 }
 
 
-#ifdef _WIN32
-
-static cSurface* create_surface(int width, int height, int depth, SurfaceType type, SurfaceDriver driver) {
-    cSurface* proto = nullptr;
-
-    BOOL result = GetSurfacePrototype(&proto, depth, (int)type, (int)driver);
-	assert(result == TRUE);
-
-    cSurface* s = new cSurface;
-    s->Create(width, height, proto);
-    return s;
-}
-
-#endif
 
 void Extension::fill_surface_obj_with_noise(RunObject* surface_obj, float xoffset, float yoffset, float zoffset, int flags) {
     #ifdef _WIN32
@@ -204,30 +190,28 @@ void Extension::fill_surface_obj_with_noise(RunObject* surface_obj, float xoffse
     int target_w, target_h, target_d;
     target->GetInfo(target_w, target_h, target_d);
 
-    // Surface object images always have 24bit depth so theres no need to handle anything else
-    cSurface* temp = create_surface(target_w, target_h, 24, SurfaceType::Memory, (SurfaceDriver)target->GetDriver());
+    // Seems like all surface types support LockBuffer so no need to allocate a temp surface.
+    // cSurface* temp = create_surface(target_w, target_h, 24, SurfaceType::Memory, (SurfaceDriver)target->GetDriver());
 
     if(flags & FillRed || flags & FillGreen || flags & FillBlue) {
         // size_t bufsize = target_w * target_h * 3;      // In bytes, BGR layout, 1 pixel = 3bytes
-        uint8_t* buf = temp->LockBuffer();
+        uint8_t* buf = target->LockBuffer();
 
         // Pitch = size between lines in bytes.
-        fill_buffer_with_noise(buf, target_w, target_h, temp->GetPitch(), temp->GetDepth(), xoffset, yoffset, zoffset, flags);
-        temp->UnlockBuffer(buf);    // you can pass a nullptr here and it will work!
+        fill_buffer_with_noise(buf, target_w, target_h, target->GetPitch(), target->GetDepth(), xoffset, yoffset, zoffset, flags);
+        target->UnlockBuffer(buf);    // you can pass a nullptr here and it will work!
     }
 
     if(flags & FillAlpha) {
-        if(!temp->HasAlpha()) {
-            temp->CreateAlpha();
+        if(!target->HasAlpha()) {
+            target->CreateAlpha();
         }
 
-        uint8_t* buf = temp->LockAlpha();
-        fill_alpha_buffer_with_noise(buf, target_w, target_h, temp->GetAlphaPitch(), xoffset, yoffset, zoffset, flags);
-        temp->UnlockAlpha();
+        uint8_t* buf = target->LockAlpha();
+        fill_alpha_buffer_with_noise(buf, target_w, target_h, target->GetAlphaPitch(), xoffset, yoffset, zoffset, flags);
+        target->UnlockAlpha();
     }
 
-    temp->Blit(*target);
-    delete temp;
     surface_rd.rc.rcChanged = true;
 
     #endif
@@ -241,9 +225,6 @@ void Extension::fill_surface_obj_with_noise(RunObject* surface_obj, float xoffse
 void Extension::fill_buffer_with_noise(uint8_t* buf, int width, int height, int pitch, int depth, float xoffset, float yoffset, float zoffset, int flags) {
     size_t buf_index;
     uint8_t noise_val;
-    uint8_t r = 0;
-    uint8_t g = 0;
-    uint8_t b = 0;
 
     assert(depth == 24);
 
@@ -255,24 +236,20 @@ void Extension::fill_buffer_with_noise(uint8_t* buf, int width, int height, int 
                 noise_val = (uint8_t)get_noise3D(x + xoffset, y + yoffset, zoffset);
             }
 
-            if(flags & FillRed) {
-                r = noise_val;
-            }
-
-            if(flags & FillGreen) {
-                g = noise_val;
-            }
-
-            if(flags & FillBlue) {
-                b = noise_val;
-            }
-
             buf_index = (x * 3) + (y * pitch);
 
             // BGR layout
-            buf[buf_index + 0] = b;
-            buf[buf_index + 1] = g;
-            buf[buf_index + 2] = r;
+            if(flags & FillRed) {
+                buf[buf_index + 2] = noise_val;
+            }
+
+            if(flags & FillGreen) {
+                buf[buf_index + 1] = noise_val;
+            }
+
+            if(flags & FillBlue) {
+                buf[buf_index + 0] = noise_val;
+            }
         }
     }
 }
@@ -280,7 +257,6 @@ void Extension::fill_buffer_with_noise(uint8_t* buf, int width, int height, int 
 void Extension::fill_alpha_buffer_with_noise(uint8_t* buf, int width, int height, int pitch, float xoffset, float yoffset, float zoffset, int flags) {
     size_t buf_index;
     uint8_t noise_val;
-    uint8_t alpha = 0;
 
     assert(flags & FillAlpha);
 
@@ -292,12 +268,10 @@ void Extension::fill_alpha_buffer_with_noise(uint8_t* buf, int width, int height
                 noise_val = (uint8_t)get_noise3D(x + xoffset, y + yoffset, zoffset);
             }
 
-            alpha = noise_val;
-
             // 1 byte = 1 pixel
             buf_index = x + (y * pitch);
 
-            buf[buf_index] = alpha;
+            buf[buf_index] = noise_val;
         }
     }
 }
