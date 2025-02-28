@@ -109,6 +109,7 @@ endforeach
 
 # Installing
 
+sdk_can_simply_install = true
 if editor_build
     ext_install_path = 'Extensions'
 else

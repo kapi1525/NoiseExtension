@@ -50,27 +50,27 @@ While porting to html/webassembly i didnt know if it would be easily posible to 
   - visual studio c++ build tools
 - android
   - android ndk
-  - 7zip (optional)
+  - 7zip (optional, used with meson install)
 - html/webassembly
   - wasi-sdk
   - npm (node.js)
 
 ### Actualy building
 
-Configure:
-- windows
-  ```console
-  meson setup bin -Deditor_build=<true or false>
-  ```
-- any other platform
+#### Configure the build directory:
 
-  First update the cross file you will use in `cross` folder with correct paths to compilers on your system.
-  ```console
-  meson setup bin --cross-file cross/<cross file>
-  ```
-note: You can add `--buildtype release`, to make optimized release builds.
+Run `meson setup bin` with correct flags depending on target platform:
+- For windows add `-Deditor_build=<true or false>` to select if you want to build for runtime or editor.
+- For other platforms first, update a cross file in 'cross/' directory with correct paths to compilers on your system and then add `--cross-file <file path>`.
 
-Compile:
-```console
-meson compile bin
-```
+You can also use `--prefix <path>` to select where files should be installed if you're using `meson install`.
+
+#### Compile:
+
+`meson compile -C bin`
+
+#### Compile and install:
+
+`meson install -C bin`
+
+This will install the files to correct directories, if you didn't specify a path with `--prefix` during setup, it will by default create a ./MFX/ folder and install everything there.

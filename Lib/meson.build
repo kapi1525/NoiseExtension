@@ -135,13 +135,6 @@ endif
 # Installing
 
 install_prefix = get_option('prefix')
-
-if install_prefix == meson.project_source_root()
-    # TODO: Look for a fusion install in windows registry and use it.
-    #       Create a mfx folder only if not found
-    install_prefix = install_prefix / 'MFX'
-endif
-
 ext_install_path = ''
 
 

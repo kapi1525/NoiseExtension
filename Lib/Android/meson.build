@@ -25,6 +25,7 @@ endif
 # |- java/Extensions/CRunExtname.java
 # |- jniLibs/arch/libExtname.so
 
+sdk_can_simply_install = false
 ext_install_path = 'Data' / 'Runtime' / 'Android'
 
 if host_machine.cpu_family() == 'aarch64'

@@ -7,12 +7,14 @@ project(
         'warning_level=1',
         'cpp_std=c++17',
         'c_std=c11',
-        'prefix=' + meson.project_source_root(),    # Install prefix
-        'b_lto=true',                               # Enable lto
-        'b_lto_mode=thin',                          # thin lto apparently is better
+        'prefix=' + meson.project_source_root() / 'MFX',    # Install prefix
+        'b_lto=true',                                       # Enable lto
+        'b_lto_mode=thin',                                  # thin lto apparently is better
     ],
     meson_version: '>=1.1',
 )
+
+# FIXME: This setup is also insane, less than visual studio but, this should realy be simplified.
 
 # Used by SDK meson.build file
 ext_author = 'Kacper Bugla'
@@ -94,6 +96,8 @@ ext = build_target(
     dependencies: darkedif_sdk,
     include_directories: ext_include,
     name_suffix: sdk_ext_name_suffix,
+    install: sdk_can_simply_install,
+    install_dir: install_prefix / ext_install_path,
 )
 
 if host_machine.system() == 'wasi'
@@ -108,17 +112,17 @@ if host_machine.system() == 'wasi'
         },
         command: [npm, '--prefix', npm_package_root, 'run', 'build'],
         build_by_default: true,
+        install: sdk_can_simply_install,
+        install_dir: install_prefix / ext_install_path,
     )
 endif
 
-copy = find_program('cp', 'xcopy', required: false) # TODO: xcopy on windows requires /y flag
+
 p7zip = find_program('7za', '7z', required: false)        # 7zip, p7zip on linux/mac
 
-install_emptydir(install_prefix / ext_install_path)
+if host_machine.system() == 'android'
+    install_emptydir(install_prefix / ext_install_path)
 
-if host_machine.system() != 'android'
-    meson.add_install_script(copy, ext.full_path(), install_prefix / ext_install_path)
-else
     target_zip = install_prefix / ext_install_path / meson.project_name() + '.zip'
     ext_filename = fs.name(ext.full_path())
 
