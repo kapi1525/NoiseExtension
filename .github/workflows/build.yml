@@ -67,12 +67,12 @@ jobs:
 
       - name: Create a custom cross file with correct android ndk path
         run: |
-          echo [constants] > cross/android-ndk.ini
-          echo android_ndk = \'$ANDROID_NDK\' >> cross/android-ndk.ini
-          echo android_ndk_host_tag = \'linux-x86_64\' >> cross/android-ndk.ini
+          echo [constants] > sdk/cross/android-ndk.ini
+          echo android_ndk = \'$ANDROID_NDK\' >> sdk/cross/android-ndk.ini
+          echo android_ndk_host_tag = \'linux-x86_64\' >> sdk/cross/android-ndk.ini
 
       - name: Configure
-        run: meson setup bin --buildtype release --cross-file cross/android-${{ matrix.target }}.ini --cross-file cross/android-ndk.ini
+        run: meson setup bin --buildtype release --cross-file sdk/cross/android-${{ matrix.target }}.ini --cross-file sdk/cross/android-ndk.ini
 
       - name: Compile
         run: meson install -C bin
@@ -124,11 +124,11 @@ jobs:
       - name: Create a custom cross file with correct wasi sdk path
         run: |
           mv wasi-sdk-*-x86_64-linux wasi-sdk-x86_64-linux
-          echo [constants] > cross/wasi-sdk.ini
-          echo wasi_sdk = \'${{ github.workspace }}/wasi-sdk-x86_64-linux\' >> cross/wasi-sdk.ini
+          echo [constants] > sdk/cross/wasi-sdk.ini
+          echo wasi_sdk = \'${{ github.workspace }}/wasi-sdk-x86_64-linux\' >> sdk/cross/wasi-sdk.ini
 
       - name: Configure
-        run: meson setup bin --buildtype release --cross-file cross/wasm-wasi.ini --cross-file cross/wasi-sdk.ini
+        run: meson setup bin --buildtype release --cross-file sdk/cross/wasm-wasi.ini --cross-file sdk/cross/wasi-sdk.ini
 
       - name: Compile
         run: meson install -C bin

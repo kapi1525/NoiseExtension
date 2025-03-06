@@ -29,7 +29,7 @@ endif
 
 sdk_deps += meson.get_compiler('cpp').find_library(
     'mmfs2',
-    dirs: meson.project_source_root() / 'Lib/Windows',
+    dirs: meson.current_source_dir(),
     required: true
 )
 

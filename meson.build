@@ -14,8 +14,6 @@ project(
     meson_version: '>=1.1',
 )
 
-# FIXME: This setup is also insane, less than visual studio but, this should realy be simplified.
-
 # Used by SDK meson.build file
 ext_author = 'Kacper Bugla'
 ext_company = 'Kacper Bugla'
@@ -26,105 +24,53 @@ ext_help_path = meson.current_source_dir() + '/Help'
 
 
 
-fs = import('fs')
+subdir('sdk')
 
-# Contains tools used during build time
-subdir('Tools')
-# SDK
-subdir('Lib')
+source = []
+include = []
+subdir('src')
 
-
-
-ext_source = []
-
-ext_source_shared = files(
-    'Noise/ACE/Actions.cpp',
-    'Noise/ACE/Expressions.cpp',
-    'Noise/Extension.cpp',
-)
-
-ext_source_windows = files(
-    'Noise/Edittime.cpp',
-    'Noise/Properties.cpp',
-)
-
-
-ext_source += ext_source_shared
-if host_machine.system() == 'windows'
-    ext_source += ext_source_windows
-endif
-
-
-ext_include = include_directories('Noise')
-
-
-if runtime_build
-    # runtime builds use minified json
-    darkext_json = custom_target('minify_json',
-        build_by_default: true,
-        input: files('Noise/DarkExt.json'),
-        output: 'DarkExt.PostMinify.json',
-        command: [jsonminify, '@INPUT@', '@OUTPUT@'],
-    )
-else
-    darkext_json = files('Noise/DarkExt.json')
-endif
-
-ext_source += custom_target('embed_json',
-    input: darkext_json,
-    output: 'DarkExt.json.h',
-    command: [bin2hpp, '@INPUT@', '@OUTPUT@', 'DarkExtJSON', 'DarkExtJSON_len'],
-)
-
-if host_machine.system() == 'windows'
-    ext_source += import('windows').compile_resources(
-        'Noise\Ext.rc',
-        args: sdk_rc_args,
-        depend_files: [
-            'Noise\Resource.h',
-            'Noise\Icon.png',
-        ],
-        include_directories: sdk_include,
-    )
-endif
 
 
 ext = build_target(
     meson.project_name(),
-    ext_source,
+    source,
     target_type: sdk_ext_target_type,
     dependencies: darkedif_sdk,
-    include_directories: ext_include,
+    include_directories: include,
     name_suffix: sdk_ext_name_suffix,
     install: sdk_can_simply_install,
     install_dir: install_prefix / ext_install_path,
 )
 
 if host_machine.system() == 'wasi'
-    # javascript wrapper that loads the webassembly
+    ext_js = meson.project_name() + '.js'
 
-    ext = custom_target(meson.project_name() + '_js',
+    # javascript wrapper that loads the webassembly
+    ext = custom_target('js ext wrapper',
         input: [ext, sdk_js_files],
-        output: meson.project_name() + '.js',
+        output: ext_js,
         env: {
             'EXTWASMPATH': ext.full_path(),
-            'OUTJSPATH': meson.current_build_dir() / 'Noise.js',
+            'OUTJSPATH': meson.current_build_dir() / ext_js,
         },
         command: [npm, '--prefix', npm_package_root, 'run', 'build'],
         build_by_default: true,
-        install: sdk_can_simply_install,
+        install: sdk_can_simply_install_js,
         install_dir: install_prefix / ext_install_path,
     )
 endif
 
 
+# Android extensions are packaged in a zip file, 7zip is needed to do that.
 p7zip = find_program('7za', '7z', required: false)        # 7zip, p7zip on linux/mac
 
+# TODO: Simplify?
 if host_machine.system() == 'android'
     install_emptydir(install_prefix / ext_install_path)
 
     target_zip = install_prefix / ext_install_path / meson.project_name() + '.zip'
-    ext_filename = fs.name(ext.full_path())
+    ext_filename = import('fs').name(ext.full_path())
 
     # Before adding a new file, the existing ones need to be deleted, 7zip can create duplicates for some reason
     meson.add_install_script(p7zip, 'd', target_zip, 'app' / 'src' / 'main' / 'java' / 'Extensions' / '*')
@@ -136,6 +82,6 @@ if host_machine.system() == 'android'
     meson.add_install_script(p7zip, 'rn', target_zip, ext_filename, 'app' / 'src' / 'main' / 'jniLibs' / ext_android_arch / ext_filename)
 endif
 
+# Install examples and help file
 install_subdir(ext_examples_path, install_dir: install_prefix)
 install_subdir(ext_help_path, install_dir: install_prefix)
-
