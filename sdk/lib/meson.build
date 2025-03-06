@@ -39,8 +39,8 @@ sdk_source = files(
 
 sdk_include = include_directories(
     'Shared',
-    '..' / 'Inc',
-    '..' / 'Inc' / 'Shared',
+    '..' / 'inc',
+    '..' / 'inc' / 'Shared',
 )
 
 
@@ -119,9 +119,9 @@ if host_machine.system() != 'windows'
     acecalltable = custom_target('ACECallTable_Macro.hpp',
         input: files(
             # Order matters!
-            meson.project_source_root() / 'Lib' / 'Shared' / 'ACECallTable_Macro.hpp',
-            meson.project_source_root() / meson.project_name() / 'Extension.cpp',
-            meson.project_source_root() / meson.project_name() / 'Extension.hpp',
+            meson.current_source_dir() / 'Shared' / 'ACECallTable_Macro.hpp',
+            meson.project_source_root() / 'src/Extension.cpp',
+            meson.project_source_root() / 'src/Extension.hpp',
         ),
         output: 'Temp_ACECallTable.hpp',
         command: [acecalltablegen, '@INPUT@', '@OUTPUT@'],

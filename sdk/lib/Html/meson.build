@@ -14,7 +14,7 @@ sdk_js_files = files('package.json', 'tsconfig.json', 'js/Noise.ts')
 
 # Install javascript dependencies
 npm = find_program('npm')
-npm_package_root = meson.project_source_root() / 'Lib' / 'Html'
+npm_package_root = meson.current_source_dir()
 
 run_command(npm, '--prefix', npm_package_root, 'i', '--save-dev',
     check: true,

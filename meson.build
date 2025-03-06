@@ -77,7 +77,7 @@ if host_machine.system() == 'android'
     meson.add_install_script(p7zip, 'd', target_zip, 'app' / 'src' / 'main' / 'jniLibs' / ext_android_arch / '*')
 
     # Add java and build native files to archive, then move them into correct paths
-    meson.add_install_script(p7zip, 'a', target_zip, meson.project_source_root() / 'Lib' / 'Android' / ext_android_java_filename, ext.full_path())
+    meson.add_install_script(p7zip, 'a', target_zip, ext_android_java_filepath, ext.full_path())
     meson.add_install_script(p7zip, 'rn', target_zip, ext_android_java_filename, 'app' / 'src' / 'main' / 'java' / 'Extensions' / ext_android_java_filename)
     meson.add_install_script(p7zip, 'rn', target_zip, ext_filename, 'app' / 'src' / 'main' / 'jniLibs' / ext_android_arch / ext_filename)
 endif

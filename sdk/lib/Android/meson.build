@@ -39,3 +39,4 @@ elif host_machine.cpu_family() == 'x86_64'
 endif
 
 ext_android_java_filename = 'CRun' + meson.project_name() + '.java'
+ext_android_java_filepath = meson.current_source_dir() / ext_android_java_filename

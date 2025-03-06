@@ -1,7 +1,7 @@
 # Source files
 source += files(
-    'ACE/Actions.cpp',
-    'ACE/Expressions.cpp',
+    'ace/Actions.cpp',
+    'ace/Expressions.cpp',
     'Extension.cpp',
 )
 
