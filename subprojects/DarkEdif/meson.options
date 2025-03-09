@@ -1,0 +1,22 @@
+option(
+    'editor_build',
+    type: 'boolean',
+    value: false,
+    description: 'Only windows, if enabled a editor .mfx will be built',
+)
+option(
+    'ext_version',
+    type: 'string',
+)
+option(
+    'ext_build',
+    type: 'integer',
+)
+option(
+    'ext_author',
+    type: 'string',
+)
+option(
+    'ext_company',
+    type: 'string',
+)
