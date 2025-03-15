@@ -1,10 +1,8 @@
-name: Build
+name: Build release
 
 on:
-  push:
-    branches:
-      - '*'     # dont build for tags
-  workflow_dispatch:
+  release:
+    types: published
 
 jobs:
   build-windows:
@@ -86,65 +84,69 @@ jobs:
           path: MFX
           if-no-files-found: error
 
-  build-wasm:
-    runs-on: ubuntu-latest
+  # build-wasm:
+  #   runs-on: ubuntu-latest
 
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          submodules: true
+  #   steps:
+  #     - name: Checkout
+  #       uses: actions/checkout@v4
+  #       with:
+  #         submodules: true
 
-      - name: Setup python
-        uses: actions/setup-python@v5
-        with:
-          python-version: 'pypy3.9'
+  #     - name: Setup python
+  #       uses: actions/setup-python@v5
+  #       with:
+  #         python-version: 'pypy3.9'
 
-      - name: Install meson and ninja
-        run: pip install meson ninja
+  #     - name: Install meson and ninja
+  #       run: pip install meson ninja
 
-      - name: Download wit-bindgen
-        uses: robinraju/release-downloader@v1
-        with:
-          repository: 'bytecodealliance/wit-bindgen'
-          latest: true
-          fileName: 'wit-bindgen-*-x86_64-linux.tar.gz'
-          extract: true
+  #     - name: Download wit-bindgen
+  #       uses: robinraju/release-downloader@v1
+  #       with:
+  #         repository: 'bytecodealliance/wit-bindgen'
+  #         latest: true
+  #         fileName: 'wit-bindgen-*-x86_64-linux.tar.gz'
+  #         extract: true
 
-      - name: Install wit-bindgen
-        run: |
-          mv wit-bindgen-*-x86_64-linux/wit-bindgen /usr/local/bin/
+  #     - name: Install wit-bindgen
+  #       run: |
+  #         mv wit-bindgen-*-x86_64-linux/wit-bindgen /usr/local/bin/
 
-      - name: Download wasi-sdk
-        uses: robinraju/release-downloader@v1
-        with:
-          repository: 'WebAssembly/wasi-sdk'
-          latest: true
-          fileName: 'wasi-sdk-*-x86_64-linux.tar.gz'
-          extract: true
+  #     - name: Download wasi-sdk
+  #       uses: robinraju/release-downloader@v1
+  #       with:
+  #         repository: 'WebAssembly/wasi-sdk'
+  #         latest: true
+  #         fileName: 'wasi-sdk-*-x86_64-linux.tar.gz'
+  #         extract: true
 
-      - name: Create a custom cross file with correct wasi sdk path
-        run: |
-          mv wasi-sdk-*-x86_64-linux wasi-sdk-x86_64-linux
-          echo [constants] > sdk/cross/wasi-sdk.ini
-          echo wasi_sdk = \'${{ github.workspace }}/wasi-sdk-x86_64-linux\' >> sdk/cross/wasi-sdk.ini
+  #     - name: Create a custom cross file with correct wasi sdk path
+  #       run: |
+  #         mv wasi-sdk-*-x86_64-linux wasi-sdk-x86_64-linux
+  #         echo [constants] > sdk/cross/wasi-sdk.ini
+  #         echo wasi_sdk = \'${{ github.workspace }}/wasi-sdk-x86_64-linux\' >> sdk/cross/wasi-sdk.ini
 
-      - name: Configure
-        run: meson setup bin --buildtype release --cross-file sdk/cross/wasm-wasi.ini --cross-file sdk/cross/wasi-sdk.ini
+  #     - name: Configure
+  #       run: meson setup bin --buildtype release --cross-file sdk/cross/wasm-wasi.ini --cross-file sdk/cross/wasi-sdk.ini
 
-      - name: Compile
-        run: meson install -C bin
+  #     - name: Compile
+  #       run: meson install -C bin
 
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: Noise-html
-          path: MFX
-          if-no-files-found: error
+  #     - name: Upload artifact
+  #       uses: actions/upload-artifact@v4
+  #       with:
+  #         name: Noise-html
+  #         path: MFX
+  #         if-no-files-found: error
 
   create-release-bundle:
     runs-on: ubuntu-latest
-    needs: [build-windows, build-android, build-wasm]
+    needs: [
+      build-windows,
+      build-android,
+      # build-wasm,
+    ]
 
     steps:
       - name: Download artifacts
@@ -174,12 +176,13 @@ jobs:
 
           rm -f MFX/Data/Runtime/Android/$ext_name.zip
           7za a MFX/Data/Runtime/Android/$ext_name.zip app -sdel
+          cd MFX
+          7za a ../Noise.zip *
 
       - run: ls -R .
 
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
+      - name: Upload release
+        uses: AButler/upload-release-assets@v3.0
         with:
-          name: Noise
-          path: MFX
-          if-no-files-found: error
+          files: 'Noise.zip'
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
