@@ -89,6 +89,9 @@ jobs:
   build-wasm:
     runs-on: ubuntu-latest
 
+    env:
+      WASI_SDK_VERSION: wasi-sdk-25
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -103,31 +106,19 @@ jobs:
       - name: Install meson and ninja
         run: pip install meson ninja
 
-      - name: Download wit-bindgen
-        uses: robinraju/release-downloader@v1
-        with:
-          repository: 'bytecodealliance/wit-bindgen'
-          latest: true
-          fileName: 'wit-bindgen-*-x86_64-linux.tar.gz'
-          extract: true
-
-      - name: Install wit-bindgen
-        run: |
-          mv wit-bindgen-*-x86_64-linux/wit-bindgen /usr/local/bin/
-
       - name: Download wasi-sdk
         uses: robinraju/release-downloader@v1
         with:
           repository: 'WebAssembly/wasi-sdk'
-          latest: true
+          tag: ${{ env.WASI_SDK_VERSION }}
           fileName: 'wasi-sdk-*-x86_64-linux.tar.gz'
           extract: true
 
-      - name: Create a custom cross file with correct wasi sdk path
+      - name: Create a cross file with correct wasi-sdk path
         run: |
-          mv wasi-sdk-*-x86_64-linux wasi-sdk-x86_64-linux
+          mv wasi-sdk-*-x86_64-linux wasi-sdk
           echo [constants] > sdk/cross/wasi-sdk.ini
-          echo wasi_sdk = \'${{ github.workspace }}/wasi-sdk-x86_64-linux\' >> sdk/cross/wasi-sdk.ini
+          echo wasi_sdk = \'${{ github.workspace }}/wasi-sdk\' >> sdk/cross/wasi-sdk.ini
 
       - name: Configure
         run: meson setup bin --buildtype release --cross-file sdk/cross/wasm-wasi.ini --cross-file sdk/cross/wasi-sdk.ini
