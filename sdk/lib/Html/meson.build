@@ -10,6 +10,12 @@ sdk_link_args += [
     '-Wl,--no-entry',
 ]
 
+if not get_option('debug')
+    sdk_link_args += [
+        '-Wl,--strip-debug'
+    ]
+endif
+
 sdk_js_files = files('package.json', 'tsconfig.json', 'js/Noise.ts')
 
 # Install javascript dependencies
