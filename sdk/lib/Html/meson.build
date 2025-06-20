@@ -31,5 +31,4 @@ run_command(npm, '--prefix', npm_package_root, 'i', '--save-dev',
 # Installing
 
 sdk_can_simply_install = false
-sdk_can_simply_install_js = true
 ext_install_path = 'Data' / 'Runtime' / 'Html5'

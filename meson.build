@@ -43,22 +43,34 @@ ext = build_target(
     install_dir: install_prefix / ext_install_path,
 )
 
+# TODO: Fix wasm builds on windows, acecalltablegen fails to compile for some reason
 if host_machine.system() == 'wasi'
-    ext_js = meson.project_name() + '.js'
+    ext_js_out = meson.project_name() + '.js'
 
     # javascript wrapper that loads the webassembly
-    ext = custom_target('js ext wrapper',
-        input: [ext, sdk_js_files],
-        output: ext_js,
+    ext_js = custom_target('js ext wrapper',
+        depend_files: sdk_js_files,
+        depends: ext,
+        output: ext_js_out,
         env: {
             'EXTWASMPATH': ext.full_path(),
-            'OUTJSPATH': meson.current_build_dir() / ext_js,
+            'OUTJSPATH': meson.current_build_dir() / ext_js_out,
         },
         command: [npm, '--prefix', npm_package_root, 'run', 'build'],
         build_by_default: true,
-        install: sdk_can_simply_install_js,
+        install: true,
         install_dir: install_prefix / ext_install_path,
     )
+
+    rm = find_program('rm', required: false)
+    if rm.found()
+        # Dumb hack: .wasm file gets installed even though it has install: false
+        # Probably a meson bug or intended "feature". just remove that file for now
+        meson.add_install_script(rm, '-f', install_prefix / ext_install_path / 'Noise.wasm')
+    elif build_machine.system() == 'windows' and (cmd = find_program('cmd', required: false)).found()
+        # On windows del command is not a program so start a cmd.
+        meson.add_install_script(cmd, '/c', '"del /q ' + (install_prefix / ext_install_path / 'Noise.wasm') + '.txt"')
+    endif
 endif
 
 
