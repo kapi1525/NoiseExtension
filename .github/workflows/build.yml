@@ -91,6 +91,7 @@ jobs:
 
     env:
       WASI_SDK_VERSION: wasi-sdk-25
+      BINARYEN_VERSION: version_123
 
     steps:
       - name: Checkout
@@ -113,6 +114,12 @@ jobs:
           tag: ${{ env.WASI_SDK_VERSION }}
           fileName: 'wasi-sdk-*-x86_64-linux.tar.gz'
           extract: true
+
+      - name: Download wasm-opt
+        run: |
+          curl -LsS --retry 5 --retry-connrefused --max-time 600 https://github.com/WebAssembly/binaryen/releases/download/${{ env.BINARYEN_VERSION }}/binaryen-${{ env.BINARYEN_VERSION }}-x86_64-linux.tar.gz | tar -xz
+          mv binaryen-${{ env.BINARYEN_VERSION }} .local
+          mv .local ~/.local
 
       - name: Create a cross file with correct wasi-sdk path
         run: |

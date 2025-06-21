@@ -47,6 +47,18 @@ ext = build_target(
 if host_machine.system() == 'wasi'
     ext_js_out = meson.project_name() + '.js'
 
+    wasm_opt = find_program('wasm-opt', required: false)
+    if wasm_opt.found() and get_option('optimization') == '3'
+        ext = custom_target(
+            'optimize',
+            input: ext,
+            output: 'Noise.post_opt.wasm',
+            depends: ext,
+            command: [wasm_opt, '@INPUT@', '-O4', '-o', '@OUTPUT@'],
+        )
+    endif
+
+
     # javascript wrapper that loads the webassembly
     ext_js = custom_target('js ext wrapper',
         depend_files: sdk_js_files,
@@ -78,7 +90,7 @@ endif
 p7zip = find_program('7za', '7z', required: false)        # 7zip, p7zip on linux/mac
 
 # TODO: Simplify?
-if host_machine.system() == 'android'
+if host_machine.system() == 'android' and p7zip.found()
     install_emptydir(install_prefix / ext_install_path)
 
     target_zip = install_prefix / ext_install_path / meson.project_name() + '.zip'
