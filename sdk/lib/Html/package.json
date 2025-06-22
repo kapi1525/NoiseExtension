@@ -7,11 +7,11 @@
     "main": "Noise.js",
     "scripts": {
         "prebuild": "tsc --noEmit",
-        "build": "esbuild js/Noise.ts --bundle --target=es2024 --loader:.wasm=binary --alias:Extension.wasm=$EXTWASMPATH --global-name=CRunNoise --footer:js=\"CRunNoise = CRunNoise.default;\" --outfile=$OUTJSPATH"
+        "build": "esbuild js/Noise.ts --bundle --target=es6 --loader:.wasm=binary --alias:Extension.wasm=$EXTWASMPATH --global-name=CRunNoise --footer:js=\"CRunNoise = CRunNoise.default;\" --outfile=$OUTJSPATH"
     },
     "dependencies": {
-        "@bjorn3/browser_wasi_shim": "0.4.0",
-        "esbuild": "~0.24.0"
+        "@bjorn3/browser_wasi_shim": "0.4.1",
+        "esbuild": "0.25.4"
     },
     "devDependencies": {
         "typescript": "~5.7.0"
