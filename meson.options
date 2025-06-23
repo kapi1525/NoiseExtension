@@ -1,6 +1,18 @@
 option(
     'editor_build',
-    type: 'boolean',
-    value: false,
-    description: 'Only windows if enabled a editor .mfx will be built',
+    type:           'boolean',
+    value:          false,
+    description:    'Only windows, if enabled a editor .mfx will be built',
+)
+option(
+    'examples',
+    type:           'feature',
+    value:          'enabled',
+    description:    'Install examples',
+)
+option(
+    'help',
+    type:           'feature',
+    value:          'enabled',
+    description:    'Install help file',
 )
