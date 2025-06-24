@@ -3,24 +3,27 @@ project(
     'cpp', 'c',
     version: '1.2.0',
     license: 'MIT',
-    default_options: [
-        'warning_level=1',
-        'cpp_std=c++17',
-        'c_std=c11',
-        'prefix=' + meson.project_source_root() / 'MFX',    # Install prefix
-        'b_lto=true',                                       # Enable lto
-        'b_lto_mode=thin',                                  # thin lto apparently is better
-    ],
-    meson_version: '>=1.1',
+    default_options: {
+        'cpp_std':       'c++17',
+        'c_std':         'c11',
+        # Workaround for: https://github.com/mesonbuild/meson/issues/5590
+        'build.cpp_std': 'c++17',
+        'build.c_std':   'c11',
+        'warning_level': '1',
+        'b_lto':         'true',                                # Enable lto
+        'b_lto_mode':    'thin',                                # thin lto apparently is better
+        'prefix':        meson.project_source_root() / 'MFX',   # Install prefix
+    },
+    meson_version: '>=1.2',
 )
 
 # Used by SDK meson.build file
 ext_author = 'Kacper Bugla'
-ext_company = 'Kacper Bugla'
+ext_company = ext_author
 ext_build = 23
 
 ext_examples_path = meson.current_source_dir() / 'Examples'
-ext_help_path = meson.current_source_dir() + '/Help'
+ext_help_path = meson.current_source_dir() / 'Help'
 
 
 
@@ -43,7 +46,6 @@ ext = build_target(
     install_dir: install_prefix / ext_install_path,
 )
 
-# TODO: Fix wasm builds on windows, acecalltablegen fails to compile for some reason
 if host_machine.system() == 'wasi'
     ext_js_out = meson.project_name() + '.js'
 
@@ -79,9 +81,12 @@ if host_machine.system() == 'wasi'
         # Dumb hack: .wasm file gets installed even though it has install: false
         # Probably a meson bug or intended "feature". just remove that file for now
         meson.add_install_script(rm, '-f', install_prefix / ext_install_path / 'Noise.wasm')
-    elif build_machine.system() == 'windows' and (cmd = find_program('cmd', required: false)).found()
-        # On windows del command is not a program so start a cmd.
-        meson.add_install_script(cmd, '/c', '"del /q ' + (install_prefix / ext_install_path / 'Noise.wasm') + '.txt"')
+    elif build_machine.system() == 'windows'
+        cmd = find_program('cmd', required: false)
+        if cmd.found()
+            # On windows del command is not a program so start a cmd.
+            meson.add_install_script(cmd, '/c', '"del /q ' + (install_prefix / ext_install_path / 'Noise.wasm') + '.txt"')
+        endif
     endif
 endif
 
