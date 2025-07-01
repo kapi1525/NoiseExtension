@@ -50,8 +50,8 @@ const wasi = new WASI(
 );
 
 // Init wasm module
-const extModule = new WebAssembly.Module(extWasm);
-const extInstance = new WebAssembly.Instance(extModule, {
+export const extModule = new WebAssembly.Module(extWasm);
+export const extInstance = new WebAssembly.Instance(extModule, {
     "wasi_snapshot_preview1": wasi.wasiImport,
     "ace_params": {
         "get_integer": (index: number) =>                                        { return wasmCallbacks.getNumber(index); },
@@ -65,7 +65,7 @@ const extInstance = new WebAssembly.Instance(extModule, {
 
 wasi.initialize(extInstance as any);
 
-let cppLand = {
+export let cppLand = {
     memory:                 extInstance.exports["memory"]                   as WebAssembly.Memory,
     malloc:                 extInstance.exports["wasm_malloc"]              as (size: number) => number,
     free:                   extInstance.exports["wasm_free"]                as (ptr: number) => void,
@@ -93,7 +93,7 @@ cppLand.init();
 // the parent class to the new class when it is created.
 // As all the necessary functions are defined in the parent class,
 // you only need to keep the ones that you actually need in your code.
-class CRunWasmExtWrapper extends CRunExtension {
+export default class CRunWasmExtWrapper extends CRunExtension {
     cppExtPtr: number = 0;
 
     constructor() {
@@ -348,12 +348,3 @@ class CRunWasmExtWrapper extends CRunExtension {
         return expressionReturn;
     }
 }
-
-// You are perfectly free to define any new class or global function in this code.
-// Avoid using generic names, as they may clash with future extensions. The best
-// option is to have a prefix specific to your name or object, inserted before the
-// name of the class or functions.
-
-// esbuild bundles everything in a way that nothing gets exposed to outside and nothing can conflict
-// Expose extension class globaly.
-export default CRunWasmExtWrapper;

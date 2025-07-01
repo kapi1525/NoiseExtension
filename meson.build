@@ -54,7 +54,7 @@ if host_machine.system() == 'wasi'
         ext = custom_target(
             'optimize',
             input: ext,
-            output: 'Noise.post_opt.wasm',
+            output: meson.project_name() + '.post_opt.wasm',
             depends: ext,
             command: [wasm_opt, '@INPUT@', '-O4', '-o', '@OUTPUT@'],
         )
@@ -63,18 +63,16 @@ if host_machine.system() == 'wasi'
 
     # javascript wrapper that loads the webassembly
     ext_js = custom_target('js ext wrapper',
-        depend_files: sdk_js_files,
         depends: ext,
         output: ext_js_out,
-        env: {
+        env: sdk_js_ext_wrapper_env + {
+            'ENTRY': meson.current_source_dir() / 'src/Noise.ts',
             'EXTWASMPATH': ext.full_path(),
-            'OUTJSPATH': meson.current_build_dir() / ext_js_out,
+            'OUTPUTPATH': meson.current_build_dir() / ext_js_out,
         },
-        command: [npm, '--prefix', npm_package_root, 'run', 'build'],
-        build_by_default: true,
-        install: true,
-        install_dir: install_prefix / ext_install_path,
+        kwargs: sdk_js_ext_wrapper_kwargs,
     )
+
 
     rm = find_program('rm', required: false)
     if rm.found()

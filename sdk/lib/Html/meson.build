@@ -16,15 +16,38 @@ if not get_option('debug')
     ]
 endif
 
-sdk_js_files = files('package.json', 'tsconfig.json', 'js/Noise.ts')
 
 # Install javascript dependencies
 npm = find_program('npm')
-npm_package_root = meson.current_source_dir()
+npm = [npm, '--prefix', meson.current_source_dir()]
 
-run_command(npm, '--prefix', npm_package_root, 'i', '--save-dev',
+run_command(npm, 'i', '--save-dev',
     check: true,
 )
+
+
+
+sdk_base_wasm_ext_wrapper = meson.current_source_dir() / 'CRunWasmExtWrapper.ts'
+
+
+
+sdk_js_ext_wrapper_env = {
+    'ENTRY': sdk_base_wasm_ext_wrapper,
+    'TOTYPECHECK': ' '.join([sdk_base_wasm_ext_wrapper, meson.current_source_dir() / '*.ts']),
+    'NODE_PATH': meson.current_source_dir(),    # esbuild uses this by default to search for extra dependencies
+    'EXTNAME': meson.project_name(),
+    'EXTWASMPATH': 'REPLACE',
+    'OUTPUTPATH': 'REPLACE',
+}
+
+
+sdk_js_ext_wrapper_kwargs = {
+    'command': [npm, 'run', 'build'],
+    'build_always_stale': true,
+    'build_by_default': true,
+    'install': true,
+    'install_dir': install_prefix / ext_install_path,
+}
 
 
 
