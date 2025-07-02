@@ -26,21 +26,25 @@ run_command(npm, 'i', '--save-dev',
 )
 
 
-
+# default wasm extension wrapper
 sdk_base_wasm_ext_wrapper = meson.current_source_dir() / 'CRunWasmExtWrapper.ts'
 
 
+# Installing
+sdk_can_simply_install = false
+ext_install_path = 'Data' / 'Runtime' / 'Html5'
 
+
+# default env used to launch npm build script
 sdk_js_ext_wrapper_env = {
     'ENTRY': sdk_base_wasm_ext_wrapper,
     'TOTYPECHECK': ' '.join([sdk_base_wasm_ext_wrapper, meson.current_source_dir() / '*.ts']),
-    'NODE_PATH': meson.current_source_dir(),    # esbuild uses this by default to search for extra dependencies
     'EXTNAME': meson.project_name(),
     'EXTWASMPATH': 'REPLACE',
     'OUTPUTPATH': 'REPLACE',
 }
 
-
+# kwargs for npm build script custom target
 sdk_js_ext_wrapper_kwargs = {
     'command': [npm, 'run', 'build'],
     'build_always_stale': true,
@@ -48,10 +52,3 @@ sdk_js_ext_wrapper_kwargs = {
     'install': true,
     'install_dir': install_prefix / ext_install_path,
 }
-
-
-
-# Installing
-
-sdk_can_simply_install = false
-ext_install_path = 'Data' / 'Runtime' / 'Html5'

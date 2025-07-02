@@ -111,9 +111,9 @@ if host_machine.system() == 'android' and p7zip.found()
 endif
 
 # Install examples and help file
-if get_option('examples').enabled()
+if install_examples
     install_subdir(ext_examples_path, install_dir: install_prefix)
 endif
-if get_option('help').enabled()
+if install_help
     install_subdir(ext_help_path, install_dir: install_prefix)
 endif

@@ -7,12 +7,12 @@ option(
 option(
     'examples',
     type:           'feature',
-    value:          'enabled',
+    value:          'auto',
     description:    'Install examples',
 )
 option(
     'help',
     type:           'feature',
-    value:          'enabled',
+    value:          'auto',
     description:    'Install help file',
 )

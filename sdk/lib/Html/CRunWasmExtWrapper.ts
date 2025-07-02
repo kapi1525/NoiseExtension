@@ -2,7 +2,7 @@
 import extWasm from "Extension.wasm";
 import {WASI, File, OpenFile, ConsoleStdout} from "@bjorn3/browser_wasi_shim";
 // html exporter runtime type definitions
-import "Runtime.d.ts"
+import "./Runtime.d.ts"
 
 
 
