@@ -1,5 +1,6 @@
-import CRunWasmExtWrapper from "CRunWasmExtWrapper";
-import { extInstance, cppLand } from "CRunWasmExtWrapper";
+import CRunWasmExtWrapper from "../../sdk/lib/Html/CRunWasmExtWrapper";
+import { extInstance, cppLand } from "../../sdk/lib/Html/CRunWasmExtWrapper";
+import "../../sdk/lib/Html/Runtime.d.ts"
 
 
 

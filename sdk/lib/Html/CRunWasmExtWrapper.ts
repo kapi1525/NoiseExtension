@@ -1,8 +1,8 @@
 // Wasm gets embeded into .js file by esbuild, its stored in base64 and gets converted to UInt8Array.
 import extWasm from "Extension.wasm";
 import {WASI, File, OpenFile, ConsoleStdout} from "@bjorn3/browser_wasi_shim";
-
-// FIXME: This should be generated from a template or something at build time
+// html exporter runtime type definitions
+import "Runtime.d.ts"
 
 
 

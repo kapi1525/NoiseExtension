@@ -5,7 +5,7 @@
 
 // wasm file binary data
 declare module "Extension.wasm" {
-    let uint8array: Uint8Array;
+    const uint8array: Uint8Array;
     export default uint8array;
 }
 

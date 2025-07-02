@@ -1,7 +1,7 @@
 {
     "name": "wasm-ext-wrapper",
     "scripts": {
-        "prebuild": "tsc $ENTRY $TOTYPECHECK --baseUrl $NODE_PATH -t es2024 --skipLibCheck --strict --module preserve --moduleResolution bundler --esModuleInterop --noEmit",
+        "prebuild": "tsc $ENTRY $TOTYPECHECK --baseUrl $NODE_PATH -t esnext --skipLibCheck --strict --module preserve --moduleResolution bundler --esModuleInterop --isolatedModules --noEmit",
         "build": "esbuild $ENTRY --bundle --target=es6 --loader:.wasm=binary --alias:Extension.wasm=$EXTWASMPATH --global-name=CRun$EXTNAME --footer:js=\"CRun$EXTNAME = CRun$EXTNAME.default;\" --outfile=$OUTPUTPATH"
     },
     "dependencies": {
