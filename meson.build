@@ -32,6 +32,7 @@ subdir('sdk')
 source = []
 include = []
 subdir('src')
+subdir('res')
 
 
 
