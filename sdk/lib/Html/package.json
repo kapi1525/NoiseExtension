@@ -1,19 +1,14 @@
 {
-    "name": "extension-wrapper",
-    "version": "1.0.0",
-    "description": "",
-    "author": "",
-    "license": "MIT",
-    "main": "Noise.js",
+    "name": "wasm-ext-wrapper",
     "scripts": {
-        "prebuild": "tsc --noEmit",
-        "build": "esbuild js/Noise.ts --bundle --target=es6 --loader:.wasm=binary --alias:Extension.wasm=$EXTWASMPATH --global-name=CRunNoise --footer:js=\"CRunNoise = CRunNoise.default;\" --outfile=$OUTJSPATH"
+        "prebuild": "tsc $ENTRY $TOTYPECHECK -t esnext --strict --module preserve --moduleResolution bundler --esModuleInterop --isolatedModules --noEmit",
+        "build": "esbuild $ENTRY --bundle --target=es6 --loader:.wasm=binary --alias:Extension.wasm=$EXTWASMPATH --global-name=CRun$EXTNAME --footer:js=\"CRun$EXTNAME = CRun$EXTNAME.default;\" --outfile=$OUTPUTPATH"
     },
     "dependencies": {
-        "@bjorn3/browser_wasi_shim": "0.4.1",
-        "esbuild": "0.25.4"
+        "@bjorn3/browser_wasi_shim": "0.4.2",
+        "esbuild": "0.25.5"
     },
     "devDependencies": {
-        "typescript": "~5.7.0"
+        "typescript": "5.8.3"
     }
 }
