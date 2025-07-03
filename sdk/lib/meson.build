@@ -18,6 +18,10 @@ if unicode_build
     config += ' Unicode'
 endif
 
+# By default installed only with editor builds
+install_examples = get_option('examples').enabled() or (get_option('examples').auto() and editor_build)
+install_help = get_option('help').enabled() or (get_option('help').auto() and editor_build)
+
 
 # All platforms except wasm are built as shared_module.
 sdk_ext_target_type = 'shared_module'
