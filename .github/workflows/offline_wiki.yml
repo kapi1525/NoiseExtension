@@ -26,28 +26,26 @@ jobs:
       with:
         repository: 'kapi1525/ghwiki2chm'
         latest: true
-        fileName: '*Linux.zip'
-        out-file-path: 'ghwiki2chm'
+        fileName: '*-x86_64-linux.tar.gz'
 
-    - name: Extract ghwiki2chm
-      working-directory: "./ghwiki2chm"
-      run: tar -xvf "${{ fromJson(steps.download.outputs.downloaded_files)[0] }}"
+    - name: Install ghwiki2chm
+      run: |
+        tar -xzf "${{ fromJson(steps.download.outputs.downloaded_files)[0] }}"
+        sudo cp -rf ghwiki2chm/* /usr/local
+        rm -r ghwiki2chm "${{ fromJson(steps.download.outputs.downloaded_files)[0] }}"
+        ghwiki2chm -v
 
     - name: Install chmcmd
-      run: sudo apt-get install fpc -y
-      # NOTE: As of 28.08.2024 restored cache is broken.
-      # https://github.com/awalsh128/cache-apt-pkgs-action/pull/136
-      # uses: awalsh128/cache-apt-pkgs-action@v1
-      # with:
-      #   packages: fpc
-      #   version: 1.0
+      run: sudo apt-get install fp-utils -y
 
     - name: Run ghwiki2chm
-      run: ./ghwiki2chm/ghwiki2chm -n Noise -r NoiseExtension.wiki -o Noise.chm
+      run: |
+        ghwiki2chm -v
+        ghwiki2chm -n Noise -r NoiseExtension.wiki -o Noise.chm
 
     - name: Copy Noise.chm
       run: |
-        mkdir ./NoiseExtension/Help
+        mkdir -p ./NoiseExtension/Help
         cp Noise.chm ./NoiseExtension/Help
 
     - name: Upload artifact
