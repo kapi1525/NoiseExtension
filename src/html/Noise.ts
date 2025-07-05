@@ -19,12 +19,11 @@ export default class CRunNoise extends CRunWasmExtWrapper {
             const ext = act.getParamObject(this.rh!, 0);
             const xOffset = act.getParamExpression(this.rh, 1) as number;
             const yOffset = act.getParamExpression(this.rh, 2) as number;
-            const zOffset = act.getParamExpression(this.rh, 2) as number;
+            const zOffset = act.getParamExpression(this.rh, 3) as number;
             let flags = act.getParamExpression(this.rh, 4) as number;
 
             // ext.hoIdentifier;
             const surface = ext.ext as any;
-            console.log(surface);
 
             // Get surface object rendering context
             const currentImage = surface.oSurf.imageList[surface.oSurf.selectedImage] as any;
@@ -34,7 +33,6 @@ export default class CRunNoise extends CRunWasmExtWrapper {
 
             // Get current image data
             const imageData = context.getImageData(0, 0, w, h);
-            console.log(imageData)
 
             // Copy it to cpp side
             const cppBufferPtr = cppLand.malloc(imageData.data.byteLength);
