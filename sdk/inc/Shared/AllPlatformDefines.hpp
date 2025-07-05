@@ -137,10 +137,12 @@ namespace DarkEdif {
 }
 
 #ifndef DARKEDIF_LOG_MIN_LEVEL
-	#ifdef __wasi__
-		#define DARKEDIF_LOG_MIN_LEVEL DARKEDIF_LOG_VERBOSE
-	#elif defined(_DEBUG)
-		#define DARKEDIF_LOG_MIN_LEVEL DARKEDIF_LOG_INFO
+	#ifdef _DEBUG
+		#ifdef __wasi__
+			#define DARKEDIF_LOG_MIN_LEVEL DARKEDIF_LOG_VERBOSE
+		#else
+			#define DARKEDIF_LOG_MIN_LEVEL DARKEDIF_LOG_INFO
+		#endif
 	#else
 		#define DARKEDIF_LOG_MIN_LEVEL DARKEDIF_LOG_WARN
 	#endif
@@ -388,10 +390,10 @@ enum class REFLAG : short {
 
 // Useful functions
 #ifndef __wasi__
-    // Currently not fully supported
-    // FIXME: Use wasi threads when they are stable
-    #include <thread>
-    #include <atomic>
+	// Currently not fully supported
+	// FIXME: Use wasi threads when they are stable
+	#include <thread>
+	#include <atomic>
 #endif
 #include <assert.h>
 
