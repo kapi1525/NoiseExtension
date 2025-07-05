@@ -67,7 +67,7 @@ if host_machine.system() == 'wasi'
         depends: ext,
         output: ext_js_out,
         env: sdk_js_ext_wrapper_env + {
-            # 'ENTRY': meson.current_source_dir() / 'src/html/Noise.ts',
+            'ENTRY': meson.current_source_dir() / 'src/html/Noise.ts',
             'EXTWASMPATH': ext.full_path(),
             'OUTPUTPATH': meson.current_build_dir() / ext_js_out,
         },

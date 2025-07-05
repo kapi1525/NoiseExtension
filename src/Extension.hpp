@@ -102,9 +102,15 @@ public:
         // Windows specific
         void fill_surface_obj_with_noise(RunObject* surface_obj, float xoffset, float yoffset, float zoffset, int flags);
 
+    #ifndef __wasi__
         // Crossplatform but only used on windows
         void fill_buffer_with_noise(uint8_t* buf, int width, int height, int pitch, int depth, float xoffset, float yoffset, float zoffset, int flags);
         void fill_alpha_buffer_with_noise(uint8_t* buf, int width, int height, int pitch, float xoffset, float yoffset, float zoffset, int flags);
+
+    #else
+        // TODO: Rething maybe? Combine with other fill_buffer functions?
+        void fill_buffer_with_noise_wasm(uint8_t* buf, int width, int height, float xoffset, float yoffset, float zoffset, int flags);
+    #endif
 
 	// Conditions
         // No conditions are here

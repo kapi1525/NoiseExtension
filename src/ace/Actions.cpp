@@ -220,6 +220,7 @@ void Extension::fill_surface_obj_with_noise(RunObject* surface_obj, float xoffse
 
 
 
+#ifndef __wasi__
 // Fill raw buffer with noise
 // surface object always uses 24bit depth so other depths are not supported now
 void Extension::fill_buffer_with_noise(uint8_t* buf, int width, int height, int pitch, int depth, float xoffset, float yoffset, float zoffset, int flags) {
@@ -275,3 +276,48 @@ void Extension::fill_alpha_buffer_with_noise(uint8_t* buf, int width, int height
         }
     }
 }
+
+#else
+
+#define WASM_EXPORT_AS(name) __attribute__((export_name(name)))
+
+void WASM_EXPORT_AS("fill_buffer_with_noise") Extension::fill_buffer_with_noise_wasm(uint8_t* buf, int width, int height, float xoffset, float yoffset, float zoffset, int flags) {
+    size_t buf_index;
+    uint8_t noise_val;
+
+    int pitch = width * 4;
+
+    for (int y = 0; y < height; y++) {
+        for (int x = 0; x < width; x++) {
+            if(flags & Only2D) {
+                noise_val = (uint8_t)get_noise2D(x + xoffset, y + yoffset);
+            } else {
+                noise_val = (uint8_t)get_noise3D(x + xoffset, y + yoffset, zoffset);
+            }
+
+            buf_index = (x * 4) + (y * pitch);
+
+            // RGBA layout
+            if(flags & FillRed) {
+                buf[buf_index + 0] = noise_val;
+            }
+
+            if(flags & FillGreen) {
+                buf[buf_index + 1] = noise_val;
+            }
+
+            if(flags & FillBlue) {
+                buf[buf_index + 2] = noise_val;
+            }
+
+            if(flags & FillAlpha) {
+                buf[buf_index + 3] = noise_val;
+            }
+
+            if(flags & FillAlpha255) {
+                buf[buf_index + 3] = 255;
+            }
+        }
+    }
+}
+#endif

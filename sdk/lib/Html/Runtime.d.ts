@@ -10,6 +10,14 @@ declare module "Extension.wasm" {
 // Stubs
 
 declare interface CCreateObjectInfo {}
+declare class CExtension {
+    hoIdentifier: number;
+    privateData: number;
+    ext: CRunExtension;
+
+    getExpParam(): number | string;
+}
+declare class CRun {}
 
 // Services.js Build 295.10
 
@@ -154,8 +162,8 @@ declare class CRunExtension {
     static readonly REFLAG_DISPLAY: number; // 1
     static readonly REFLAG_ONESHOT: number; // 2
 
-    ho: any;
-    rh: any;
+    ho: CExtension;
+    rh: CRun;
 
     init(hoPtr: any): void;
     getNumberOfConditions(): number;
@@ -189,7 +197,7 @@ declare class CExpExtension {
 declare class CActExtension {
     execute(rhPtr: any): void;
 
-    getParamObject      (rhPtr: any, num: number): any;
+    getParamObject      (rhPtr: any, num: number): CExtension;
     getParamBorder      (rhPtr: any, num: number): any;
     getParamShort       (rhPtr: any, num: number): any;
     getParamAltValue    (rhPtr: any, num: number): any;
@@ -205,7 +213,7 @@ declare class CActExtension {
     getParamJoyDirection(rhPtr: any, num: number): any;
     getParamShoot       (rhPtr: any, num: number): any;
     getParamZone        (rhPtr: any, num: number): any;
-    getParamExpression  (rhPtr: any, num: number): any;
+    getParamExpression  (rhPtr: any, num: number): number | string;
     getParamColour      (rhPtr: any, num: number): any;
     getParamFrame       (rhPtr: any, num: number): any;
     getParamNewDirection(rhPtr: any, num: number): any;
@@ -234,7 +242,7 @@ declare class CCndExtension {
     getParamSpeed       (rhPtr: any, num: number): any;
     getParamPosition    (rhPtr: any, num: number): any;
     getParamJoyDirection(rhPtr: any, num: number): any;
-    getParamExpression  (rhPtr: any, num: number): any;
+    getParamExpression  (rhPtr: any, num: number): number | string;
     getParamColour      (rhPtr: any, num: number): any;
     getParamFrame       (rhPtr: any, num: number): any;
     getParamNewDirection(rhPtr: any, num: number): any;

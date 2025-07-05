@@ -11,6 +11,10 @@ enum FillSurfaceFlags {
     FillAlpha = 1<<3,
     // Use GetNoise2D instead of GetNoise3D, z offset will be ignored
     Only2D = 1<<4,
+    // Internal
+    FillAlpha0 = 1<<5,
+    FillAlpha255 = 1<<6,
+
     DefaultFlags = (FillRed | FillGreen | FillBlue),
 };
 
