@@ -102,15 +102,14 @@ public:
         // Windows specific
         void fill_surface_obj_with_noise(RunObject* surface_obj, float xoffset, float yoffset, float zoffset, int flags);
 
-    #ifndef __wasi__
-        // Crossplatform but only used on windows
-        void fill_buffer_with_noise(uint8_t* buf, int width, int height, int pitch, int depth, float xoffset, float yoffset, float zoffset, int flags);
-        void fill_alpha_buffer_with_noise(uint8_t* buf, int width, int height, int pitch, float xoffset, float yoffset, float zoffset, int flags);
+        enum class PixelFormat {
+            BGR24,
+            A8,
+            RGBA32,
+        };
 
-    #else
-        // TODO: Rething maybe? Combine with other fill_buffer functions?
-        void fill_buffer_with_noise_wasm(uint8_t* buf, int width, int height, float xoffset, float yoffset, float zoffset, int flags);
-    #endif
+        // Cross platform
+        void fill_buffer_with_noise(uint8_t* buf, int width, int height, int pitch, PixelFormat format, float xoffset, float yoffset, float zoffset, int flags);
 
 	// Conditions
         // No conditions are here
@@ -154,6 +153,8 @@ public:
         int fill_blue();
         int fill_alpha();
         int only_2d();
+        int fill_alpha0();
+        int fill_alpha255();
 
 
     float map_noise_value(float value);

@@ -194,21 +194,20 @@ void Extension::fill_surface_obj_with_noise(RunObject* surface_obj, float xoffse
     // cSurface* temp = create_surface(target_w, target_h, 24, SurfaceType::Memory, (SurfaceDriver)target->GetDriver());
 
     if(flags & FillRed || flags & FillGreen || flags & FillBlue) {
-        // size_t bufsize = target_w * target_h * 3;      // In bytes, BGR layout, 1 pixel = 3bytes
         uint8_t* buf = target->LockBuffer();
 
         // Pitch = size between lines in bytes.
-        fill_buffer_with_noise(buf, target_w, target_h, target->GetPitch(), target->GetDepth(), xoffset, yoffset, zoffset, flags);
+        fill_buffer_with_noise(buf, target_w, target_h, target->GetPitch(), PixelFormat::BGR24, xoffset, yoffset, zoffset, flags);
         target->UnlockBuffer(buf);    // you can pass a nullptr here and it will work!
     }
 
-    if(flags & FillAlpha) {
+    if(flags & FillAlpha || flags & FillAlpha0 || flags & FillAlpha255) {
         if(!target->HasAlpha()) {
             target->CreateAlpha();
         }
 
         uint8_t* buf = target->LockAlpha();
-        fill_alpha_buffer_with_noise(buf, target_w, target_h, target->GetAlphaPitch(), xoffset, yoffset, zoffset, flags);
+        fill_buffer_with_noise(buf, target_w, target_h, target->GetAlphaPitch(), PixelFormat::A8, xoffset, yoffset, zoffset, flags);
         target->UnlockAlpha();
     }
 
@@ -218,16 +217,41 @@ void Extension::fill_surface_obj_with_noise(RunObject* surface_obj, float xoffse
 }
 
 
-
-
-#ifndef __wasi__
 // Fill raw buffer with noise
-// surface object always uses 24bit depth so other depths are not supported now
-void Extension::fill_buffer_with_noise(uint8_t* buf, int width, int height, int pitch, int depth, float xoffset, float yoffset, float zoffset, int flags) {
+void Extension::fill_buffer_with_noise(uint8_t* buf, int width, int height, int pitch, PixelFormat format, float xoffset, float yoffset, float zoffset, int flags) {
     size_t buf_index;
     uint8_t noise_val;
 
-    assert(depth == 24);
+    bool has_alpha = format != PixelFormat::BGR24;
+    bool has_color = format != PixelFormat::A8;
+
+    // all in bytes:
+    size_t pixel_sz;
+    uint8_t r_offset;
+    uint8_t g_offset;
+    uint8_t b_offset;
+    uint8_t a_offset;
+
+    // TODO: This function is getting a bit heavy, maybe its time to abuse templates or simd to speed it up? :3
+    switch (format) {
+    case PixelFormat::BGR24:
+        pixel_sz = 3;
+        r_offset = 2;
+        g_offset = 1;
+        b_offset = 0;
+        break;
+    case PixelFormat::A8:
+        pixel_sz = 1;
+        a_offset = 0;
+        break;
+    case PixelFormat::RGBA32:
+        pixel_sz = 4;
+        r_offset = 0;
+        g_offset = 1;
+        b_offset = 2;
+        a_offset = 3;
+        break;
+    }
 
     for (int y = 0; y < height; y++) {
         for (int x = 0; x < width; x++) {
@@ -237,87 +261,43 @@ void Extension::fill_buffer_with_noise(uint8_t* buf, int width, int height, int 
                 noise_val = (uint8_t)get_noise3D(x + xoffset, y + yoffset, zoffset);
             }
 
-            buf_index = (x * 3) + (y * pitch);
+            buf_index = (x * pixel_sz) + (y * pitch);
 
-            // BGR layout
-            if(flags & FillRed) {
-                buf[buf_index + 2] = noise_val;
+            if(has_color) {
+                if(flags & FillRed) {
+                    buf[buf_index + r_offset] = noise_val;
+                }
+
+                if(flags & FillGreen) {
+                    buf[buf_index + g_offset] = noise_val;
+                }
+
+                if(flags & FillBlue) {
+                    buf[buf_index + b_offset] = noise_val;
+                }
             }
 
-            if(flags & FillGreen) {
-                buf[buf_index + 1] = noise_val;
-            }
+            if(has_alpha) {
+                if(flags & FillAlpha) {
+                    buf[buf_index + a_offset] = noise_val;
+                }
 
-            if(flags & FillBlue) {
-                buf[buf_index + 0] = noise_val;
+                if(flags & FillAlpha0) {
+                    buf[buf_index + a_offset] = 0;
+                }
+
+                if(flags & FillAlpha255) {
+                    buf[buf_index + a_offset] = 255;
+                }
             }
         }
     }
 }
 
-void Extension::fill_alpha_buffer_with_noise(uint8_t* buf, int width, int height, int pitch, float xoffset, float yoffset, float zoffset, int flags) {
-    size_t buf_index;
-    uint8_t noise_val;
-
-    assert(flags & FillAlpha);
-
-    for (int y = 0; y < height; y++) {
-        for (int x = 0; x < width; x++) {
-            if(flags & Only2D) {
-                noise_val = (uint8_t)get_noise2D(x + xoffset, y + yoffset);
-            } else {
-                noise_val = (uint8_t)get_noise3D(x + xoffset, y + yoffset, zoffset);
-            }
-
-            // 1 byte = 1 pixel
-            buf_index = x + (y * pitch);
-
-            buf[buf_index] = noise_val;
-        }
-    }
-}
-
-#else
-
+#ifdef __wasi__
 #define WASM_EXPORT_AS(name) __attribute__((export_name(name)))
 
-void WASM_EXPORT_AS("fill_buffer_with_noise") Extension::fill_buffer_with_noise_wasm(uint8_t* buf, int width, int height, float xoffset, float yoffset, float zoffset, int flags) {
-    size_t buf_index;
-    uint8_t noise_val;
-
-    int pitch = width * 4;
-
-    for (int y = 0; y < height; y++) {
-        for (int x = 0; x < width; x++) {
-            if(flags & Only2D) {
-                noise_val = (uint8_t)get_noise2D(x + xoffset, y + yoffset);
-            } else {
-                noise_val = (uint8_t)get_noise3D(x + xoffset, y + yoffset, zoffset);
-            }
-
-            buf_index = (x * 4) + (y * pitch);
-
-            // RGBA layout
-            if(flags & FillRed) {
-                buf[buf_index + 0] = noise_val;
-            }
-
-            if(flags & FillGreen) {
-                buf[buf_index + 1] = noise_val;
-            }
-
-            if(flags & FillBlue) {
-                buf[buf_index + 2] = noise_val;
-            }
-
-            if(flags & FillAlpha) {
-                buf[buf_index + 3] = noise_val;
-            }
-
-            if(flags & FillAlpha255) {
-                buf[buf_index + 3] = 255;
-            }
-        }
-    }
+void WASM_EXPORT_AS("fill_buffer_with_noise") fill_buffer_with_noise_wasm(Extension* extPtr, uint8_t* buf, int width, int height, float xoffset, float yoffset, float zoffset, int flags) {
+    extPtr->fill_buffer_with_noise(buf, width, height, width * 4, Extension::PixelFormat::RGBA32, xoffset, yoffset, zoffset, flags);
 }
 #endif

@@ -143,6 +143,8 @@ Extension::Extension(const EDITDATA* const edPtr, const CreateObjectInfo* const 
         LinkExpression(46, fill_blue);
         LinkExpression(47, fill_alpha);
         LinkExpression(48, only_2d);
+        LinkExpression(49, fill_alpha0);
+        LinkExpression(50, fill_alpha255);
 	}
 
 	// Properties

@@ -216,3 +216,11 @@ int Extension::fill_alpha() {
 int Extension::only_2d() {
     return FillSurfaceFlags::Only2D;
 }
+
+int Extension::fill_alpha0() {
+    return FillSurfaceFlags::FillAlpha0;
+}
+
+int Extension::fill_alpha255() {
+    return FillSurfaceFlags::FillAlpha255;
+}
