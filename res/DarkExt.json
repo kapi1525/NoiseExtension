@@ -523,7 +523,7 @@
             { //48
                 "Title": "Only2D(",
                 "Returns": "Integer"
-            }
+            },
             { //49
                 "Title": "FillAlpha0(",
                 "Returns": "Integer"
@@ -531,7 +531,7 @@
             { //50
                 "Title": "FillAlpha255(",
                 "Returns": "Integer"
-            },
+            }
         ],
 
         "Properties": [
