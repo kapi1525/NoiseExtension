@@ -1,14 +1,30 @@
 # JSON
+# Include version and commit info
+darkext_json = configure_file(
+    input: 'DarkExt.json',
+    output: 'DarkExt.json.in',
+    configuration: {
+        'version': 'v' + meson.project_version(),
+        'build': ext_build,
+        'VCS_TAG': '@VCS_TAG@'
+    }
+)
+
+darkext_json = vcs_tag(
+    input: darkext_json,
+    output: 'DarkExt.json',
+    fallback: 'v' + meson.project_version(),
+)
+
+
 if runtime_build
     # runtime builds use minified json
     darkext_json = custom_target('minify_json',
         build_by_default: true,
-        input: files('DarkExt.json'),
+        input: darkext_json,
         output: 'DarkExt.PostMinify.json',
         command: [jsonminify, '@INPUT@', '@OUTPUT@'],
     )
-else
-    darkext_json = files('DarkExt.json')
 endif
 
 source += custom_target('embed_json',
