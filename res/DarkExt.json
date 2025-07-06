@@ -137,7 +137,9 @@
                 [ 45, "Fill green" ],
                 [ 46, "Fill blue" ],
                 [ 47, "Fill alpha" ],
-                [ 48, "Only 2D" ]
+                [ 48, "Only 2D" ],
+                [ 49, "Fill alpha with 0" ],
+                [ 50, "Fill alpha with 255" ]
             ],
             "---"
         ],
