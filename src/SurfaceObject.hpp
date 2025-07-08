@@ -3,7 +3,7 @@
 
 
 
-enum FillSurfaceFlags {
+enum FillSurfaceFlags : int {
     // What color channels should be filled with noise?
     FillRed = 1<<0,
     FillGreen = 1<<1,
@@ -11,11 +11,17 @@ enum FillSurfaceFlags {
     FillAlpha = 1<<3,
     // Use GetNoise2D instead of GetNoise3D, z offset will be ignored
     Only2D = 1<<4,
-    // Internal
     FillAlpha0 = 1<<5,
     FillAlpha255 = 1<<6,
 
     DefaultFlags = (FillRed | FillGreen | FillBlue),
+};
+
+
+enum class PixelFormat {
+    BGR24,
+    A8,
+    RGBA32,
 };
 
 

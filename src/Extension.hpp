@@ -102,12 +102,6 @@ public:
         // Windows specific
         void fill_surface_obj_with_noise(RunObject* surface_obj, float xoffset, float yoffset, float zoffset, int flags);
 
-        enum class PixelFormat {
-            BGR24,
-            A8,
-            RGBA32,
-        };
-
         // Cross platform
         void fill_buffer_with_noise(uint8_t* buf, int width, int height, int pitch, PixelFormat format, float xoffset, float yoffset, float zoffset, int flags);
 

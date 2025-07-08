@@ -298,6 +298,6 @@ void Extension::fill_buffer_with_noise(uint8_t* buf, int width, int height, int 
 #define WASM_EXPORT_AS(name) __attribute__((export_name(name)))
 
 void WASM_EXPORT_AS("fill_buffer_with_noise") fill_buffer_with_noise_wasm(Extension* extPtr, uint8_t* buf, int width, int height, float xoffset, float yoffset, float zoffset, int flags) {
-    extPtr->fill_buffer_with_noise(buf, width, height, width * 4, Extension::PixelFormat::RGBA32, xoffset, yoffset, zoffset, flags);
+    extPtr->fill_buffer_with_noise(buf, width, height, width * 4, PixelFormat::RGBA32, xoffset, yoffset, zoffset, flags);
 }
 #endif
