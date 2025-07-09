@@ -217,87 +217,131 @@ void Extension::fill_surface_obj_with_noise(RunObject* surface_obj, float xoffse
 }
 
 
-// Fill raw buffer with noise
-void Extension::fill_buffer_with_noise(uint8_t* buf, int width, int height, int pitch, PixelFormat format, float xoffset, float yoffset, float zoffset, int flags) {
-    size_t buf_index;
-    uint8_t noise_val;
-
-    bool has_alpha = format != PixelFormat::BGR24;
-    bool has_color = format != PixelFormat::A8;
-
-    // all in bytes:
-    size_t pixel_sz;
-    uint8_t r_offset;
-    uint8_t g_offset;
-    uint8_t b_offset;
-    uint8_t a_offset;
-
-    // TODO: This function is getting a bit heavy, maybe its time to abuse templates or simd to speed it up? :3
-    switch (format) {
-    case PixelFormat::BGR24:
-        pixel_sz = 3;
-        r_offset = 2;
-        g_offset = 1;
-        b_offset = 0;
-        break;
-    case PixelFormat::A8:
-        pixel_sz = 1;
-        a_offset = 0;
-        break;
-    case PixelFormat::RGBA32:
-        pixel_sz = 4;
-        r_offset = 0;
-        g_offset = 1;
-        b_offset = 2;
-        a_offset = 3;
-        break;
-    }
+template<int flags>
+void fill_buffer_with_noise_bgr24(Extension* extptr, uint8_t* buf, int width, int height, int pitch, float xoffset, float yoffset, float zoffset) {
+    uint8_t noise_val = 0;
 
     for (int y = 0; y < height; y++) {
         for (int x = 0; x < width; x++) {
-            if(flags & Only2D) {
-                noise_val = (uint8_t)get_noise2D(x + xoffset, y + yoffset);
+            if constexpr (flags & Only2D) {
+                noise_val = (uint8_t)extptr->get_noise2D(x + xoffset, y + yoffset);
             } else {
-                noise_val = (uint8_t)get_noise3D(x + xoffset, y + yoffset, zoffset);
+                noise_val = (uint8_t)extptr->get_noise3D(x + xoffset, y + yoffset, zoffset);
             }
 
-            buf_index = (x * pixel_sz) + (y * pitch);
+            const size_t buf_index = (x * 3) + (y * pitch);
 
-            if(has_color) {
-                if(flags & FillRed) {
-                    buf[buf_index + r_offset] = noise_val;
-                }
+            if constexpr (flags & FillBlue)
+                buf[buf_index + 0] = noise_val;
 
-                if(flags & FillGreen) {
-                    buf[buf_index + g_offset] = noise_val;
-                }
+            if constexpr (flags & FillGreen)
+                buf[buf_index + 1] = noise_val;
 
-                if(flags & FillBlue) {
-                    buf[buf_index + b_offset] = noise_val;
-                }
-            }
-
-            if(has_alpha) {
-                if(flags & FillAlpha) {
-                    buf[buf_index + a_offset] = noise_val;
-                }
-
-                if(flags & FillAlpha0) {
-                    buf[buf_index + a_offset] = 0;
-                }
-
-                if(flags & FillAlpha255) {
-                    buf[buf_index + a_offset] = 255;
-                }
-            }
+            if constexpr (flags & FillRed)
+                buf[buf_index + 2] = noise_val;
         }
     }
 }
 
-#ifdef __wasi__
-#define WASM_EXPORT_AS(name) __attribute__((export_name(name)))
+template<int flags>
+void fill_buffer_with_noise_a8(Extension* extptr, uint8_t* buf, int width, int height, int pitch, float xoffset, float yoffset, float zoffset) {
+    uint8_t noise_val = 0;
 
-void WASM_EXPORT_AS("fill_buffer_with_noise") fill_buffer_with_noise_wasm(Extension* extPtr, uint8_t* buf, int width, int height, float xoffset, float yoffset, float zoffset, int flags) {
+    for (int y = 0; y < height; y++) {
+        for (int x = 0; x < width; x++) {
+            const size_t buf_index = (x) + (y * pitch);
+
+            if constexpr (flags & FillAlpha) {
+                if constexpr (flags & Only2D) {
+                    noise_val = (uint8_t)extptr->get_noise2D(x + xoffset, y + yoffset);
+                } else {
+                    noise_val = (uint8_t)extptr->get_noise3D(x + xoffset, y + yoffset, zoffset);
+                }
+                buf[buf_index] = noise_val;
+            }
+
+            if constexpr (flags & FillAlpha0)
+                buf[buf_index] = 0;
+
+            if constexpr (flags & FillAlpha255)
+                buf[buf_index] = 255;
+        }
+    }
+}
+
+template<int flags>
+void fill_buffer_with_noise_rgba32(Extension* extptr, uint8_t* buf, int width, int height, int pitch, float xoffset, float yoffset, float zoffset) {
+    uint8_t noise_val = 0;
+
+    for (int y = 0; y < height; y++) {
+        for (int x = 0; x < width; x++) {
+            if constexpr (flags & Only2D) {
+                noise_val = (uint8_t)extptr->get_noise2D(x + xoffset, y + yoffset);
+            } else {
+                noise_val = (uint8_t)extptr->get_noise3D(x + xoffset, y + yoffset, zoffset);
+            }
+
+            const size_t buf_index = (x * 4) + (y * pitch);
+
+            if constexpr (flags & FillRed)
+                buf[buf_index + 0] = noise_val;
+
+            if constexpr (flags & FillGreen)
+                buf[buf_index + 1] = noise_val;
+
+            if constexpr (flags & FillBlue)
+                buf[buf_index + 2] = noise_val;
+
+            if constexpr (flags & FillAlpha)
+                buf[buf_index + 3] = noise_val;
+
+            if constexpr (flags & FillAlpha0)
+                buf[buf_index + 3] = 0;
+
+            if constexpr (flags & FillAlpha255)
+                buf[buf_index + 3] = 255;
+        }
+    }
+}
+
+template<PixelFormat format, int flags>
+void constexpr fill_buffer_with_noise_dispach2(Extension* extptr, uint8_t* buf, int width, int height, int pitch, float xoffset, float yoffset, float zoffset) {
+    if constexpr (format == PixelFormat::BGR24)
+        return fill_buffer_with_noise_bgr24<flags>(extptr, buf, width, height, pitch, xoffset, yoffset, zoffset);
+
+    if constexpr (format == PixelFormat::A8)
+        return fill_buffer_with_noise_a8<flags>(extptr, buf, width, height, pitch, xoffset, yoffset, zoffset);
+
+    if constexpr (format == PixelFormat::RGBA32)
+        return fill_buffer_with_noise_rgba32<flags>(extptr, buf, width, height, pitch, xoffset, yoffset, zoffset);
+}
+
+template<PixelFormat format, int cur_flags_check = 0, int max_flags = MaxFillFlags>
+void constexpr fill_buffer_with_noise_dispach(Extension* extptr, uint8_t* buf, int width, int height, int pitch, float xoffset, float yoffset, float zoffset, int flags) {
+    if (cur_flags_check == flags) {
+        return fill_buffer_with_noise_dispach2<format, cur_flags_check>(extptr, buf, width, height, pitch, xoffset, yoffset, zoffset);
+    }
+    if constexpr (cur_flags_check < max_flags) {
+        fill_buffer_with_noise_dispach<format, cur_flags_check + 1>(extptr, buf, width, height, pitch, xoffset, yoffset, zoffset, flags);
+    }
+}
+
+void Extension::fill_buffer_with_noise(uint8_t* buf, int width, int height, int pitch, PixelFormat format, float xoffset, float yoffset, float zoffset, int flags) {
+    // auto start = std::chrono::high_resolution_clock::now();
+
+    switch (format) {
+    case PixelFormat::BGR24:  fill_buffer_with_noise_dispach<PixelFormat::BGR24 >(this, buf, width, height, pitch, xoffset, yoffset, zoffset, flags); break;
+    case PixelFormat::A8:     fill_buffer_with_noise_dispach<PixelFormat::A8    >(this, buf, width, height, pitch, xoffset, yoffset, zoffset, flags); break;
+    case PixelFormat::RGBA32: fill_buffer_with_noise_dispach<PixelFormat::RGBA32>(this, buf, width, height, pitch, xoffset, yoffset, zoffset, flags); break;
+    }
+
+    // auto end = std::chrono::high_resolution_clock::now();
+    // auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+    // DarkEdif::MsgBox::Info(_T("This took:"), _T("%lldms\n"), duration);
+}
+
+#ifdef __wasi__
+void WASM_FUNC_EXPORT(fill_buffer_with_noise)(Extension* extPtr, uint8_t* buf, int width, int height, float xoffset, float yoffset, float zoffset, int flags) {
     extPtr->fill_buffer_with_noise(buf, width, height, width * 4, PixelFormat::RGBA32, xoffset, yoffset, zoffset, flags);
 }
 #endif
