@@ -104,6 +104,9 @@ public:
 
         // Cross platform
         void fill_buffer_with_noise(uint8_t* buf, int width, int height, int pitch, PixelFormat format, float xoffset, float yoffset, float zoffset, int flags);
+        void fill_buffer_with_noise_bgr24 (uint8_t* buf, int width, int height, int pitch, float xoffset, float yoffset, float zoffset, int flags);
+        void fill_buffer_with_noise_a8    (uint8_t* buf, int width, int height, int pitch, float xoffset, float yoffset, float zoffset, int flags);
+        void fill_buffer_with_noise_rgba32(uint8_t* buf, int width, int height, int pitch, float xoffset, float yoffset, float zoffset, int flags);
 
 	// Conditions
         // No conditions are here
