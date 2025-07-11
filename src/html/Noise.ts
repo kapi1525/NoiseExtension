@@ -22,21 +22,23 @@ export default class CRunNoise extends CRunWasmExtWrapper {
             const zOffset = act.getParamExpression(this.rh, 3) as number;
             let flags = act.getParamExpression(this.rh, 4) as number;
 
-            // ext.hoIdentifier;
+            const surface_id = 0x53555246; // (('S'<<24)|('U'<<16)|('R'<<8)|('F'));
+            if(ext.hoIdentifier != surface_id) {
+                return;
+            }
+
             const surface = ext.ext as any;
 
             // Get surface object rendering context
-            const currentImage = surface.oSurf.imageList[surface.oSurf.selectedImage] as any;
-            const context = currentImage.context as CanvasRenderingContext2D;
-            const w: number = currentImage.getWidth();
-            const h: number = currentImage.getHeight();
+            let currentImage = surface.oSurf.imageList[surface.oSurf.selectedImage] as any;
+            let context = currentImage.context as CanvasRenderingContext2D;
 
             // Get current image data
-            const imageData = context.getImageData(0, 0, w, h);
+            let imageData = context.getImageData(0, 0, currentImage.getWidth(), currentImage.getHeight());
 
             // Copy it to cpp side
             const cppBufferPtr = cppLand.malloc(imageData.data.byteLength);
-            const bufferDV = new DataView(cppLand.memory.buffer, cppBufferPtr, imageData.data.byteLength);
+            let bufferDV = new DataView(cppLand.memory.buffer, cppBufferPtr, imageData.data.byteLength);
 
             for (let i = 0; i < imageData.data.byteLength; i++) {
                 bufferDV.setUint8(i, imageData.data[i]);
