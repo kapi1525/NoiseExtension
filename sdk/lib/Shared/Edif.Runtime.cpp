@@ -356,18 +356,14 @@ std::size_t AltVals::GetAltValueCount() const {
 #ifdef _WIN32
 	return DarkEdif::IsFusion25 ? CF25.NumAltValues : 26;
 #else
-#ifndef __wasi__ // exceptions are currently not supported by wasi
 throw std::runtime_error("not implemented");
-#endif
 #endif
 }
 std::size_t AltVals::GetAltStringCount() const {
 #ifdef _WIN32
 	return DarkEdif::IsFusion25 ? CF25.NumAltStrings : 26;
 #else
-#ifndef __wasi__ // exceptions are currently not supported by wasi
 	throw std::runtime_error("not implemented");
-#endif
 #endif
 }
 const TCHAR* AltVals::GetAltStringAtIndex(const std::size_t i) const {
@@ -379,9 +375,7 @@ const TCHAR* AltVals::GetAltStringAtIndex(const std::size_t i) const {
 		c = nullptr;
 #else
 	const TCHAR* c = nullptr;
-#ifndef __wasi__ // exceptions are currently not supported by wasi
 	throw std::runtime_error("not implemented");
-#endif
 #endif
 	return c;
 }
@@ -389,9 +383,7 @@ const CValueMultiPlat* AltVals::GetAltValueAtIndex(const std::size_t i) const {
 #ifdef _WIN32
 	return DarkEdif::IsFusion25 ? &CF25.Values[i] : &MMF2.rvpValues[i];
 #else
-#ifndef __wasi__ // exceptions are currently not supported by wasi
 	throw std::runtime_error("Not implemented");
-#endif
 #endif
 }
 
@@ -413,9 +405,7 @@ void AltVals::SetAltStringAtIndex(const std::size_t i, const std::tstring_view& 
 		*(void **)&CF25.Strings = v; // TODO: Simplify
 		CF25.NumAltStrings = (int)i;
 #else
-#ifndef __wasi__ // exceptions are currently not supported by wasi
 		throw std::runtime_error("Not implemented");
-#endif
 #endif
 	}
 #ifdef _WIN32
@@ -433,30 +423,22 @@ void AltVals::SetAltStringAtIndex(const std::size_t i, const std::tstring_view& 
 		*c = t;
 	}
 #else
-#ifndef __wasi__ // exceptions are currently not supported by wasi
 	throw std::runtime_error("Not implemented");
-#endif
 #endif
 }
 void AltVals::SetAltValueAtIndex(const std::size_t, const double)
 {
-#ifndef __wasi__ // exceptions are currently not supported by wasi
 	throw std::runtime_error("Not implemented");
-#endif
 }
 void AltVals::SetAltValueAtIndex(const std::size_t, const int)
 {
-#ifndef __wasi__ // exceptions are currently not supported by wasi
 	throw std::runtime_error("Not implemented");
-#endif
 }
 std::uint32_t AltVals::GetInternalFlags() const {
 #ifdef _WIN32
 	return DarkEdif::IsFusion25 ? CF25.InternalFlags : MMF2.rvValueFlags;
 #else
-#ifndef __wasi__ // exceptions are currently not supported by wasi
 	throw std::runtime_error("not implemented");
-#endif
 #endif
 }
 void AltVals::SetInternalFlags(const std::uint32_t nf) {
@@ -466,9 +448,7 @@ void AltVals::SetInternalFlags(const std::uint32_t nf) {
 	else
 		MMF2.rvValueFlags = nf;
 #else
-#ifndef __wasi__ // exceptions are currently not supported by wasi
 	throw std::runtime_error("not implemented");
-#endif
 #endif
 }
 
@@ -3177,9 +3157,7 @@ char * Edif::Runtime::CopyStringEx(const char * String) {
 	return CopyString(String);
 }
 wchar_t * Edif::Runtime::CopyStringEx(const wchar_t * String) {
-#ifndef __wasi__ // exceptions are currently not supported by wasi
 	throw std::runtime_error("Do not use wchar_t in iOS!");
-#endif
 	return (wchar_t *)String;
 }
 

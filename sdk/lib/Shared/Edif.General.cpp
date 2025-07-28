@@ -942,6 +942,17 @@ ProjectFunc int16_t WASM_FUNC_EXPORT(continue_run_object)(Extension* extPtr) {
 }
 
 
+// stubs for exceptions
+// https://libcxxabi.llvm.org/spec.html
+// FIXME: Remove when wasi starts supporting exceptions
+extern "C" void* __cxa_allocate_exception(size_t thrown_size) {
+    LOGE("__cxa_allocate_exception stub called. Aborting...");
+    abort();
+};
+extern "C" void __cxa_throw(void* thrown_exception, struct std::type_info * tinfo, void (*dest)(void*)) {
+    LOGE("__cxa_throw stub called. Aborting...");
+    abort();
+};
 
 #else
     #error Unsupported platform.

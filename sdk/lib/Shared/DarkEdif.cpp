@@ -3592,9 +3592,7 @@ bool DarkEdif::FileExists(const std::tstring_view path)
 	const DWORD fileAttr = GetFileAttributes(pathSafe.c_str());
 	return fileAttr != INVALID_FILE_ATTRIBUTES && (fileAttr & FILE_ATTRIBUTE_DIRECTORY) != FILE_ATTRIBUTE_DIRECTORY;
 #else
-#ifndef __wasi__ // exceptions are currently not supported by wasi
 	throw std::runtime_error("Function not implemented in non-Windows");
-#endif
 #endif
 }
 
@@ -3724,15 +3722,11 @@ std::tstring_view DarkEdif::GetMFXRelativeFolder(GetFusionFolderType type)
 #else
 std::tstring_view DarkEdif::GetRunningApplicationPath(DarkEdif::GetRunningApplicationPathType type)
 {
-#ifndef __wasi__ // exceptions are currently not supported by wasi
 	throw std::runtime_error("GetRunningApplicationPath function not implemented on non-Windows.");
-#endif
 }
 std::tstring_view DarkEdif::GetMFXRelativeFolder(GetFusionFolderType type)
 {
-#ifndef __wasi__ // exceptions are currently not supported by wasi
 	throw std::runtime_error("GetMFXRelativeFolder function not implemented on non-Windows.");
-#endif
 }
 #endif // _WIN32
 
