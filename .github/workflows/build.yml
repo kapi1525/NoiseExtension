@@ -90,7 +90,7 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      WASI_SDK_VERSION: wasi-sdk-25
+      WASI_SDK_VERSION: wasi-sdk-27
       BINARYEN_VERSION: version_123
 
     steps:
