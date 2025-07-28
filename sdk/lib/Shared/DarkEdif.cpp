@@ -2922,13 +2922,11 @@ std::uint16_t DarkEdif::GetEventNumber(eventGroup * evg) {
 /// <summary> If error, -1 is returned. </summary>
 int DarkEdif::GetCurrentFusionEventNum(const Extension * const ext)
 {
-    #ifndef __wasi__
 	// Reading Fusion's internals requires the main runtime to not be editing them
 	if (MainThreadID != std::this_thread::get_id()) {
 		LOGE(_T("Read GetCurrentFusionEventNum from non-main thread. Returning -1.\n"));
 		return -1;
 	}
-    #endif
 
 #ifdef _WIN32
 	// Can we read current event?
@@ -4707,9 +4705,7 @@ DWORD WINAPI DarkEdifUpdateThread(void *)
 
 // Define it
 std::tstring DarkEdif::ExtensionName(_T("" PROJECT_NAME ""s));
-#ifndef __wasi__
 std::thread::id DarkEdif::MainThreadID;
-#endif
 WindowHandleType DarkEdif::Internal_WindowHandle;
 DarkEdif::MFXRunMode DarkEdif::RunMode = DarkEdif::MFXRunMode::Unset;
 
@@ -4864,12 +4860,10 @@ void DarkEdif::OutputDebugStringAInternal(const char * debugString)
 // To get the Windows-like behaviour
 void DarkEdif::Sleep(unsigned int milliseconds)
 {
-#ifndef __wasi__
 	if (milliseconds == 0)
 		std::this_thread::yield();
 	else
 		std::this_thread::sleep_for(std::chrono::milliseconds(milliseconds));
-#endif
 }
 
 #endif

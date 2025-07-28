@@ -173,10 +173,8 @@ enum class EventGroupFlags : unsigned short
 enum_class_is_a_bitmask(EventGroupFlags);
 
 
-#ifndef __wasi__
 // Converts std::thread::id to a std::string
 std::string ThreadIDToStr(std::thread::id);
-#endif
 
 
 namespace Edif { class Runtime; }

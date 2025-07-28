@@ -389,12 +389,8 @@ enum class REFLAG : short {
 #define LOGF(x, ...) DarkEdif::LOGFInternal(x, ##__VA_ARGS__)
 
 // Useful functions
-#ifndef __wasi__
-	// Currently not fully supported
-	// FIXME: Use wasi threads when they are stable
-	#include <thread>
-	#include <atomic>
-#endif
+#include <thread>
+#include <atomic>
 #include <assert.h>
 
 // Prevents using Fusion internals directly, to allow multiplatform consistency

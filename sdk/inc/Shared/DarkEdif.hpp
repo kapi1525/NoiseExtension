@@ -238,9 +238,7 @@ namespace DarkEdif {
 
 	// Extension name; ANSI/Wide on Windows, UTF-8 elsewhere.
 	extern std::tstring ExtensionName;
-    #ifndef __wasi__
 	extern std::thread::id MainThreadID;
-    #endif
 	extern WindowHandleType Internal_WindowHandle;
 
 	enum class MFXRunMode

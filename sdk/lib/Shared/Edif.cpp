@@ -296,9 +296,7 @@ int Edif::Init(mv * mV, bool fusionStartupScreen)
 	// Main thread ID is used to prevent crashes from message boxes not being task-modal.
 	// Since we're initializing this, might as well set all the DarkEdif mV variables.
 
-    #ifndef __wasi__
 	DarkEdif::MainThreadID = std::this_thread::get_id();
-    #endif
 #ifdef _WIN32
 	DarkEdif::IsFusion25 = ((mV->GetVersion() & MMFVERSION_MASK) == CFVERSION_25);
 	DarkEdif::Internal_WindowHandle = mV->HMainWin;
@@ -2162,7 +2160,6 @@ void Edif::recursive_mutex::unlock(edif_lock_debugParams)
 
 #else // Not debug
 
-#ifndef __wasi__
 Edif::recursive_mutex::recursive_mutex()
 {
 }
@@ -2181,6 +2178,5 @@ void Edif::recursive_mutex::unlock(edif_lock_debugParams)
 {
 	this->intern.unlock();
 }
-#endif
 
 #endif // _DEBUG

@@ -1,9 +1,6 @@
 #pragma once
 #include <vector>
-#ifndef __wasi__
-    // Currently not fully supported
-    #include <thread>
-#endif
+#include <thread>
 #include <mutex>
 #include <algorithm>
 #include <chrono>
@@ -336,7 +333,6 @@ namespace Edif
 
 	// A cross-platform, recursion-allowed, single thread exclusive mutex.
 	// Use mutexvar.edif_lock() and mutexvar.edif_unlock() macros to track locks and find any poor coding.
-#ifndef __wasi__
 	class recursive_mutex {
 #ifdef _DEBUG
 		std::recursive_timed_mutex intern;
@@ -361,7 +357,6 @@ namespace Edif
 #define edif_try_lock() try_lock(edif_lock_debugParamDefs)
 #define edif_unlock() unlock(edif_lock_debugParamDefs)
 	};
-#endif
 
 };
 
