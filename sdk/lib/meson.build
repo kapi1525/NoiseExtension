@@ -69,7 +69,9 @@ sdk_defines_common = [
     'EXTENSION_VERSION=' + ext_build.to_string(),
 ]
 
-if not get_option('debug')
+if get_option('debug')
+    sdk_defines_common += '_DEBUG'
+else
     sdk_defines_common += 'NDEBUG'
 endif
 
