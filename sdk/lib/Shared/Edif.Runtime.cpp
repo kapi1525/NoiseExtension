@@ -35,9 +35,51 @@ void objInfoList::SelectAll(RunHeader* rhPtr, bool explicitAll /* = false */) {
 	set_EventCount(rhPtr->GetRH2EventCount());
 	if (get_NObjects() == 0)
 		return;
-	const short ourOiList = rhPtr->GetObjectListOblOffsetByIndex(get_Object())->get_rHo()->get_Number();
+
+	// Get the oilist index for looping
+	const short ourOiList = rhPtr->GetOIListIndexFromOi(get_Oi());
+
+	// From there we can loop instances and re-select them
 	for (auto ho : DarkEdif::ObjectIterator(rhPtr, ourOiList, DarkEdif::Selection::All, false))
 		ho->get_rHo()->set_NextSelected(ho->get_rHo()->get_NumNext());
+}
+
+short RunHeader::GetOIListIndexFromOi(const short oi)
+{
+	if (oi == -1)
+		LOGF(_T("OI -1 should not have been passed to GetOIListByOi()."));
+
+	// Qualifier OI not expected
+	if ((oi & 0x8000) != 0)
+		LOGF(_T("OI %hi is a qualifier or invalid OI; it should not have been passed to GetOIListByOi()."), oi);
+
+	// The OIList is a sparse array, but consistently increasing, as I understand it.
+	// TODO: If this is not the case, the last > j, and j > oi checks need removing,
+	// so that looping the entire iterator is permitted.
+	// Also consider HeaderObject::get_OiList().
+	short i = 0, j, last = -1;
+	for (auto oiList : DarkEdif::AllOIListIterator(this))
+	{
+		j = oiList->get_Oi();
+
+		if (j == oi)
+			return i;
+
+		// TODO: Until I know SOL is always consistently increasing, this is LOGF to abort the app
+		if (last > j)
+			LOGF(_T("Is SOL non-increasing? %hi > %hi. Contact DarkEdif developers.\n"), last, j);
+		last = j;
+
+		// Went past
+		if (j > oi)
+			LOGE(_T("Exceeded expected oi %hi with %hi.\n"), oi, j);
+		++i;
+	}
+
+	// You're either looking up what is already a OIList index, as a OI,
+	// or you're reading something else entirely. Either way, this is a ext dev issue.
+	LOGF(_T("Could not find expected oi %hi.\n"), oi);
+	return INT16_MIN;
 }
 
 std::vector<short> qualToOi::HalfVector(std::size_t first)
@@ -161,8 +203,14 @@ void Edif::Runtime::GenerateEvent(int EventID)
 	// runtime sets rhEventGroup based on a local variable evgPtr, which it relies on instead
 	eventGroup* const evg = rhPtr->EventGroup;
 
+	// Fix rh2ActionOn - affects whether object selection is modified by expressions, or used
+	const bool rh2ActOn = rhPtr->rh2.ActionOn;
+	if (rh2ActOn)
+		rhPtr->rh2.ActionOn = false;
+
 	CallRunTimeFunction2(hoPtr, RFUNCTION::GENERATE_EVENT, EventID, 0);
 
+	rhPtr->rh2.ActionOn = rh2ActOn;
 	rhPtr->EventGroup = evg;
 	rhPtr->rh4.ExpToken = saveExpToken;
 	rhPtr->SetRH2ActionCount(oldActionCount);
@@ -356,7 +404,7 @@ std::size_t AltVals::GetAltValueCount() const {
 #ifdef _WIN32
 	return DarkEdif::IsFusion25 ? CF25.NumAltValues : 26;
 #else
-throw std::runtime_error("not implemented");
+	throw std::runtime_error("not implemented");
 #endif
 }
 std::size_t AltVals::GetAltStringCount() const {
@@ -381,6 +429,8 @@ const TCHAR* AltVals::GetAltStringAtIndex(const std::size_t i) const {
 }
 const CValueMultiPlat* AltVals::GetAltValueAtIndex(const std::size_t i) const {
 #ifdef _WIN32
+	if (i >= GetAltValueCount())
+		return nullptr;
 	return DarkEdif::IsFusion25 ? &CF25.Values[i] : &MMF2.rvpValues[i];
 #else
 	throw std::runtime_error("Not implemented");
@@ -397,7 +447,7 @@ void AltVals::SetAltStringAtIndex(const std::size_t i, const std::tstring_view& 
 #ifdef _WIN32
 		void * v = mvReAlloc(Edif::SDK->mV, (void *)CF25.Strings, (int)i * sizeof(TCHAR *));
 #else
-		void* v = malloc(i * sizeof(TCHAR*));
+		void* v = malloc(i * sizeof(TCHAR*)); // TODO: test this, and alt value equivalent
 #endif
 		if (!v)
 			return LOGF(_T("Failed to expand alt strings to %zu entries."), i);
@@ -426,13 +476,67 @@ void AltVals::SetAltStringAtIndex(const std::size_t i, const std::tstring_view& 
 	throw std::runtime_error("Not implemented");
 #endif
 }
-void AltVals::SetAltValueAtIndex(const std::size_t, const double)
+void AltVals::SetAltValueAtIndex(const std::size_t i, const double d)
 {
+	if (i >= GetAltValueCount())
+	{
+		if (!DarkEdif::IsFusion25)
+			return LOGE(_T("Cannot set alt value at index %zu, invalid index."), i);
+
+		// TODO: if this does not work, just throw
+#ifdef _WIN32
+		void * v = mvReAlloc(Edif::SDK->mV, (void *)CF25.Values, (int)i * sizeof(CValueMultiPlat));
+#else
+		void* v = NULL; // malloc(i * sizeof(CValueMultiPlat));
+#endif
+		if (!v)
+			return LOGF(_T("Failed to expand alt strings to %zu entries."), i);
+#ifdef _WIN32
+		*(void **)&CF25.Values = v; // TODO: Simplify
+		CF25.NumAltValues = (int)i;
+#else
+		throw std::runtime_error("Not implemented");
+#endif
+	}
+
+#ifdef _WIN32
+	auto v = DarkEdif::IsFusion25 ? &CF25.Values[i] : &MMF2.rvpValues[i];
+	v->m_type = TYPE_DOUBLE;
+	v->m_double = d;
+#else
 	throw std::runtime_error("Not implemented");
+#endif
 }
-void AltVals::SetAltValueAtIndex(const std::size_t, const int)
+void AltVals::SetAltValueAtIndex(const std::size_t i, const int l)
 {
+	if (i >= GetAltValueCount())
+	{
+		if (!DarkEdif::IsFusion25)
+			return LOGE(_T("Cannot set alt value at index %zu, invalid index."), i);
+
+		// TODO: if this does not work, just throw
+#ifdef _WIN32
+		void * v = mvReAlloc(Edif::SDK->mV, (void *)CF25.Values, (int)i * sizeof(CValueMultiPlat));
+#else
+		void* v = NULL; // malloc(i * sizeof(CValueMultiPlat));
+#endif
+		if (!v)
+			return LOGF(_T("Failed to expand alt strings to %zu entries."), i);
+#ifdef _WIN32
+		*(void **)&CF25.Values = v; // TODO: Simplify
+		CF25.NumAltValues = (int)i;
+#else
+		throw std::runtime_error("Not implemented");
+#endif
+	}
+
+#ifdef _WIN32
+	auto v = DarkEdif::IsFusion25 ? &CF25.Values[i] : &MMF2.rvpValues[i];
+	v->m_type = TYPE_LONG;
+	v->m_long = l;
+#else
 	throw std::runtime_error("Not implemented");
+#endif
 }
 std::uint32_t AltVals::GetInternalFlags() const {
 #ifdef _WIN32
@@ -493,14 +597,14 @@ int HeaderObject::GetFixedValue() {
 }
 
 #if defined(_WIN32)
-short Edif::Runtime::GetOIFromObjectParam(std::size_t paramIndex)
+short Edif::Runtime::GetOIListIndexFromObjectParam(std::size_t paramIndex)
 {
 	const EventParam* curParam = ParamZero;
 	for (std::size_t i = 0; i < paramIndex; ++i)
 		curParam = (const EventParam*)((const std::uint8_t*)curParam + curParam->size);
 	if ((Params)curParam->Code != Params::Object)
-		LOGE(_T("GetOIFromExtParam: Returning a OI for a non-Object parameter.\n"));
-	LOGV(_T("GetOIFromExtParam: Returning OiList %hi, oi is %hi.\n"), curParam->evp.W[0], curParam->evp.W[1]);
+		LOGE(_T("GetOIListIndexFromObjectParam: Returning a OiList index for a non-Object parameter.\n"));
+	LOGI(_T("GetOIListIndexFromObjectParam: Returning OiList %hi, oi is %hi.\n"), curParam->evp.W[0], curParam->evp.W[1]);
 	return curParam->evp.W[0];
 }
 int Edif::Runtime::GetCurrentFusionFrameNumber()
@@ -547,6 +651,12 @@ objectsList* RunHeader::get_ObjectList() {
 }
 objInfoList* RunHeader::GetOIListByIndex(std::size_t index)
 {
+	if ((std::size_t)NumberOi <= index)
+	{
+		LOGE(_T("RunHeader::GetOIListByIndex() was passed invalid OIList index %zu, are you passing a OI instead?\n"), index);
+		return nullptr;
+	}
+
 	assert(DarkEdif::ObjectSelection::oiListItemSize != 0 || index == 0); // first time is index 0
 	assert((std::size_t)NumberOi > index); // invalid OI
 
@@ -968,10 +1078,14 @@ void Edif::Runtime::GenerateEvent(int EventID)
 	// Android also swaps out the underlying array when it changes expression, so we have to restore the array too.
 	// Due to Android's JVM use of references, this is efficient as we don't have to do a full array clone.
 
+	const bool rh2ActionOn = rhPtr->get_EventProgram()->GetRH2ActionOn();
 	const int rh4CurToken = rhPtr->GetRH4CurToken();
 	jobjectArray rh4Tokens = rhPtr->GetRH4Tokens();
 	if (rh4Tokens)
 		rh4Tokens = (jobjectArray)threadEnv->NewGlobalRef(rh4Tokens);
+	// We are starting a new condition, so we're not in actions anymore
+	if (rh2ActionOn)
+		rhPtr->get_EventProgram()->SetRH2ActionOn(false);
 
 	// Fix event group being incorrect after event finishes.
 	// This being incorrect doesn't have any major effects, as the event parsing part of
@@ -990,6 +1104,7 @@ void Edif::Runtime::GenerateEvent(int EventID)
 	rhPtr->SetRH2ActionLoopCount(oldActionLoopCount);
 	rhPtr->SetRH4CurToken(rh4CurToken);
 	rhPtr->SetRH4Tokens(rh4Tokens);
+	rhPtr->get_EventProgram()->SetRH2ActionOn(rh2ActionOn);
 	if (rh4Tokens)
 		threadEnv->DeleteGlobalRef(rh4Tokens);
 	if (evg)
@@ -1298,7 +1413,7 @@ const char* getClassName(jclass myCls, bool fullpath)
 	return res.c_str();
 }
 
-short Edif::Runtime::GetOIFromObjectParam(std::size_t paramIndex)
+short Edif::Runtime::GetOIListIndexFromObjectParam(std::size_t paramIndex)
 {
 	LOGV(_T("Running %s()."), _T(__FUNCTION__));
 	if (*(long *)&paramIndex < 0)
@@ -1314,7 +1429,7 @@ short Edif::Runtime::GetOIFromObjectParam(std::size_t paramIndex)
 	jint pParamCode = mainThreadJNIEnv->GetShortField(thisParam, mainThreadJNIEnv->GetFieldID(mainThreadJNIEnv->GetObjectClass(thisParam), "code", "S"));
 	JNIExceptionCheck();
 	if ((Params)pParamCode != Params::Object)
-		LOGE(_T("GetOIFromExtParam: Returning a OI for a non-Object parameter.\n"));
+		LOGE(_T("GetOIListIndexFromObjectParam: Returning a OI for a non-Object parameter.\n"));
 #endif
 	// Read the equivalent of evp.W[0]
 	jshort oiList = mainThreadJNIEnv->GetShortField(thisParam, mainThreadJNIEnv->GetFieldID(mainThreadJNIEnv->GetObjectClass(thisParam), "oiList", "S"));
@@ -1322,7 +1437,7 @@ short Edif::Runtime::GetOIFromObjectParam(std::size_t paramIndex)
 #if defined(_DEBUG) && (DARKEDIF_LOG_MIN_LEVEL <= DARKEDIF_LOG_DEBUG)
 	jshort oi = mainThreadJNIEnv->GetShortField(thisParam, mainThreadJNIEnv->GetFieldID(mainThreadJNIEnv->GetObjectClass(thisParam), "oi", "S"));
 	JNIExceptionCheck();
-	LOGD(_T("GetOIFromExtParam: Returning OiList %hi (%#04hx; non-qual: %hi, %#04hx), oi is %hi (%#04hx; non-qual: %hi, %#04hx).\n"),
+	LOGD(_T("GetOIListIndexFromObjectParam: Returning OiList %hi (%#04hx; non-qual: %hi, %#04hx), oi is %hi (%#04hx; non-qual: %hi, %#04hx).\n"),
 		oiList, oiList, (short)(oiList & 0x7FFF), (short)(oiList & 0x7FFF), oi, oi, (short)(oi & 0x7FFF), (short)(oi & 0x7FFF));
 #endif
 	return oiList;
@@ -1431,7 +1546,10 @@ objInfoList * RunHeader::GetOIListByIndex(std::size_t index)
 	if (OiList.invalid())
 		GetOiList(); // ignore return
 	if (index >= OiListLength)
+	{
+		LOGE(_T("RunHeader::GetOIListByIndex() was passed invalid OIList index %zu, are you passing a OI instead?\n"), index);
 		return nullptr;
+	}
 
 	if ((long)index < 0)
 		raise(SIGINT);
@@ -1597,7 +1715,7 @@ void RunHeader::InvalidatedByNewGeneratedEvent()
 }
 
 // Static definitions - default inited to zero
-jfieldID CEventProgram::rh4ActStartFieldID;
+jfieldID CEventProgram::rh4ActStartFieldID, CEventProgram::rh2ActionOnFieldID;
 
 eventGroup * CEventProgram::get_eventGroup() {
 	LOGV(_T("Running %s()."), _T(__FUNCTION__));
@@ -1622,7 +1740,13 @@ CEventProgram::CEventProgram(jobject me, Edif::Runtime* runtime) :
 	meClass = global(threadEnv->GetObjectClass(me), "CEventProgram class");
 	JNIExceptionCheck();
 
-	// rh4ActionStart is missing in earlier Runtime versions (<= 295.10)
+	if (rh2ActionOnFieldID == NULL)
+	{
+		rh2ActionOnFieldID = threadEnv->GetFieldID(meClass, "rh2ActionOn", "Z");
+		JNIExceptionCheck();
+	}
+
+	// rh4ActionStart is missing in unpatched and earlier Runtime versions (<= 295.10)
 	if (RunHeader::eventProgramFieldID != NULL)
 	{
 		rh4ActStartFieldID = threadEnv->GetFieldID(meClass, "rh4ActionStart", "LActions/CAct;");
@@ -1762,11 +1886,15 @@ void CEventProgram::set_rh2ActionLoopCount(int newActLoopCount)
 bool CEventProgram::GetRH2ActionOn() {
 	// TODO: We can possibly optimize this by storing true/false Action/Condition jump funcs
 	LOGV(_T("Running %s()."), _T(__FUNCTION__));
-	static jfieldID fieldID = threadEnv->GetFieldID(meClass, "rh2ActionOn", "Z");
-	JNIExceptionCheck();
-	bool yes = threadEnv->GetBooleanField(me, fieldID);
+	bool yes = threadEnv->GetBooleanField(me, rh2ActionOnFieldID);
 	JNIExceptionCheck();
 	return yes;
+}
+void CEventProgram::SetRH2ActionOn(bool newSet) {
+	// TODO: We can possibly optimize this by storing true/false Action/Condition jump funcs
+	LOGV(_T("Running %s(%i)."), _T(__FUNCTION__), newSet ? 1 : 0);
+	threadEnv->SetBooleanField(me, rh2ActionOnFieldID, newSet);
+	JNIExceptionCheck();
 }
 
 eventGroup * RunHeader::get_EventGroup() {
@@ -2220,11 +2348,12 @@ AltVals* RunObject::get_rov() {
 }
 
 objectsList::objectsList(jobjectArray me, Edif::Runtime* runtime) :
-	me(me, "objectList ctor from rhPtr"), runtime(runtime)
+	me(me, "objectList ctor from rhPtr"),
+	meClass(threadEnv->GetObjectClass(this->me), "objectList array inside rhPtr's class"),
+	runtime(runtime)
 {
-	meClass = global(threadEnv->GetObjectClass(me), "objectList array inside rhPtr's class");
 	JNIExceptionCheck();
-	length = threadEnv->GetArrayLength(me);
+	length = threadEnv->GetArrayLength(this->me);
 	JNIExceptionCheck();
 }
 
@@ -2241,6 +2370,11 @@ RunObjectMultiPlatPtr objectsList::GetOblOffsetByIndex(std::size_t index) {
 	// The CObject is a CRunExtension as well, so we'll just return it directly.
 	jobject rhObjEntry = threadEnv->GetObjectArrayElement(me, index);
 	JNIExceptionCheck();
+	if (rhObjEntry == nullptr)
+	{
+		LOGE(_T("Looked up object by hoNumber %zu, result was null.\n"), index);
+		return nullptr;
+	}
 	jclass rhObjEntryClass = threadEnv->GetObjectClass(rhObjEntry);
 	JNIExceptionCheck();
 	auto ro = std::make_shared<RunObject>(rhObjEntry, rhObjEntryClass, runtime);
@@ -2733,12 +2867,12 @@ Edif::Runtime::~Runtime()
 {
 }
 
-extern "C" void DarkEdifObjCFunc(PROJECT_NAME_RAW, generateEvent)(void * ext, int code, int param);
-extern "C" void DarkEdifObjCFunc(PROJECT_NAME_RAW, reHandle)(void * ext);
+extern "C" void DarkEdifObjCFunc(PROJECT_TARGET_NAME_UNDERSCORES_RAW, generateEvent)(void * ext, int code, int param);
+extern "C" void DarkEdifObjCFunc(PROJECT_TARGET_NAME_UNDERSCORES_RAW, reHandle)(void * ext);
 
 void Edif::Runtime::Rehandle()
 {
-	DarkEdifObjCFunc(PROJECT_NAME_RAW, reHandle)(this->objCExtPtr);
+	DarkEdifObjCFunc(PROJECT_TARGET_NAME_UNDERSCORES_RAW, reHandle)(this->objCExtPtr);
 }
 
 void Edif::Runtime::GenerateEvent(int EventID)
@@ -2746,9 +2880,19 @@ void Edif::Runtime::GenerateEvent(int EventID)
 	// Fix event group being incorrect after event finishes.
 	// This being incorrect doesn't have any major effects, as the event parsing part of
 	// runtime sets rhEventGroup based on a local variable evgPtr, which it relies on instead
-	auto evg = ((CRun*)ObjectSelection.rhPtr)->rhEvtProg->rhEventGroup;
-	DarkEdifObjCFunc(PROJECT_NAME_RAW, generateEvent)(this->objCExtPtr, EventID, 0);
-	((CRun*)ObjectSelection.rhPtr)->rhEvtProg->rhEventGroup = evg;
+	auto evp = ((CRun*)ObjectSelection.rhPtr)->rhEvtProg;
+	auto evg = evp->rhEventGroup;
+
+	// Fix rh2ActionOn - affects whether object selection is modified by expressions, or used
+	const bool rh2ActOn = evp->rh2ActionOn;
+	if (rh2ActOn)
+		evp->rh2ActionOn = false;
+
+	DarkEdifObjCFunc(PROJECT_TARGET_NAME_UNDERSCORES_RAW, generateEvent)(this->objCExtPtr, EventID, 0);
+
+	// Restore both saved
+	evp->rhEventGroup = evg;
+	evp->rh2ActionOn = rh2ActOn;
 }
 
 void Edif::Runtime::PushEvent(int EventID)
@@ -2902,15 +3046,15 @@ void * Edif::Runtime::ReadGlobal(const TCHAR * name)
 	return NULL;
 }
 
-short Edif::Runtime::GetOIFromObjectParam(std::size_t paramIndex)
+short Edif::Runtime::GetOIListIndexFromObjectParam(std::size_t paramIndex)
 {
 	// This still works for conditions, as they store params in same offset.
 	const eventParam* curParam = ((CActExtension*)curCEvent)->pParams[0];
 	for (int i = 0; i < paramIndex; ++i)
 		curParam = (const eventParam*)((const std::uint8_t*)curParam + curParam->evpSize);
 	if ((Params)curParam->evpCode != Params::Object)
-		LOGE(_T("GetOIFromExtParam: Returning a OI for a non-Object parameter."));
-	LOGD(_T("GetOIFromExtParam: Returning OiList %hi, oi is %hi.\n"), curParam->evp.evpW.evpW0, curParam->evp.evpW.evpW1);
+		LOGE(_T("GetOIListIndexFromObjectParam: Returning a OI for a non-Object parameter."));
+	LOGD(_T("GetOIListIndexFromObjectParam: Returning OiList %hi, oi is %hi.\n"), curParam->evp.evpW.evpW0, curParam->evp.evpW.evpW1);
 	return curParam->evp.evpW.evpW0;
 }
 int Edif::Runtime::GetCurrentFusionFrameNumber()
@@ -2944,6 +3088,12 @@ objectsList* RunHeader::get_ObjectList() {
 
 objInfoList* RunHeader::GetOIListByIndex(std::size_t index)
 {
+	if (index >= ((CRun*)this)->rhMaxOI)
+	{
+		LOGE(_T("RunHeader::GetOIListByIndex() was passed invalid OIList index %zu, are you passing a OI instead?\n"), index);
+		return nullptr;
+	}
+
 #if _DEBUG
 	int maxOi = ((CRun*)this)->rhMaxOI;
 	assert(maxOi > index || (long)index < 0); // invalid OI
@@ -3242,7 +3392,7 @@ void Edif::Runtime::WriteGlobal(const TCHAR * name, void * Value)
 void * Edif::Runtime::ReadGlobal(const TCHAR * name){
 }
 
-short Edif::Runtime::GetOIFromObjectParam(std::size_t paramIndex){
+short Edif::Runtime::GetOIListIndexFromObjectParam(std::size_t paramIndex){
 }
 int Edif::Runtime::GetCurrentFusionFrameNumber(){
 }
@@ -3376,5 +3526,5 @@ std::unique_ptr<event2> eventGroup::GetCAByIndex(size_t index){
 }
 
 
-#endif // Apple, Android or WASI
 #endif
+#endif // Apple, Android or WASI

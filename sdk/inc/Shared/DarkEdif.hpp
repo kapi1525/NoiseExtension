@@ -71,13 +71,13 @@ namespace DarkEdif {
 	static const int SDKVersion = 19;
 #if EditorBuild
 
-	/// <summary> Gets DarkEdif.ini setting. Returns empty if file missing or key not in file.
-	///			  Will generate a languages file if absent. </summary>
+	// Gets DarkEdif.ini setting. Returns empty if file missing or key not in file.
+	// Will generate a languages file if absent.
 	std::string GetIniSetting(const std::string_view key);
 
 	namespace SDKUpdater
 	{
-		/// <summary> Starts an update check in async. Will ignore second runs. </summary>
+		// Starts an update check in async. Will ignore second runs.
 		void StartUpdateCheck();
 
 		enum class ExtUpdateType
@@ -101,10 +101,10 @@ namespace DarkEdif {
 			// Major ext update, will change ext icon, and cause message box once per Fusion session
 			Major
 		};
-		/// <summary> Checks if update is needed. Returns type if so. Optionally returns update log. </summary>
+		// Checks if update is needed. Returns type if so. Optionally returns update log.
 		ExtUpdateType ReadUpdateStatus(std::string * logData);
 
-		/// <summary> Updates ::SDK->Icon to draw on it; optionally displays a message box. </summary>
+		// Updates ::SDK->Icon to draw on it; optionally displays a message box.
 		void RunUpdateNotifs(mv * mV, EDITDATA * edPtr);
 	}
 
@@ -126,8 +126,8 @@ namespace DarkEdif {
 			int cachedInt;
 			std::tstring cachedText;
 
-			size_t refreshMS;
-			size_t nextRefreshTime;
+			std::uint64_t refreshMS;
+			std::uint64_t nextRefreshTime;
 			const char *userSuppliedName;
 
 			int (*intReadFromExt)(Extension *const ext);
@@ -143,7 +143,7 @@ namespace DarkEdif {
 			{
 				cachedText.resize(30);
 				_itot_s(cachedInt, cachedText.data(), cachedText.size(), 10);
-				nextRefreshTime = refreshMS ? GetTickCount() + refreshMS : -1;
+				nextRefreshTime = refreshMS ? GetTickCount64() + refreshMS : -1;
 			}
 			DebugItem(decltype(textReadFromExt) reader, decltype(textStoreDataToExt) editor,
 				size_t refreshMS, const char *userSuppliedName) :
@@ -152,7 +152,7 @@ namespace DarkEdif {
 				textReadFromExt(reader), textStoreDataToExt(editor)
 			{
 				cachedText.reserve(256);
-				nextRefreshTime = refreshMS ? GetTickCount() + refreshMS : -1;
+				nextRefreshTime = refreshMS ? GetTickCount64() + refreshMS : -1;
 			}
 
 			// Run when user has finished editing.
@@ -175,12 +175,13 @@ namespace DarkEdif {
 
 	public:
 
-		/// <summary> Adds textual property to Fusion debugger display. </summary>
-		/// <param name="getLatestFromExt"> Pointer to function to read the current text from your code. Null if it never changes. </param>
-		/// <param name="saveUserInputToExt"> Pointer to function to run if user submits a new value via Fusion debugger.
-		///									  Null if you want it uneditable. Return true if edit was accepted by your ext. </param>
-		/// <param name="initialText"> Initial text to have in this item. Null not allowed. </param>
-		/// <param name="refreshMS"> Milliseconds before reader() should be called again to update the cached text. </param>
+		/** Adds textual property to Fusion debugger display.
+		 * @param getLatestFromExt	 Pointer to function to read the current text from your code. Null if it never changes.
+		 * @param saveUserInputToExt Pointer to function to run if user submits a new value via Fusion debugger.
+		 *							 Null if you want it uneditable. Return true if edit was accepted by your ext.
+		 * @param refreshMS			 Milliseconds before getLatestFromExt() should be called again to update the cached text.
+		 * @param userSuppliedName	 The property name, case-sensitive. Null is allowed if property is not removable.
+		*/
 		void AddItemToDebugger(
 			// Supply NULL if it will not ever change.
 			void (*getLatestFromExt)(Extension *const ext, std::tstring &writeTo),
@@ -192,12 +193,13 @@ namespace DarkEdif {
 			const char *userSuppliedName
 		);
 
-		/// <summary> Adds integer property to Fusion debugger display. </summary>
-		/// <param name="getLatestFromExt"> Pointer to function to read the current value from your code. Null if it never changes. </param>
-		/// <param name="saveUserInputToExt"> Pointer to function to run if user submits a new value via Fusion debugger.
-		///									  Null if you want it uneditable. Return true if edit was accepted by your ext. </param>
-		/// <param name="initialInteger"> Initial number to have in this item. </param>
-		/// <param name="refreshMS"> Milliseconds before reader() should be called again to update the cached integer. </param>
+		/** Adds integer property to Fusion debugger display.
+		 * @param getLatestFromExt	 Pointer to function to read the current text from your code. Null if it never changes.
+		 * @param saveUserInputToExt Pointer to function to run if user submits a new value via Fusion debugger.
+		 *							 Null if you want it uneditable. Return true if edit was accepted by your ext.
+		 * @param refreshMS			 Milliseconds before getLatestFromExt() should be called again to update the cached text.
+		 * @param userSuppliedName	 The property name, case-sensitive. Null is allowed if property is not removable.
+		*/
 		void AddItemToDebugger(
 			// Supply NULL if it will not ever change.
 			int (*getLatestFromExt)(Extension *const ext),
@@ -209,7 +211,7 @@ namespace DarkEdif {
 			const char *userSuppliedName
 		);
 
-		/// <summary> Updates the debug item with the given name from the Fusion debugger. </summary>
+		// Updates the debug item with the given name from the Fusion debugger.
 		void UpdateItemInDebugger(const char *userSuppliedName, const TCHAR *newText);
 		void UpdateItemInDebugger(const char *userSuppliedName, int newValue);
 
@@ -218,12 +220,17 @@ namespace DarkEdif {
 		FusionDebugger(FusionDebugger &&) = delete;
 	};
 
-
-	// True if Fusion 2.5. False if Fusion 2.0. Set during SDK ctor.
 #ifdef _WIN32
 	extern bool IsFusion25;
+	extern bool IsHWAFloatAngles;
+	extern bool IsRunningUnderWine;
 #else
+	// True if Fusion 2.5. False if Fusion 2.0. Always true for non-Windows builds.
 	constexpr bool IsFusion25 = true;
+	// True if angle variables are degrees as floats. Always true for non-Windows builds.
+	constexpr bool IsHWAFloatAngles = true;
+	// True if running under Wine. Always false for non-Windows builds, as Wine will be using Windows app + exts.
+	constexpr bool IsRunningUnderWine = false;
 #endif
 	// Returns the Fusion event number for this group. Works in CF2.5 and MMF2.0
 	std::uint16_t GetEventNumber(eventGroup *);
@@ -371,11 +378,12 @@ namespace DarkEdif {
 		BOOL DLL_GetPropCheck(mv* mV, EDITDATA* edPtr, unsigned int PropID);
 		void DLL_SetPropCheck(mv* mV, EDITDATA* edPtr, unsigned int PropID, BOOL checked);
 		BOOL DLL_IsPropEnabled(mv* mV, EDITDATA* edPtr, unsigned int PropID);
+		BOOL DLL_EditProp(mv* mV, EDITDATA*& edPtr, unsigned int PropID);
 
 		HGLOBAL DLL_UpdateEditStructure(mv* mV, EDITDATA* OldEdPtr);
 #endif
 
-		// /// <summary> Loads all default values into EDITDATA. Only used for new objects. </summary>
+		// Loads all default values into EDITDATA. Only used for new objects.
 		// std::vector<std::string> PopulateEDITDATA(mv * mV, EDITDATA *& edPtr, EDITDATA ** oldEdPtr, void *(*reallocFunc)(mv * mV, void * ptr, size_t s));
 
 		struct PropAccesser;
@@ -400,10 +408,20 @@ namespace DarkEdif {
 		std::tstring GetPropertyStr(std::string_view propName) const;
 		// Returns std::tstring property string from property ID.
 		std::tstring GetPropertyStr(int propID) const;
-		// Returns a float property setting from property name.
+		// Returns a float/int property setting from property name.
 		float GetPropertyNum(std::string_view propName) const;
-		// Returns float property setting from a property ID.
+		// Returns float/int property setting from a property ID.
 		float GetPropertyNum(int propID) const;
+		// Returns Fusion image bank ID from a image list property ID,
+		// suitable for DarkEdif::Surface::CreateFromImageBankID()
+		std::uint16_t GetPropertyImageID(int propID, std::size_t index) const;
+		// Returns Fusion image bank ID from a image list property name,
+		// suitable for DarkEdif::Surface::CreateFromImageBankID()
+		std::uint16_t GetPropertyImageID(std::string_view propName, std::size_t index) const;
+		// Returns number of images in a image list property by property ID
+		std::uint16_t GetPropertyNumImages(int propID, std::size_t index) const;
+		// Returns number of images in a image list property by property name
+		std::uint16_t GetPropertyNumImages(std::string_view propName, std::size_t index) const;
 
 #if EditorBuild
 		// =====
@@ -619,6 +637,10 @@ CONSTEXPR14_TN static_string type_name()
 // static_string to std::string_view
 #define typestr(type) std::string(type_name<type>().begin(), type_name<type>().end())
 
+// Ignore analysis warning C6287 about left and right sub-expressions being identical - they're not
+#pragma warning(push)
+#pragma warning(disable: 6287)
+
 template<int acParamIndexPlusOne, class Ret, class Struct, class... Args>
 typename std::enable_if<(acParamIndexPlusOne > 0), void>::type
 forLoopAC(unsigned int ID, const _json_value &json, std::stringstream &str, Ret(Struct::*Function)(Args...) const, Params * const condRetType = nullptr) {
@@ -713,7 +735,6 @@ forLoopAC(unsigned int ID, const _json_value &json, std::stringstream &str, Ret(
 				if (std::is_same<cppType, int>())
 					break;
 				expCppType = "int"sv;
-
 			}
 		}
 		else // unimplemented param type test
@@ -1051,6 +1072,9 @@ void LinkExpressionDebug(unsigned int ID, Ret(Struct::*Function)(Args...) const)
 	(Edif::SDK)->ExpressionFunctions[ID] = Edif::MemberFunctionPointer(Function);
 }
 
+// Restore analysis warning C6287
+#pragma warning(pop)
+
 // Combine the two:
 // returnType X() const;
 // returnType X();
@@ -1076,7 +1100,7 @@ void LinkExpressionDebug(unsigned int ID, Ret(Struct::*Function)(Args...))
 
 #ifdef __APPLE__
 //
-extern "C" int DarkEdifObjCFunc(PROJECT_NAME_RAW, getCurrentFusionEventNum)(void* objCExt);
+extern "C" int DarkEdifObjCFunc(PROJECT_TARGET_NAME_UNDERSCORES_RAW, getCurrentFusionEventNum)(void* objCExt);
 
 // Reads files from inside anywhere Fusion runtime can readily access.
 // Uses the CRun functions used by Edit Box to load files.
@@ -1086,5 +1110,5 @@ extern "C" int DarkEdifObjCFunc(PROJECT_NAME_RAW, getCurrentFusionEventNum)(void
 // Errors are indicated by > at start of return, which is illegal filename char;
 // otherwise the return is the file path in a temporary folder, suitable for fopen()
 // Return is malloc'd and must be free'd, even for errors
-extern "C" char* DarkEdifObjCFunc(PROJECT_NAME_RAW, makePathUnembeddedIfNeeded)(void* ext, const char* fileName);
+extern "C" char* DarkEdifObjCFunc(PROJECT_TARGET_NAME_UNDERSCORES_RAW, makePathUnembeddedIfNeeded)(void* ext, const char* fileName);
 #endif

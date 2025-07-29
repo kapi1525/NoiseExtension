@@ -25,7 +25,7 @@
 #define STRIFY(X) #X
 
 void Sleep(unsigned int milliseconds);
-// #define _CrtCheckMemory() /* no op */
+#define _CrtCheckMemory() /* no op */
 
 // #include <signal.h>
 #include <map>
@@ -37,10 +37,7 @@ void Sleep(unsigned int milliseconds);
 #define FusionAPI /* no declarator */
 #include <fcntl.h>
 #include <errno.h>
-// #include <jni.h>
 #include <unistd.h>
-// #include <sys/resource.h>
-// #include <android/log.h>
 #include <math.h>
 #include <optional>
 
@@ -298,11 +295,6 @@ protected:
 private:
     int get_EventCountOR();
     void set_EventCountOR(int);
-
-    // static jfieldID eventCountFieldID, actionLoopCountFieldID, objectFieldID, nameFieldID,
-    //  numOfSelectedFieldID, listSelectedFieldID, eventCountORFieldID, qualifiersFieldID,
-    //  nextFieldID, nextFlagFieldID, currentRoutineFieldID, currentOiFieldID, actionCountFieldID,
-    //  typeFieldID, nObjectsFieldID, oiFieldID;
 };
 
 // Object creation structure
@@ -407,6 +399,7 @@ struct CEventProgram {
     eventGroup* get_eventGroup();
     // true: actions are being executed. False: conditions. Neither: undefined
     bool GetRH2ActionOn();
+    void SetRH2ActionOn(bool);
 
     // CEventProgram(jobject me, Edif::Runtime* runtime);
 
@@ -505,6 +498,7 @@ struct RunHeader {
     std::size_t get_NObjects();
 
     objInfoList * GetOIListByIndex(std::size_t index);
+    short GetOIListIndexFromOi(const short oi);
     qualToOi * GetQualToOiListByOffset(std::size_t index);
     RunObjectMultiPlatPtr GetObjectListOblOffsetByIndex(std::size_t index);
     EventGroupFlags GetEVGFlags();
@@ -547,9 +541,9 @@ protected:
     // static jfieldID rh4TokensFieldID, rh4CurTokenFieldID, eventProgramFieldID, oiListFieldID;
 };
 
-typedef void* CCndExtension;
-typedef void* CActExtension;
-typedef void* CNativeExpInstance;
+// typedef jobject CCndExtension;
+// typedef jobject CActExtension;
+// typedef jobject CNativeExpInstance;
 struct HeaderObject {
     short get_NextSelected();
     unsigned short get_CreationId();

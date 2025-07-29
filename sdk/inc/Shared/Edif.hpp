@@ -131,9 +131,9 @@ namespace Edif
 		std::vector<ACEInfo *>	ConditionInfos;
 		std::vector<ACEInfo *>	ExpressionInfos;
 
-		void ** ActionJumps;
-		void ** ConditionJumps;
-		void ** ExpressionJumps;
+		void ** ActionJumps = NULL;
+		void ** ConditionJumps = NULL;
+		void ** ExpressionJumps = NULL;
 
 		std::vector<void *> ActionFunctions;
 		std::vector<void *> ConditionFunctions;
@@ -141,11 +141,11 @@ namespace Edif
 
 		mv* mV;
 		// A fnv1a hash of all changeable property names and types, all separated by pipe. Used for property upgrades.
-		std::uint32_t jsonPropsNameAndTypesHash;
+		std::uint32_t jsonPropsNameAndTypesHash = 0;
 		// A fnv1a hash of all changeable property types, separated by pipe. Used for property upgrades.
-		std::uint32_t jsonPropsTypesHash;
+		std::uint32_t jsonPropsTypesHash = 0;
 #if EditorBuild
-		cSurface * Icon;
+		cSurface * Icon = nullptr;
 		std::unique_ptr<PropData[]> EdittimeProperties;
 #endif
 	};
@@ -171,11 +171,11 @@ namespace Edif
 #endif
 
 	public:
-		long param1, param2;
+		long param1 = 0, param2 = 0;
 
 #ifdef _WIN32
 		Runtime(Extension * ext);
-		EventParam* ParamZero;
+		EventParam* ParamZero = NULL;
 #elif defined(__ANDROID__)
 		Runtime(Extension* ext, jobject javaExtPtr);
 		global<jobject> curCEvent, curRH4ActStart;
@@ -220,9 +220,9 @@ namespace Edif
 		RunObjectMultiPlatPtr RunObjPtrFromFixed(int fixedValue);
 		int FixedFromRunObjPtr(RunObjectMultiPlatPtr object);
 
-		// For Object action parameters. Returns the object/qualifier OI used in the events; only necessary if you are looping the instances yourself.
-		// @remarks This works for conditions too, but it should be unnecessary, as they're passed this OI directly.
-		short GetOIFromObjectParam(std::size_t paramIndex);
+		// For Object action parameters. Returns the object/qualifier OIList index used in the events; only necessary if you are looping the instances yourself.
+		// @remarks This works for conditions too, but it should be unnecessary, as they're passed this OIList index directly.
+		short GetOIListIndexFromObjectParam(std::size_t paramIndex);
 
 		// For Object action parameters. Cancels other selected instances of the OI being looped through by Fusion runtime.
 		// Only necessary if you are looping the instances yourself, or doing a singleton pattern.
@@ -335,12 +335,16 @@ namespace Edif
 	// Use mutexvar.edif_lock() and mutexvar.edif_unlock() macros to track locks and find any poor coding.
 	class recursive_mutex {
 #ifdef _DEBUG
+#ifndef DISABLE_EDIF_MUTEX
 		std::recursive_timed_mutex intern;
+#endif
 #define edif_lock_debugParams const char * file, const char * func, int line
 #define edif_lock_debugParamDefs __FILE__, __FUNCTION__, __LINE__
 		std::stringstream log;
 #else
+#ifndef DISABLE_EDIF_MUTEX
 		std::recursive_mutex intern;
+#endif
 #define edif_lock_debugParams /* none */
 #define edif_lock_debugParamDefs /* none */
 #endif
@@ -362,5 +366,5 @@ namespace Edif
 
 namespace Edif {
 	class SDK;
-	extern SDK* SDK;
+	extern class SDK* SDK;
 }

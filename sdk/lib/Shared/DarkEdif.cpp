@@ -329,6 +329,15 @@ struct DarkEdif::Properties::Data
 	}
 };
 #pragma pack(pop)
+
+// Backing struct for an image list property. Varying size.
+struct ImgListProperty {
+	// Number of images stored in this image list
+	std::uint16_t numImages;
+	// Fusion image bank IDs
+	std::uint16_t imageIDs[];
+};
+
 #if EditorBuild
 
 // Hash function; we can't use std::hash as it returns size_t, which varies in size per platform
@@ -461,7 +470,7 @@ DarkEdif::DLL::PropAccesser & Elevate(const DarkEdif::Properties &p)
 struct DarkEdif::DLL::PropAccesser
 {
 	NO_DEFAULT_CTORS_OR_DTORS(PropAccesser);
-	// Type of DarKEdif::Properties
+	// Type of DarkEdif::Properties
 	decltype(Properties::propVersion) propVersion;
 
 	// Used to read JSON properties to see if a change has been made.
@@ -475,7 +484,7 @@ struct DarkEdif::DLL::PropAccesser
 	decltype(Properties::sizeBytes) sizeBytes;
 	// The actual data for properties, merged together
 	// Starts with checkboxes, then data, which is Data struct: type ID followed by binary.
-	decltype(DarkEdif::Properties::dataForProps) dataForProps; /* [], inherited from decltype*/;
+	decltype(DarkEdif::Properties::dataForProps) dataForProps; /* [], inherited from decltype */;
 
 	// Note: There is a single bit for each checkbox.
 	// Use numProps / 8 for num of bytes used by checkboxes.
@@ -519,7 +528,7 @@ void DarkEdif::Properties::Internal_PropChange(mv* mV, EDITDATA*& edPtr, unsigne
 	Data* oldPropValue = edPtr->Props.Internal_DataAt(PropID);
 	if (!oldPropValue)
 	{
-		MsgBox::Error(_T("DarkEdif property error"), _T("Couldn't find property %s (type %hs), failed to edit it."),
+		MsgBox::Error(_T("DarkEdif property error"), _T("Couldn't find property %s (JSON type %hs), failed to edit it."),
 			UTF8ToTString((const char*)CurLang["Properties"][PropID]["Title"]).c_str(), curTypeStr);
 		return;
 	}
@@ -547,14 +556,14 @@ void DarkEdif::Properties::Internal_PropChange(mv* mV, EDITDATA*& edPtr, unsigne
 	// but as each prop has a preceding value size there's not really a need for that.
 	if (newPropValueSize == 0 && !IsStringPropType(curTypeStr, false))
 	{
-		MsgBox::Error(_T("DarkEdif property error"), _T("Property size of property %s (type %hs) is 0!"),
+		MsgBox::Error(_T("DarkEdif property error"), _T("Property size of property %s (JSON type %hs) is 0!"),
 			UTF8ToTString((const char*)CurLang["Properties"][PropID]["Title"]).c_str(), curTypeStr);
 	}
 
-	// Shouldn't happen unless user starts messing.
+	// Shouldn't happen unless ext dev starts messing with ext properties without changing version
 	if (edPtr->eHeader.extSize != edPtr->Props.sizeBytes)
 	{
-		if (MsgBox::WarningYesNo(_T("DarkEdif property warning"), _T("Property block size is different to actual size. "
+		if (MsgBox::WarningYesNo(_T("DarkEdif property warning"), _T("Change to property \"%s\" (JSON type \"%hs\") caused reserved size to be different to actual size. "
 			"Press Yes to set it to Fusion's size (may corrupt properties).\n"
 			"Press No to cancel property change."),
 			UTF8ToTString((const char*)CurLang["Properties"][PropID]["Title"]).c_str(), curTypeStr) == IDYES)
@@ -745,8 +754,8 @@ Prop * DarkEdif::Properties::GetProperty(size_t IDParam)
 		ret = new Prop_Str(UTF8ToTString((const char *)propJSON["DefaultState"], &allConv).c_str());
 		if (!allConv)
 		{
-			MsgBox::WarningOK(_T("DarkEdif property error"), _T("Warning: The property's Unicode string \"%hs\" couldn't be converted to ANSI. "
-				"Characters will be replaced with filler."), (const char *)propJSON["DefaultState"]);
+			MsgBox::WarningOK(_T("DarkEdif property error"), _T("Warning: The property's Unicode string \"%s\" couldn't be converted to ANSI. "
+				"Characters will be replaced with filler."), UTF8ToTString((const char *)propJSON["DefaultState"]).c_str());
 		}
 		return ret;
 	}
@@ -768,6 +777,7 @@ Prop * DarkEdif::Properties::GetProperty(size_t IDParam)
 		ret = new Prop_Str(UTF8ToTString(std::string_view((const char *)Current->ReadPropValue(), Current->ReadPropValueSize()), &allConv).c_str());
 		if (!allConv)
 		{
+			// Failed to convert to ANSI (UTF-8 -> UTF-16 won't reasonably fail); if we report it with %s, we'll likely repeat the problem, so use %hs and report as-is.
 			MsgBox::WarningOK(_T("DarkEdif property error"), _T("GetProperty warning: The property's Unicode string \"%hs\" couldn't be converted to ANSI. "
 				"Characters will be replaced with filler."), std::string((const char*)Current->ReadPropValue(), Current->ReadPropValueSize()).c_str());
 		}
@@ -786,7 +796,7 @@ Prop * DarkEdif::Properties::GetProperty(size_t IDParam)
 		if (propJSONItems.type != json_array)
 		{
 			MsgBox::Error(_T("Property error"), _T("GetProperty error: JSON Items not valid in Combo Box property \"%s\", ID %i, language %s."),
-				ID, (const char *)propJSON["Title"], DarkEdif::JSON::LanguageName());
+				UTF8ToTString((const char *)propJSON["Title"]).c_str(), ID, DarkEdif::JSON::LanguageName());
 			return nullptr;
 		}
 		size_t itemIndex = -1;
@@ -802,8 +812,8 @@ Prop * DarkEdif::Properties::GetProperty(size_t IDParam)
 		}
 		if (itemIndex == -1)
 		{
-			MsgBox::Error(_T("Property error"), _T("GetProperty error: JSON Items does not contain given value %s (Combo Box property \"%s\", ID %i, JSON language %s)."),
-				UTF8ToTString(str).c_str(), (const char *)propJSON["Title"], ID, DarkEdif::JSON::LanguageName());
+			MsgBox::Error(_T("Property error"), _T("GetProperty error: JSON Items does not contain given value %s (Combo Box property \"%s\", ID %zu, JSON language %s)."),
+				UTF8ToTString(str).c_str(), UTF8ToTString((const char *)propJSON["Title"]).c_str(), ID, DarkEdif::JSON::LanguageName());
 			return nullptr;
 		}
 		ret = new Prop_UInt(itemIndex);
@@ -869,8 +879,8 @@ void DarkEdif::DLL::DLL_SetPropValue(mv * mV, EDITDATA * edPtr, unsigned int Pro
 			// If we get a Buff and it's not a string property, DarkEdif doesn't know how to handle it.
 			else
 			{
-				MsgBox::Error(_T("DarkEdif property error"), _T("Got Buff type for non-string property \"%hs\"."),
-					(const char *)propjson["Title"]);
+				MsgBox::Error(_T("DarkEdif property error"), _T("Got Buff type for non-string property \"%s\"."),
+					UTF8ToTString((const char *)propjson["Title"]).c_str());
 			}
 			break;
 		}
@@ -966,15 +976,87 @@ BOOL DarkEdif::DLL::DLL_IsPropEnabled(mv * mV, EDITDATA * edPtr, unsigned int Pr
 	return TRUE;
 }
 
+// Enumerates images and fonts used by this object
+int FusionAPI EnumElts(mv* mV, EDITDATA* edPtr, ENUMELTPROC enumProc, ENUMELTPROC undoProc, LPARAM p1, LPARAM p2)
+{
+#pragma DllExportHint
+	LOGV(_T("Call to %s with edPtr %p.\n"), _T(__FUNCTION__), edPtr);
+	// Yves informed that the textual font properties - that is, TEXT_OEFLAG_EXTENSION,
+	// GetTextFont(), do not need the font in the font property tab enumed here,
+	// they are automatically grabbed during build.
+	//
+	// Direct3D 11 apps:	All LOGFONT used by TEXT_OEFLAG_EXTENSION automatically stored.
+	//						Only TTF fonts are supported by D3D11.
+	// Direct3D 8 + 9 apps: Will need to use Font Embed object, the one for Windows.
+	//						It's manual: you embed the font yourself in Data Elements,
+	//						then extract it at runtime, then pass the extracted path to its action.
+	//						This supports all fonts.
+	// Android apps:		Requires the Android Font Embed object to embed fonts.
+	// iOS + Mac apps:		You have to manually add the font into your xcodeproj's Resources,
+	//						and then add them to the plist as UIAppFonts. Don't just put them in
+	//						the Resources directory, you must link them.
+	//						You may also need to add the font to Build Phases.
+	//						https://community.clickteam.com/forum/thread/67739-custom-fonts/
+
+	// Note that enumProc may change the image or font number passed to it.
+	int error = 0;
+	std::vector<std::pair<std::uint16_t*, int>> IdAndType;
+
+	const auto& realProps = Elevate(edPtr->Props);
+
+	const DarkEdif::Properties::Data* d = realProps.Internal_FirstData();
+	for (std::size_t i = 0, j = realProps.numProps; i < j; ++i)
+	{
+		if (d->propTypeID == Edif::Properties::IDs::PROPTYPE_FONT)
+		{
+			LOGV(_T("Adding font of property %s from font bank ID %hu.\n"),
+				UTF8ToTString(d->ReadPropName()).c_str(), *(std::uint16_t*)d->ReadPropValue());
+			if ((error = enumProc((std::uint16_t*)d->ReadPropValue(), FONT_TAB, p1, p2)) != 0)
+			{
+				MsgBox::Error(_T("EnumElts"), _T("Adding font property %hs, font ID %hu failed! Error %d.\n"),
+					UTF8ToTString(d->ReadPropName()).c_str(), *(std::uint16_t*)d->ReadPropValue(), error);
+				goto postLoop;
+			}
+			IdAndType.emplace_back(std::make_pair((std::uint16_t*)d->ReadPropValue(), FONT_TAB));
+		}
+		else if (d->propTypeID == Edif::Properties::IDs::PROPTYPE_IMAGELIST)
+		{
+			ImgListProperty* imgProp = (ImgListProperty*)d->ReadPropValue();
+			LOGV(_T("Adding images of property %s, num IDs %hu...\n"),
+				UTF8ToTString(d->ReadPropName()).c_str(), imgProp->numImages);
+			for (std::size_t k = 0; k < imgProp->numImages; ++k)
+			{
+				if ((error = enumProc(&imgProp->imageIDs[k], IMG_TAB, p1, p2)) != 0)
+				{
+					MsgBox::Error(_T("EnumElts"), _T("Adding image of property %s, ID %hu failed! Error %d.\n"),
+						UTF8ToTString(d->ReadPropName()).c_str(), imgProp->imageIDs[k], error);
+					goto postLoop;
+				}
+				IdAndType.emplace_back(std::make_pair(&imgProp->imageIDs[k], IMG_TAB));
+			}
+		}
+		d = d->Next();
+	}
+postLoop:
+	// In case of error, undo it
+	if (error != 0)
+	{
+		for (int i = IdAndType.size() - 1; i >= 0; --i)
+			undoProc(std::get<0>(IdAndType[i]), std::get<1>(IdAndType[i]), p1, p2);
+	}
+	return error;
+}
+
+
 struct Properties::PreSmartPropertyReader : Properties::PropertyReader
 {
 	//int numProps;
-	const std::uint8_t * at;
-	size_t atID;
-	const std::uint8_t * endPos;
-	const Properties::ConverterState * convState;
-	size_t maxChkboxID;
-	const std::uint8_t * chkBoxAt;
+	const std::uint8_t * at = nullptr;
+	size_t atID = 0;
+	const std::uint8_t * endPos = nullptr;
+	const Properties::ConverterState * convState = nullptr;
+	size_t maxChkboxID = 0;
+	const std::uint8_t * chkBoxAt = nullptr;
 
 
 	// Start the reader. Return ConverterUnsuitable if the converter isn't necessary.
@@ -1141,8 +1223,14 @@ struct Properties::PreSmartPropertyReader : Properties::PropertyReader
 			case IDs::PROPTYPE_DIRECTORYNAME:
 			case IDs::PROPTYPE_URLBUTTON:
 			{
-				size_t maxSize = endPos - at;
-				size_t sizeOfStr = maxSize <= 0 ? INT32_MIN : strnlen((const char *)at, maxSize);
+				std::size_t maxSize = endPos - at;
+				if (maxSize <= 0)
+				{
+					// string went past end of properties.
+					DebugProp_OutputString(_T("PreSmartPropertyReader: Was already reading too far for ID %zu. Killing use of converter.\n"), atID);
+					return false;
+				}
+				std::size_t sizeOfStr = maxSize <= 0 ? ~0 : strnlen((const char*)at, maxSize);
 				if (sizeOfStr == maxSize)
 				{
 					// string went past end of properties.
@@ -1259,7 +1347,7 @@ static Properties::PreSmartPropertyReader preSmartPropertyReader;
 struct Properties::SmartPropertyReader : Properties::PropertyReader
 {
 	std::vector<const Properties::Data *> data;
-	const Properties::ConverterState * convState;
+	const Properties::ConverterState * convState = nullptr;
 
 	// Resets the reader for a new run. Return ConverterUnsuitable if the converter isn't necessary.
 	void Initialise(ConverterState &convState, ConverterReturn * const convRet)
@@ -1285,7 +1373,7 @@ struct Properties::SmartPropertyReader : Properties::PropertyReader
 		const std::uint32_t curVer = 'DAR1';
 		if (oldProps.propVersion != curVer)
 		{
-			DebugProp_OutputString(_T("SmartPropertyReader: smart property is implemented with DarkEdif::Properties struct %.4s, but this reader is %.4s.\n"), &oldProps.propVersion, &curVer);
+			DebugProp_OutputString(_T("SmartPropertyReader: smart property is implemented with DarkEdif::Properties struct %.4hs, but this reader is %.4hs.\n"), (const char *)&oldProps.propVersion, (const char*)&curVer);
 			return Abort(convRet);
 		}
 
@@ -1465,7 +1553,7 @@ static Properties::SmartPropertyReader smartPropertyReader;
 
 struct Properties::JSONPropertyReader : Properties::PropertyReader
 {
-	Properties::ConverterState * convState;
+	Properties::ConverterState * convState = nullptr;
 	static const char bullet[];
 
 	// Start the reader. Return ConverterUnsuitable if the converter isn't necessary.
@@ -1645,6 +1733,25 @@ struct Properties::JSONPropertyReader : Properties::PropertyReader
 			++convState->numPropsReset;
 
 			return convRet->Return_OK(&f, sizeof(float));
+		}
+		case IDs::PROPTYPE_IMAGELIST:
+		{
+			// Image list should have no images
+			if (prop["DefaultState"].type != json_none)
+			{
+				return convRet->Return_Error(_T("JSONPropertyReader: JSON item %s, ID %zu, language %s has a default value, and shouldn't have one."),
+					UTF8ToTString(title).c_str(), id, DarkEdif::JSON::LanguageName());
+			}
+			// TODO: Check image list JSON options are valid
+
+			static ImgListProperty prop;
+			prop.numImages = 0;
+
+			// convState->resetPropertiesStream << bullet << title << " = image count 0\n";
+			convState->resetPropertiesStream << bullet << title << "\n";
+			++convState->numPropsReset;
+
+			return convRet->Return_OK(&prop, sizeof(prop));
 		}
 
 		case IDs::PROPTYPE_CUSTOM:
@@ -1867,7 +1974,7 @@ HGLOBAL DarkEdif::DLL::DLL_UpdateEditStructure(mv * mV, EDITDATA * oldEdPtr)
 
 			// Prop offsets change: properties are same, but EDITDATA changed.
 			// Bulk copy all the properties over
-			dataToWriteStream.write(((const char *)oldEdPtr) + oldOffset, oldProps.sizeBytes - ((int)oldOffset));
+			dataToWriteStream.write(((const char *)oldEdPtr) + oldOffset, ((std::streamsize)oldProps.sizeBytes) - oldOffset);
 			DebugProp_OutputString(_T("Prop offsets changed, but hashes are the same. Jumping to output.\n"));
 			goto ReadyToOutput;
 		}
@@ -2038,7 +2145,7 @@ HGLOBAL DarkEdif::DLL::DLL_UpdateEditStructure(mv * mV, EDITDATA * oldEdPtr)
 						chkboxIndexesToRead.erase(f);
 					}
 
-					DebugProp_OutputString(_T("Added property %d - accum data size is now %zu.\n"), i, dataToWriteStream.tellp());
+					DebugProp_OutputString(_T("Added property %zu - accum data size is now %zu.\n"), i, dataToWriteStream.str().size());
 					break;
 				}
 
@@ -2064,8 +2171,8 @@ HGLOBAL DarkEdif::DLL::DLL_UpdateEditStructure(mv * mV, EDITDATA * oldEdPtr)
 			// JSON errors are reported elsewhere, and aren't relevant for upgrading anyway
 			if (!ok && RunMode != MFXRunMode::SplashScreen)
 			{
-				MsgBox::Error(_T("Property conversion error"), _T("All converters have failed for property %i (%hs). Your property data is corrupt "
-					"beyond recovery or reset. Please re-add the object to frame."), i, (const char *)convState.jsonProps[i]["Title"]);
+				MsgBox::Error(_T("Property conversion error"), _T("All converters have failed for property %i (%s). Your property data is corrupt "
+					"beyond recovery or reset. Please re-add the object to frame."), i, UTF8ToTString((const char *)convState.jsonProps[i]["Title"]).c_str());
 			}
 		}
 
@@ -2203,6 +2310,8 @@ ReadyToOutput:
 	}
 
 	EDITDATA * newEdPtr = (EDITDATA *)GlobalLock(globalPtr);
+	if (newEdPtr == NULL)
+		throw std::logic_error("shouldn't fail to lock");
 	newEdPtr->eHeader.extPrivateData = newOffset;
 	newEdPtr->eHeader.extVersion = Extension::Version;
 	newEdPtr->eHeader.extSize = newEdPtrSize;
@@ -2276,7 +2385,7 @@ bool DarkEdif::Properties::IsPropChecked(std::string_view propName) const
 found:
 #if EditorBuild
 	if (data->propTypeID != Edif::Properties::IDs::PROPTYPE_LEFTCHECKBOX &&
-		CurLang["Properties"][index]["CheckboxDefaultState"].type == json_none)
+		CurLang["Properties"][index]["CheckboxDefaultState"].type == json_type::json_none)
 	{
 		MsgBox::Error(_T("DarkEdif property error"), _T("IsPropChecked() name = \"%s\" does not have a checkbox in the JSON."), UTF8ToTString(propName).c_str());
 		return false;
@@ -2447,6 +2556,95 @@ float DarkEdif::Properties::GetPropertyNum(int propID) const
 	}
 }
 
+// Returns Fusion image bank ID from a image list property ID
+std::uint16_t DarkEdif::Properties::GetPropertyImageID(int propID, std::size_t index) const
+{
+	const auto& p = Elevate(*this);
+	const Properties::Data* data = p.Internal_DataAt(propID);
+	if (!data)
+	{
+		MsgBox::Error(_T("DarkEdif property error"), _T("GetPropertyImageID() error; property ID %d does not exist."), propID);
+		return UINT16_MAX;
+	}
+	if (data->propTypeID != Edif::Properties::IDs::PROPTYPE_IMAGELIST)
+	{
+		MsgBox::Error(_T("DarkEdif property error"), _T("GetPropertyImageID() error; property ID %d is not an image list."), propID);
+		return UINT16_MAX;
+	}
+	const ImgListProperty* imgProp = (ImgListProperty*)data->ReadPropValue();
+	if (index >= imgProp->numImages)
+		return UINT16_MAX;
+	return imgProp->imageIDs[index];
+}
+// Returns Fusion image bank ID from a image list property name
+std::uint16_t DarkEdif::Properties::GetPropertyImageID(std::string_view propName, std::size_t index) const
+{
+	const auto& p = Elevate(*this);
+	const Properties::Data* data = p.Internal_FirstData();
+	while (data)
+	{
+		if (data->ReadPropName() == propName)
+			goto found;
+		data = data->Next();
+	}
+
+	MsgBox::Error(_T("DarkEdif property error"), _T("GetPropertyImageID() error; property name \"%s\" does not exist."), UTF8ToTString(propName).c_str());
+	return UINT16_MAX;
+
+found:
+	if (data->propTypeID != Edif::Properties::IDs::PROPTYPE_IMAGELIST)
+	{
+		MsgBox::Error(_T("DarkEdif property error"), _T("GetPropertyImageID() error; property name \"%s\" is not an image list."), UTF8ToTString(propName).c_str());
+		return UINT16_MAX;
+	}
+	const ImgListProperty* imgProp = (ImgListProperty*)data->ReadPropValue();
+	if (index >= imgProp->numImages)
+		return UINT16_MAX;
+	return imgProp->imageIDs[index];
+}
+// Returns number of images in a image list property by property ID
+std::uint16_t DarkEdif::Properties::GetPropertyNumImages(int propID, std::size_t index) const
+{
+	const auto& p = Elevate(*this);
+	const Properties::Data* data = p.Internal_DataAt(propID);
+	if (!data)
+	{
+		MsgBox::Error(_T("DarkEdif property error"), _T("GetPropertyNumImages() error; property ID %d does not exist."), propID);
+		return UINT16_MAX;
+	}
+	if (data->propTypeID != Edif::Properties::IDs::PROPTYPE_IMAGELIST)
+	{
+		MsgBox::Error(_T("DarkEdif property error"), _T("GetPropertyNumImages() error; property ID %d is not an image list."), propID);
+		return UINT16_MAX;
+	}
+	const ImgListProperty* imgProp = (ImgListProperty*)data->ReadPropValue();
+	return imgProp->numImages;
+}
+// Returns number of images in a image list property by property name
+std::uint16_t DarkEdif::Properties::GetPropertyNumImages(std::string_view propName, std::size_t index) const
+{
+	const auto& p = Elevate(*this);
+	const Properties::Data* data = p.Internal_FirstData();
+	while (data)
+	{
+		if (data->ReadPropName() == propName)
+			goto found;
+		data = data->Next();
+	}
+
+	MsgBox::Error(_T("DarkEdif property error"), _T("GetPropertyImageID() error; property name \"%s\" does not exist."), UTF8ToTString(propName).c_str());
+	return UINT16_MAX;
+
+found:
+	if (data->propTypeID != Edif::Properties::IDs::PROPTYPE_IMAGELIST)
+	{
+		MsgBox::Error(_T("DarkEdif property error"), _T("GetPropertyImageID() error; property name \"%s\" is not an image list."), UTF8ToTString(propName).c_str());
+		return UINT16_MAX;
+	}
+	const ImgListProperty* imgProp = (ImgListProperty*)data->ReadPropValue();
+	return imgProp->numImages;
+}
+
 
 const Properties::Data * DarkEdif::Properties::Internal_FirstData() const
 {
@@ -2455,7 +2653,7 @@ const Properties::Data * DarkEdif::Properties::Internal_FirstData() const
 const Properties::Data * DarkEdif::Properties::Internal_DataAt(int ID) const
 {
 	const json_value& j = CurLang["Properties"];
-	if (j.type != json_array)
+	if (j.type != json_type::json_array)
 	{
 		MsgBox::Error(_T("Premature function call"), _T("Internal_DataAt() const called for prop ID %u without JSON properties being valid."), ID);
 		return nullptr;
@@ -2490,9 +2688,9 @@ Properties::Data * DarkEdif::Properties::Internal_DataAt(int ID)
 	}
 
 	const json_value& j = CurLang["Properties"];
-	if (j.type != json_array)
+	if (j.type != json_type::json_array)
 	{
-		MsgBox::Error(_T("Premature function call"), _T("Internal_DataAt() called for prop ID %u without DarkEdif_Props being valid."),
+		MsgBox::Error(_T("Premature function call"), _T("Internal_DataAt() called for prop ID %u without DarkEdif_Props for language %s being valid."),
 			ID, DarkEdif::JSON::LanguageName());
 		return nullptr;
 	}
@@ -2505,11 +2703,11 @@ Properties::Data * DarkEdif::Properties::Internal_DataAt(int ID)
 	Data * data = Internal_FirstData();
 	for (size_t i = 0; i < (size_t)ID && data; i++)
 	{
-		DebugProp_OutputString(_T("Locating ID %u, at %u: type %s, title: %s.\n"), ID, i, UTF8ToTString((const char *)j[ID]["Type"]).c_str(), UTF8ToTString(data->ReadPropName()).c_str());
+		DebugProp_OutputString(_T("Locating ID %d, at %u: type %s, title: %s.\n"), ID, i, UTF8ToTString((const char *)j[ID]["Type"]).c_str(), UTF8ToTString(data->ReadPropName()).c_str());
 		data = data->Next();
 	}
 
-	DebugProp_OutputString(_T("DataAt ID %u type %s, title: %s.\n"), ID, UTF8ToTString((const char *)j[ID]["Type"]).c_str(), UTF8ToTString(data->ReadPropName()).c_str());
+	DebugProp_OutputString(_T("DataAt ID %d type %s, title: %s.\n"), ID, UTF8ToTString((const char *)j[ID]["Type"]).c_str(), data ? UTF8ToTString(data->ReadPropName()).c_str() : _T("(null)"));
 	return data;
 }
 #endif
@@ -2540,7 +2738,7 @@ void DarkEdif::DLL::GeneratePropDataFromJSON()
 		//   "Display",
 		//   { ... }, // display props
 		// }
-		if (Property.type == json_string)
+		if (Property.type == json_type::json_string)
 		{
 			DarkEdif::MsgBox::Error(errorPrefix, _T("Properties contains a string \"%s\" instead of an object. ")
 				_T("Multiple categories of properties not currently implemented. (%s)"),
@@ -2595,13 +2793,13 @@ void DarkEdif::DLL::GeneratePropDataFromJSON()
 
 			if (!CurrentProperty)
 			{
-				DarkEdif::MsgBox::Error(errorPrefix, _T("Property index %zu \"%hs\" has an unrecognised property type \"%hs\" in the JSON (under %s language).\n")
-					_T("Check your spelling of the \"Type\" Parameter."), i, (const char*)Property["Title"], PropertyType, JSON::LanguageName());
+				DarkEdif::MsgBox::Error(errorPrefix, _T("Property index %zu \"%s\" has an unrecognised property type \"%s\" in the JSON (under %s language).\n"
+					"Check your spelling of the \"Type\" Parameter."), i, UTF8ToTString((const char*)Property["Title"]).c_str(), UTF8ToTString(PropertyType).c_str(), JSON::LanguageName());
 				continue;
 			}
 			// If checkbox is enabled, pass that as flags as well.
 			unsigned int Options =
-				(Property["CheckboxDefaultState"].type != json_none ? PROPOPT_CHECKBOX : 0)		// Checkbox enabled by property option in JSON
+				(Property["CheckboxDefaultState"].type != json_type::json_none ? PROPOPT_CHECKBOX : 0)		// Checkbox enabled by property option in JSON
 				| (bool(Property["Bold"]) ? PROPOPT_BOLD : 0)				// Bold enabled by property option in JSON
 				| (bool(Property["Removable"]) ? PROPOPT_REMOVABLE : 0)		// Removable enabled by property option in JSON
 				| (bool(Property["Renameable"]) ? PROPOPT_RENAMEABLE : 0)	// Renamable enabled by property option in JSON
@@ -2651,12 +2849,12 @@ void DarkEdif::DLL::GeneratePropDataFromJSON()
 				}
 				else
 				{
-					if (Property["Case"].type != json_none)
-						DarkEdif::MsgBox::WarningOK(_T("DarkEdif JSON property"), _T("Property \"%hs\" is set to \"Case\"=\"%s\", but that won't work with property type %hs."), (const char*)Property["Title"], (const char*)Property["Case"], Names[CurrentProperty->Type_ID % 1000]);
-					if (Property["Password"].type != json_none)
-						DarkEdif::MsgBox::WarningOK(_T("DarkEdif JSON property"), _T("Property \"%hs\" is set to password mask, but that won't work with property type %hs."), (const char*)Property["Title"], Names[CurrentProperty->Type_ID % 1000]);
+					if (Property["Case"].type != json_type::json_none)
+						DarkEdif::MsgBox::WarningOK(_T("DarkEdif JSON property"), _T(R"(Property "%s" is set to "Case"="%hs", but that won't work with property type %hs.)"), UTF8ToTString((const char*)Property["Title"]).c_str(), (const char*)Property["Case"], Names[CurrentProperty->Type_ID % 1000]);
+					if (Property["Password"].type != json_type::json_none)
+						DarkEdif::MsgBox::WarningOK(_T("DarkEdif JSON property"), _T("Property \"%s\" is set to password mask, but that won't work with property type %hs."), UTF8ToTString((const char*)Property["Title"]).c_str(), Names[CurrentProperty->Type_ID % 1000]);
 				}
-				if (Property["MaxLength"].type != json_integer) {
+				if (Property["MaxLength"].type != json_type::json_integer) {
 					SetAllProps(0, NULL);
 				}
 				else
@@ -2686,8 +2884,8 @@ void DarkEdif::DLL::GeneratePropDataFromJSON()
 			case PROPTYPE_COMBOBOX:
 			case PROPTYPE_COMBOBOXBTN:
 			{
-				if (Property["Items"].type != json_array || Property["Items"].u.array.length == 0)
-					DarkEdif::MsgBox::Error(_T("DarkEdif JSON property"), _T("No Items detected in combobox property %hs."), (const char*)Property["Title"]);
+				if (Property["Items"].type != json_type::json_array || Property["Items"].u.array.length == 0)
+					DarkEdif::MsgBox::Error(_T("DarkEdif JSON property"), _T("No Items detected in combobox property %s."), UTF8ToTString((const char*)Property["Title"]).c_str());
 
 				const TCHAR** Fixed = new const TCHAR * [Property["Items"].u.array.length + 2];
 
@@ -2798,6 +2996,132 @@ void DarkEdif::DLL::GeneratePropDataFromJSON()
 	Edif::SDK->jsonPropsNameAndTypesHash = fnv1a(hashNamesAndTypes.str());
 	Edif::SDK->jsonPropsTypesHash = fnv1a(hashTypes.str());
 }
+
+BOOL DarkEdif::DLL::DLL_EditProp(mv* mV, EDITDATA*& edPtr, unsigned int PropID_)
+{
+	if (PropID_ < PROPID_EXTITEM_CUSTOM_FIRST)
+		return FALSE;
+
+	unsigned int PropID = GetPropRealID(PropID_);
+
+	// Not our responsibility; ID unrecognised
+	if (CurLang["Properties"].type == json_null || CurLang["Properties"].u.array.length <= PropID)
+		return FALSE;
+
+	auto& Props = Elevate(edPtr->Props);
+	DarkEdif::Properties::Data* data = Props.Internal_DataAt(PropID);
+	const json_value& jsonProp = CurLang["Properties"][PropID];
+	if (jsonProp.type != json_object)
+	{
+		MsgBox::Error(_T("Property error"), _T("Property ID %u (%s) is not correctly formatted."),
+			PropID, UTF8ToTString(data->ReadPropName()).c_str());
+		return FALSE;
+	}
+	if (!_stricmp(jsonProp["Type"], "Image List"))
+	{
+		ImgListProperty* thisPropData = (ImgListProperty*)data->ReadPropValue();
+
+		std::tstring windowTitle = UTF8ToTString((const char*)jsonProp["WindowTitle"]).c_str();
+
+		const std::uint32_t maxNumImages = std::max(1U, (std::uint32_t)(json_int_t)jsonProp["MaxNumImages"]);
+		const std::uint32_t imageSize[2] = {
+			std::max(1U, (std::uint32_t)(json_int_t)jsonProp["ImageSize"][0]),
+			std::max(1U, (std::uint32_t)(json_int_t)jsonProp["ImageSize"][1])
+		};
+
+		PictureEditOptions opts = PictureEditOptions::None;
+		if ((bool)jsonProp["FixedImageSize"])
+			opts |= PictureEditOptions::FixedImageSize;
+		if ((bool)jsonProp["HotSpotAndActionPoint"])
+			opts |= PictureEditOptions::EditableHotSpot | PictureEditOptions::EditableActionPoint;
+		if ((bool)jsonProp["NoAlphaChannel"])
+			opts |= PictureEditOptions::NoAlphaChannel;
+		if ((bool)jsonProp["NoTransparentColor"])
+			opts |= PictureEditOptions::NoTransparentColor;
+		if ((bool)jsonProp["16Colors"])
+			opts |= PictureEditOptions::SixteenColors;
+		// Ignore FixedNumOfImages if only one image, as it'll enable the add image button but make it no-op
+		if ((bool)jsonProp["FixedNumOfImages"] || maxNumImages == 1)
+			opts |= PictureEditOptions::FixedNumOfImages;
+		if ((bool)jsonProp["AllowEmpty"])
+			opts |= PictureEditOptions::CanBeEmpty;
+
+		BOOL result;
+		// Only one image possible: edit it in solo
+		if (maxNumImages == 1)
+		{
+			EditImageParams<TCHAR> eip;
+			eip.size = sizeof(eip);
+			eip.windowTitle = windowTitle.empty() ? nullptr : windowTitle.c_str();
+			eip.pad = 0;
+			eip.imageID = thisPropData->numImages == 0 ? 0 : thisPropData->imageIDs[0];
+			eip.defaultImageWidth = imageSize[0];
+			eip.defaultImageHeight = imageSize[1];
+			eip.options = opts;
+
+			result = mV->mvEditImage(edPtr, &eip, mV->HEditWin);
+			if (result == TRUE)
+			{
+				// Save image count + image ID, same as we do for multiple images
+				// Impersonate a ImageListProperty struct, with one image ID
+				const std::uint16_t two[] = { 1, eip.imageID };
+				Props.Internal_PropChange(mV, edPtr, PropID, two, sizeof(two));
+			}
+		}
+		else
+		{
+			std::tstring imageTitlesBuffer;
+			std::unique_ptr<TCHAR* []> titles;
+			if (jsonProp["ImageTitles"].type == json_array)
+			{
+				const json_value& imgTitles = jsonProp["ImageTitles"];
+				titles = std::make_unique<TCHAR* []>(imgTitles.u.array.length + 1); // + 1 to end with null ptr
+				std::tstringstream str;
+				std::tstring tstr;
+				for (std::size_t i = 0, j = 0; i < imgTitles.u.array.length; ++i)
+				{
+					tstr = UTF8ToTString((const char*)imgTitles.u.array.values[i]);
+					str.write(tstr.c_str(), tstr.size() + 1);
+					titles[i] = (TCHAR*)j;
+					j += tstr.size() + 1;
+				}
+				imageTitlesBuffer = str.str();
+				for (std::size_t i = 0, j = 0; i < imgTitles.u.array.length; ++i)
+					titles[i] = imageTitlesBuffer.data() + (std::size_t)titles[i];
+			}
+
+			EditAnimationParams<TCHAR> eap;
+			eap.size = sizeof(eap);
+			eap.windowTitle = windowTitle.empty() ? nullptr : windowTitle.c_str();
+			eap.numImages = thisPropData->numImages;
+			eap.maxNumImages = maxNumImages;
+			eap.startIndexToEdit = 0;
+			auto prop = std::make_unique<std::uint16_t[]>(1 + maxNumImages);
+			if (!prop || memcpy_s(&prop[1], maxNumImages * sizeof(std::uint16_t),
+				thisPropData->imageIDs, thisPropData->numImages * sizeof(std::uint16_t)) != 0)
+			{
+				return FALSE;
+			}
+			eap.imageIDs = &prop[1];
+			eap.imageTitles = titles.get();
+			eap.defaultImageWidth = imageSize[0];
+			eap.defaultImageHeight = imageSize[1];
+			eap.options = opts;
+
+			result = mV->mvEditAnimation(edPtr, &eap, mV->HEditWin);
+			if (result == TRUE)
+			{
+				prop[0] = eap.numImages;
+				Props.Internal_PropChange(mV, edPtr, PropID,
+					prop.get(), (1 + eap.numImages) * sizeof(std::uint16_t));
+			}
+		}
+		//mvRefreshProp(mV, edPtr, PropID_, FALSE);
+		return result;
+	}
+
+	return FALSE;
+}
 #endif
 
 // Returns size of EDITDATA and all properties if they were using their default values from JSON
@@ -2851,6 +3175,8 @@ std::uint16_t DarkEdif::DLL::Internal_GetEDITDATASizeFromJSON()
 		// Stores two numbers
 		else if (!_stricmp(curPropType, "Size"))
 			fullSize += sizeof(int) * 2;
+		else if (!_stricmp(curPropType, "Image List"))
+			fullSize += sizeof(ImgListProperty);
 		else
 		{
 			DarkEdif::MsgBox::Error(_T("GetEDITDATASizeFromJSON failed"), _T("Calculation of edittime property size can't understand property type \"%s\". (%s)"),
@@ -2902,9 +3228,13 @@ std::uint16_t DarkEdif::DLL::Internal_GetEDITDATASizeFromJSON()
 
 // Static definition; set during SDK::SDK()
 #ifdef _WIN32
+// True if Fusion 2.5. False if Fusion 2.0. Set during SDK ctor.
 bool DarkEdif::IsFusion25;
-#else
-//constexpr bool DarkEdif::IsFusion25 = true;
+// True if angle variables are degrees as floats, false if they are ints.
+// Ints are used in MMF2 non-Direct3D display modes.
+bool DarkEdif::IsHWAFloatAngles;
+// True if running under Wine, false otherwise.
+bool DarkEdif::IsRunningUnderWine;
 #endif
 
 // Returns the Fusion event number for this group. Works in CF2.5 and MMF2.0
@@ -2947,7 +3277,7 @@ int DarkEdif::GetCurrentFusionEventNum(const Extension * const ext)
 
 		// This is a Java wrapper implementation failure and so its absence should be considered fatal
 		if (getEventIDMethod == nullptr)
-			LOGF("Failed to find CRun" PROJECT_NAME_UNDERSCORES "'s darkedif_jni_getCurrentFusionEventNum method in Java wrapper file.\n");
+			LOGF("Failed to find CRun" PROJECT_TARGET_NAME_UNDERSCORES "'s darkedif_jni_getCurrentFusionEventNum method in Java wrapper file.\n");
 	}
 
 	return threadEnv->CallIntMethod(ext->javaExtPtr, getEventIDMethod);
@@ -2984,7 +3314,7 @@ std::tstring DarkEdif::MakePathUnembeddedIfNeeded(const Extension * ext, const s
 
 		// This is a Java wrapper implementation failure and so its absence should be considered fatal
 		if (getEventIDMethod == nullptr)
-			LOGF("Failed to find CRun" PROJECT_NAME_UNDERSCORES "'s darkedif_jni_makePathUnembeddedIfNeeded method in Java wrapper file.\n");
+			LOGF("Failed to find CRun" PROJECT_TARGET_NAME_UNDERSCORES "'s darkedif_jni_makePathUnembeddedIfNeeded method in Java wrapper file.\n");
 	}
 
 	jstring pathJava = CStrToJStr(std::string(filePath).c_str());
@@ -2996,7 +3326,7 @@ std::tstring DarkEdif::MakePathUnembeddedIfNeeded(const Extension * ext, const s
 	threadEnv->DeleteLocalRef(pathJava);
 	threadEnv->DeleteLocalRef((jobject)str.ctx);
 #elif defined(__APPLE__)
-	const std::string truePath = DarkEdifObjCFunc(PROJECT_NAME_RAW, makePathUnembeddedIfNeeded)(ext->objCExtPtr, std::string(filePath).c_str());
+	const std::string truePath = DarkEdifObjCFunc(PROJECT_TARGET_NAME_UNDERSCORES_RAW, makePathUnembeddedIfNeeded)(ext->objCExtPtr, std::string(filePath).c_str());
 #elif defined(__wasi__)
     // FIXME: STUB
     const std::string truePath = "";
@@ -3234,7 +3564,7 @@ int DarkEdif::MessageBoxA(WindowHandleType hwnd, const TCHAR * text, const TCHAR
 	jmethodID methodShow = threadEnv->GetMethodID(toast, "show", "()V");
 	threadEnv->CallVoidMethod(toastobj, methodShow);
 
-	__android_log_print(iconAndButtons, PROJECT_NAME_UNDERSCORES, "Msg Box swallowed: \"%s\", %s.", caption, text);
+	__android_log_print(iconAndButtons, PROJECT_TARGET_NAME_UNDERSCORES, "Msg Box swallowed: \"%s\", %s.", caption, text);
 	if (!strncmp(caption, "DarkEdif", sizeof("DarkEdif") - 1) && (iconAndButtons & MB_ICONERROR) != 0)
 		DarkEdif::BreakIfDebuggerAttached();
 	return 0;
@@ -3378,7 +3708,7 @@ namespace DarkEdif
 				if (!di.intStoreDataToExt(ext, edi.value))
 				{
 					di.cachedInt = oldInteger;
-					di.nextRefreshTime = GetTickCount();
+					di.nextRefreshTime = GetTickCount64();
 				}
 			}
 
@@ -3398,7 +3728,7 @@ namespace DarkEdif
 				if (!di.textStoreDataToExt(ext, di.cachedText))
 				{
 					di.cachedText = oldText;
-					di.nextRefreshTime = GetTickCount();
+					di.nextRefreshTime = GetTickCount64();
 				}
 			}
 		}
@@ -3411,7 +3741,7 @@ namespace DarkEdif
 		// Reader function exists, and timer for refreshing (if it exists) has expired
 		auto &di = debugItems[debugItemID];
 		if ((di.isInt ? di.intReadFromExt != NULL : di.textReadFromExt != NULL) &&
-			(!di.refreshMS || GetTickCount() >= di.nextRefreshTime))
+			(!di.refreshMS || GetTickCount64() >= di.nextRefreshTime))
 		{
 			if (di.isInt)
 				di.cachedInt = di.intReadFromExt(ext);
@@ -3430,7 +3760,7 @@ namespace DarkEdif
 				}
 			}
 			if (di.refreshMS)
-				di.nextRefreshTime = GetTickCount() + di.refreshMS;
+				di.nextRefreshTime = GetTickCount64() + di.refreshMS;
 		}
 		_tcscpy_s(writeTo, 256U, di.cachedText.c_str());
 	}
@@ -3678,10 +4008,10 @@ std::tstring_view DarkEdif::GetRunningApplicationPath(GetRunningApplicationPathT
 	}
 
 	std::tstring_view path = appPath;
-	if (!stdrtPath.empty() && (type & GetSTDRTNotApp) == GetSTDRTNotApp)
+	if (!stdrtPath.empty() && (type & GetRunningApplicationPathType::GetSTDRTNotApp) == GetRunningApplicationPathType::GetSTDRTNotApp)
 		path = stdrtPath;
 
-	if ((type & AppFolderOnly) == AppFolderOnly)
+	if ((type & GetRunningApplicationPathType::AppFolderOnly) == GetRunningApplicationPathType::AppFolderOnly)
 	{
 		size_t lastSlash = std::tstring::npos;
 		if ((lastSlash = path.rfind(_T('\\'))) == std::tstring::npos)
@@ -4109,28 +4439,34 @@ DWORD WINAPI DarkEdifUpdateThread(void *)
 
 	// Remove spaces around the ';'s. We can't just remove all spaces, as some ext names have them.
 	size_t semiSpace = 0;
-	while ((semiSpace = ini.find("; ", semiSpace)) != std::string::npos)
-		ini = ini.replace(semiSpace--, 2, ";");
+	while ((semiSpace = ini.find("; "sv, semiSpace)) != std::string::npos)
+		ini = ini.replace(semiSpace--, 2, ";"sv);
 
 	semiSpace = 0;
-	while ((semiSpace = ini.find(" ;", semiSpace)) != std::string::npos)
-		ini = ini.replace(semiSpace--, 2, ";");
+	while ((semiSpace = ini.find(" ;"sv, semiSpace)) != std::string::npos)
+		ini = ini.replace(semiSpace--, 2, ";"sv);
 
 	// Acquire the rudimentary lock, do op, and release
 #define GetLockAnd(x) while (updateLock.exchange(true)) /* retry */; x; updateLock = false
 #define GetLockSetConnectErrorAnd(x) while (updateLock.exchange(true)) /* retry */; x; pendingUpdateType = DarkEdif::SDKUpdater::ExtUpdateType::ConnectionError; updateLock = false
 
 	// If the ext name is found, or the wildcard *
-	if (ini.find(";" PROJECT_NAME ";") != std::string::npos || ini.find(";*;") != std::string::npos)
+	bool updateCheckDisablingWasIgnored = false;
+	if (ini.find(";" PROJECT_NAME ";"sv) != std::string::npos || ini.find(";*;"sv) != std::string::npos)
 	{
+#if USE_DARKEDIF_UC_TAGGING
+		GetLockAnd(updateLog << "Update check was disabled, but UC tagging is on."sv);
+		updateCheckDisablingWasIgnored = true;
+#else
 		GetLockAnd(updateLog << "Update check was disabled."sv;
-			pendingUpdateType = DarkEdif::SDKUpdater::ExtUpdateType::CheckDisabled);
+		pendingUpdateType = DarkEdif::SDKUpdater::ExtUpdateType::CheckDisabled);
 		return 0;
+#endif
 	}
 
 	std::string projConfig = STRIFY(CONFIG);
 	while ((semiSpace = projConfig.find(' ')) != std::string::npos)
-		projConfig.replace(semiSpace, 1, "%20");
+		projConfig.replace(semiSpace, 1, "%20"sv);
 
 	// Opt-in feature for tagging built EXEs with a unique key.
 	// This key is unique per Fusion install, but is otherwise meaningless; it's not a hash of anything.
@@ -4149,11 +4485,11 @@ DWORD WINAPI DarkEdifUpdateThread(void *)
 	if (mvIsUnicodeVersion(Edif::SDK->mV))
 	{
 		std::tstring uniPath = drMFXPath;
-		uniPath += _T("Unicode\\") PROJECT_NAME ".mfx"sv;
+		uniPath += _T("Unicode\\") PROJECT_TARGET_NAME ".mfx"sv;
 
 		if (!DarkEdif::FileExists(uniPath))
 		{
-			drMFXPath += _T("" PROJECT_NAME ".mfx"sv);
+			drMFXPath += _T("" PROJECT_TARGET_NAME ".mfx"sv);
 
 			// Couldn't find either; roll back to Uni for error messages
 			if (!DarkEdif::FileExists(drMFXPath))
@@ -4165,7 +4501,7 @@ DWORD WINAPI DarkEdifUpdateThread(void *)
 			drMFXPath = uniPath;
 	}
 	else // ANSI runtime will only use ANSI MFX
-		drMFXPath += _T("" PROJECT_NAME ".mfx"sv);
+		drMFXPath += _T("" PROJECT_TARGET_NAME ".mfx"sv);
 
 	// Stores UC tags in resources or registry.
 	std::wstring resKey, regKey;
@@ -4190,7 +4526,7 @@ DWORD WINAPI DarkEdifUpdateThread(void *)
 		}
 		else if (GetLastError() == ERROR_ACCESS_DENIED)
 		{
-			DarkEdif::MsgBox::Error(_T("Resource loading"), _T("Failed to set up ") PROJECT_NAME _T(" - access denied writing to Data\\Runtime MFX. Try running the UCT Fix Tool, or run Fusion as admin.\n\nUCT fix tool:\nhttps://dark-wire.com/storage/UCT%20Fix%20Tool.exe"));
+			DarkEdif::MsgBox::Error(_T("Resource loading"), _T("Failed to set up ") PROJECT_NAME _T(" - access denied writing to Data\\Runtime MFX. Try running the UCT Fix Tool, or run Fusion as admin.\n\nUCT fix tool:\nhttps://dark-wire.com/storage/UCT%%20Fix%%20Tool.exe"));
 			std::abort();
 		}
 		else // Some other error loading; we'll consider it fatal.
@@ -4249,6 +4585,7 @@ DWORD WINAPI DarkEdifUpdateThread(void *)
 			resKey = keyError;
 		}
 	}
+
 	// Use RAII to auto-close the opened resource writing when this update thread exits
 	auto CloseHandle = [](HANDLE *h) { EndUpdateResource(*h, TRUE); *h = NULL; return; };
 	std::unique_ptr<HANDLE, std::function<void(HANDLE*)>> resHandleHolder(&resHandle, CloseHandle);
@@ -4284,6 +4621,15 @@ DWORD WINAPI DarkEdifUpdateThread(void *)
 	}
 	else // reg key is missing
 		regKey = UC_TAG_NEW_SETUP;
+
+	// If UC tag is used, the ext MUST connect if there's any issues with the tagging,
+	// even if update check was disabled
+	if (updateCheckDisablingWasIgnored && regKey != UC_TAG_NEW_SETUP && resKey == regKey)
+	{
+		GetLockAnd(updateLog << "Update check was disabled, UC tagging already done, closing with disabled."sv;
+		pendingUpdateType = DarkEdif::SDKUpdater::ExtUpdateType::CheckDisabled);
+		return 0;
+	}
 
 #else // !USE_DARKEDIF_UC_TAGGING
 	std::wstring resKey = L"disabled"s, regKey = L"disabled"s;
@@ -4812,21 +5158,25 @@ void DarkEdif::LogV(int logLevel, PrintFHintInside const TCHAR* msgFormat, va_li
 			_tcscpy(&outputBuff[std::size(outputBuff) - std::size(_T("\n"))], _T("\n"));
 	}
 
-	OutputDebugString(outputBuff);
+	// Wine debugstr only logs OutputDebugStringA, not OutputDebugStringW
+	#ifdef _UNICODE
+		if (DarkEdif::IsRunningUnderWine)
+			OutputDebugStringA(TStringToUTF8(outputBuff).c_str());
+		else
+	#endif // Unicode
+			OutputDebugString(outputBuff);
+
 #elif defined(__ANDROID__)
 	std::string msgFormatT = std::string(aceIndex, '>');
 	msgFormatT += ' ';
 	msgFormatT += msgFormat;
-	__android_log_vprint(logLevel, PROJECT_NAME_UNDERSCORES, msgFormatT.c_str(), v);
+	__android_log_vprint(logLevel, PROJECT_TARGET_NAME_UNDERSCORES, msgFormatT.c_str(), v);
 #else // iOS
 	static const char* logLevels[] = {
 		"", "", "verbose", "debug", "info", "warn", "error", "fatal"
 	};
 	printf("%-9s", logLevels[logLevel]);
 	vprintf(msgFormat, v);
-#endif
-#ifdef __wasi__
-    fflush(stdout);
 #endif
 }
 

@@ -10,7 +10,7 @@
 	// as many C++17 features as you can.
 	#error Your version of Visual Studio is too old!
 #endif
-#if __cplusplus < 201703L
+#if __cplusplus < 201703L && !defined(__INTELLISENSE__)
 	// Android IntelliSense uses a different code inspecting engine, triggering this warning in edit time,
 	// although at compile time it may indeed be using C++17 and thus have no issues.
 	#error Not running in C++17 mode
@@ -24,7 +24,8 @@
 		#define ThreadSafeStaticInitIsSafe 1
 	#endif
 // We're still targeting XP, and it's VS 2019, why don't we have the define?
-#elif defined(__cpp_threadsafe_static_init) && WINVER <= 0x0503 && _MSC_VER > 1920 && _MSC_FULL_VER < 193030705
+// Assume Vista+ otherwise, because we don't want to import windows.h here
+#elif defined(__cpp_threadsafe_static_init) && (defined(WINVER) && WINVER <= 0x0503) && _MSC_VER > 1920 && _MSC_FULL_VER < 193030705
 	#error Static constructors cannot be used on XP; this should be disabled with /Zc:threadSafeInit-
 #endif
 
@@ -62,6 +63,10 @@ using namespace std::string_view_literals;
 	EnumClassType constexpr static operator&=(EnumClassType &lhs, EnumClassType rhs) { \
 		lhs = static_cast<EnumClassType>(static_cast<std::underlying_type<EnumClassType>::type>(lhs) & static_cast<std::underlying_type<EnumClassType>::type>(rhs)); \
 		return lhs; \
+	} \
+	EnumClassType constexpr static operator~(EnumClassType &en) { \
+		en = static_cast<EnumClassType>(~static_cast<std::underlying_type<EnumClassType>::type>(en)); \
+		return en; \
 	}
 
 // allows the compiler to check printf format matches parameters
@@ -138,11 +143,7 @@ namespace DarkEdif {
 
 #ifndef DARKEDIF_LOG_MIN_LEVEL
 	#ifdef _DEBUG
-		#ifdef __wasi__
-			#define DARKEDIF_LOG_MIN_LEVEL DARKEDIF_LOG_VERBOSE
-		#else
-			#define DARKEDIF_LOG_MIN_LEVEL DARKEDIF_LOG_INFO
-		#endif
+		#define DARKEDIF_LOG_MIN_LEVEL DARKEDIF_LOG_INFO
 	#else
 		#define DARKEDIF_LOG_MIN_LEVEL DARKEDIF_LOG_WARN
 	#endif
@@ -327,10 +328,9 @@ enum class ExpReturnType : short {
 };
 
 #ifdef __APPLE__
-namespace FusionInternals {
+inline namespace FusionInternals {
 	struct RunObject;
 }
-using namespace FusionInternals;
 #else
 struct RunObject;
 #endif

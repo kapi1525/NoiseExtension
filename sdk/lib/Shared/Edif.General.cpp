@@ -4,10 +4,8 @@
 // be modified.
 // ============================================================================
 
-#include "Edif.hpp"
 #include "Common.hpp"
 #include "DarkEdif.hpp"
-#include <cstdlib>
 
 #ifdef _WIN32
 
@@ -49,9 +47,14 @@ int FusionAPI Free(mv *mV)
 
 	// But if the update checker thread is running, we don't want it to try to write to memory it can't access.
 #if USE_DARKEDIF_UPDATE_CHECKER
+	// Ignore warning about TerminateThread - better to kill thread than crash Fusion,
+	// and at this point we've waited 3 full seconds
+#pragma warning(push)
+#pragma warning(disable: 6258)
 	extern HANDLE updateThread;
 	if (updateThread != NULL && WaitForSingleObject(updateThread, 3000) == WAIT_TIMEOUT)
 		TerminateThread(updateThread, 2);
+#pragma warning(pop)
 #endif
 	return 0; // No error
 }
@@ -80,18 +83,20 @@ void FusionAPI UnloadObject(mv * mV, EDITDATA * edPtr, int reserved)
 }
 
 
-const TCHAR ** Dependencies = 0;
+const TCHAR * Dependencies[32] = {};
 
 const TCHAR ** FusionAPI GetDependencies()
 {
 #pragma DllExportHint
+	// This is pointed to by Dependencies.
+	static TCHAR singleton[1024];
+
 	if (!Dependencies)
 	{
 		const json_value &DependenciesJSON = Edif::SDK->json["Dependencies"];
+		TCHAR* singletonPtr = singleton;
 
-		Dependencies = new const TCHAR * [DependenciesJSON.u.object.length + 2];
-
-		int Offset = 0;
+		std::size_t Offset = 0;
 
 		if (Edif::ExternalJSON)
 		{
@@ -101,29 +106,33 @@ const TCHAR ** FusionAPI GetDependencies()
 
 			TCHAR * Iterator = JSONFilename + _tcslen(JSONFilename) - 1;
 
-			while(*Iterator != _T('.'))
+			while (*Iterator != _T('.'))
 				-- Iterator;
 
 			_tcscpy(++ Iterator, _T("json"));
 
 			Iterator = JSONFilename + _tcslen(JSONFilename) - 1;
 
-			while(*Iterator != _T('\\') && *Iterator != _T('/'))
+			while (*Iterator != _T('\\') && *Iterator != _T('/'))
 				-- Iterator;
 
-			Dependencies [Offset ++] = ++ Iterator;
+			// We append it, then add a pointer to what we just appended
+			// to our pointer list
+			_tcscpy(singletonPtr, ++Iterator);
+			Dependencies[Offset++] = singletonPtr;
+			singletonPtr += _tcslen(singletonPtr) + 1;
 		}
 
-		std::uint32_t i = 0;
-
-		for(; i < DependenciesJSON.u.object.length; ++ i)
+		for (unsigned int i = 0; i < DependenciesJSON.u.array.length; ++i)
 		{
-			TCHAR* tstr = Edif::ConvertString(DependenciesJSON[i]);
-			Dependencies[Offset + i] = tstr;
-			Edif::FreeString(tstr);
+			std::tstring tstr = DarkEdif::UTF8ToTString((const char *)DependenciesJSON[i]);
+
+			_tcscpy(singletonPtr, tstr.c_str());
+			Dependencies[Offset++] = singletonPtr;
+			singletonPtr += tstr.size() + 1;
 		}
 
-		Dependencies[Offset + i] = 0;
+		Dependencies[Offset] = 0;
 	}
 
 	return Dependencies;
@@ -135,8 +144,8 @@ struct ForbiddenInternals2 {
 	static std::int16_t GetRunObjectInfos2(mv* mV, kpxRunInfos* infoPtr);
 };
 
-/// <summary> Called every time the extension is being created from nothing.
-///			  Default property contents should be loaded from JSON. </summary>
+// Called every time the extension is being created from nothing.
+// Default property contents should be loaded from JSON.
 std::int16_t FusionAPI GetRunObjectInfos(mv* mV, kpxRunInfos* infoPtr)
 {
 #pragma DllExportHint
@@ -531,17 +540,17 @@ void DarkEdif::LOGFInternal(PrintFHintInside const char * x, ...)
 	fflush(stdout);
 	fflush(stderr);
 #endif
-	__android_log_write(ANDROID_LOG_FATAL, PROJECT_NAME_UNDERSCORES, "Killed by extension " PROJECT_NAME ".");
+	__android_log_write(ANDROID_LOG_FATAL, PROJECT_TARGET_NAME_UNDERSCORES, "Killed by extension " PROJECT_NAME ".");
 	if (threadEnv)
 	{
 #if _DEBUG
 		raise(SIGINT);
 #endif
-		threadEnv->FatalError("Killed by extension " PROJECT_NAME ". Look at previous logcat entries from " PROJECT_NAME_UNDERSCORES " for details.");
+		threadEnv->FatalError("Killed by extension " PROJECT_NAME ". Look at previous logcat entries from " PROJECT_TARGET_NAME_UNDERSCORES " for details.");
 	}
 	else
 	{
-		__android_log_write(ANDROID_LOG_FATAL, PROJECT_NAME_UNDERSCORES, "Killed from unattached thread! Running exit.");
+		__android_log_write(ANDROID_LOG_FATAL, PROJECT_TARGET_NAME_UNDERSCORES, "Killed from unattached thread! Running exit.");
 		exit(EXIT_FAILURE);
 	}
 }
@@ -766,8 +775,8 @@ ProjectFunc jint JNICALL JNI_OnLoad(JavaVM * vm, void * reserved) {
 
 	// Get jclass with mainThreadJNIEnv->FindClass.
 	// Register methods with mainThreadJNIEnv->RegisterNatives.
-	std::string classNameCRun("Extensions/" "CRun" PROJECT_NAME_UNDERSCORES);
-	std::string className("Extensions/" PROJECT_NAME_UNDERSCORES);
+	const std::string classNameCRun("Extensions/" "CRun" PROJECT_TARGET_NAME_UNDERSCORES);
+	const std::string className("Extensions/" PROJECT_TARGET_NAME_UNDERSCORES);
 	LOGV("Looking for class %s... [1/2]\n", classNameCRun.c_str());
 	jclass clazz = mainThreadJNIEnv->FindClass(classNameCRun.c_str());
 	if (clazz == NULL) {
@@ -809,7 +818,7 @@ ProjectFunc jint JNICALL JNI_OnLoad(JavaVM * vm, void * reserved) {
 	LOGV("Registering natives for %s...\n", PROJECT_NAME);
 	if (mainThreadJNIEnv->RegisterNatives(clazz, methods, sizeof(methods) / sizeof(methods[0])) < 0) {
 		threadEnv = mainThreadJNIEnv;
-		std::string excStr = GetJavaExceptionStr();
+		const std::string excStr = GetJavaExceptionStr();
 		LOGF("Failed to register natives for ext %s; error %s.\n", PROJECT_NAME, excStr.c_str());
 	}
 	else
@@ -849,7 +858,7 @@ ProjectFunc void JNICALL JNI_OnUnload(JavaVM * vm, void * reserved)
 #include "Extension.hpp"
 
 // Raw creation func
-ProjectFunc void PROJ_FUNC_GEN(PROJECT_NAME_RAW, _init())
+ProjectFunc void PROJ_FUNC_GEN(PROJECT_TARGET_NAME_UNDERSCORES_RAW, _init())
 {
 	mv * mV = NULL;
 	if (!Edif::SDK) {
@@ -859,16 +868,16 @@ ProjectFunc void PROJ_FUNC_GEN(PROJECT_NAME_RAW, _init())
 }
 
 // Last Objective-C class was freed
-ProjectFunc void PROJ_FUNC_GEN(PROJECT_NAME_RAW, _dealloc())
+ProjectFunc void PROJ_FUNC_GEN(PROJECT_TARGET_NAME_UNDERSCORES_RAW, _dealloc())
 {
 	LOGV("The SDK is being freed.\n");
 }
 
-ProjectFunc int PROJ_FUNC_GEN(PROJECT_NAME_RAW, _getNumberOfConditions())
+ProjectFunc int PROJ_FUNC_GEN(PROJECT_TARGET_NAME_UNDERSCORES_RAW, _getNumberOfConditions())
 {
 	return CurLang["Conditions"].u.array.length;
 }
-ProjectFunc void * PROJ_FUNC_GEN(PROJECT_NAME_RAW, _createRunObject(void * file, int cob, int version, void * objCExtPtr))
+ProjectFunc void * PROJ_FUNC_GEN(PROJECT_TARGET_NAME_UNDERSCORES_RAW, _createRunObject(void * file, int cob, int version, void * objCExtPtr))
 {
 	EDITDATA * edPtr = (EDITDATA *)file;
 	LOGV("Note: objCExtPtr is %p, edPtr %p.\n", objCExtPtr, edPtr);
@@ -876,11 +885,11 @@ ProjectFunc void * PROJ_FUNC_GEN(PROJECT_NAME_RAW, _createRunObject(void * file,
 	cppExt->Runtime.ObjectSelection.pExtension = cppExt;
 	return cppExt;
 }
-ProjectFunc short PROJ_FUNC_GEN(PROJECT_NAME_RAW, _handleRunObject)(void * cppExt)
+ProjectFunc short PROJ_FUNC_GEN(PROJECT_TARGET_NAME_UNDERSCORES_RAW, _handleRunObject)(void * cppExt)
 {
 	return (short) ((Extension *)cppExt)->Handle();
 }
-ProjectFunc void PROJ_FUNC_GEN(PROJECT_NAME_RAW, _destroyRunObject)(void * cppExt, bool bFast)
+ProjectFunc void PROJ_FUNC_GEN(PROJECT_TARGET_NAME_UNDERSCORES_RAW, _destroyRunObject)(void * cppExt, bool bFast)
 {
 	delete ((Extension *)cppExt);
 }

@@ -295,11 +295,23 @@ int Edif::Init(mv * mV, bool fusionStartupScreen)
 	// We want DarkEdif::MsgBox::XX as soon as possible.
 	// Main thread ID is used to prevent crashes from message boxes not being task-modal.
 	// Since we're initializing this, might as well set all the DarkEdif mV variables.
-
 	DarkEdif::MainThreadID = std::this_thread::get_id();
 #ifdef _WIN32
 	DarkEdif::IsFusion25 = ((mV->GetVersion() & MMFVERSION_MASK) == CFVERSION_25);
 	DarkEdif::Internal_WindowHandle = mV->HMainWin;
+
+	// 2.0 uses floats for angles if it's a Direct3D display, Software or DirectDraw uses int
+	// Fusion 2.5 always uses floats, even in Software, and doesn't use DirectDraw at all
+	DarkEdif::IsHWAFloatAngles = DarkEdif::IsFusion25 || mvIsHWAVersion(mV) != FALSE;
+
+	// Detect wine by presence of wine_get_version() inside their wrapper ntdll
+	HMODULE ntDll = GetModuleHandle(_T("ntdll.dll"));
+	if (ntDll == NULL)
+		return DarkEdif::MsgBox::Error(_T("DarkEdif Wine detection error"), _T("Couldn't search for Wine, couldn't load ntdll: error %u."), GetLastError()), -1;
+
+	const char* (__cdecl * pwine_get_version)(void) =
+		(decltype(pwine_get_version))GetProcAddress(ntDll, "wine_get_version");
+	DarkEdif::IsRunningUnderWine = pwine_get_version != NULL;
 #endif
 
 #if EditorBuild
@@ -343,36 +355,77 @@ int Edif::Init(mv * mV, bool fusionStartupScreen)
 			}
 		}
 	}
+
+	if (DarkEdif::RunMode == DarkEdif::MFXRunMode::Editor || DarkEdif::RunMode == DarkEdif::MFXRunMode::SplashScreen)
+	{
+		int localeNum = 1033;
+
+		// CF2.5 editor language code is a setting, stored in registry
+		if (DarkEdif::IsFusion25)
+		{
+			HKEY key = NULL;
+			TCHAR value[6];
+			DWORD value_length = std::size(value), err;
+			const std::tstring settingsRegPath =
+				((mV->GetVersion() & MMFVERFLAG_MASK) == MMFVERFLAG_PRO) ?
+				_T("Software\\Clickteam\\Fusion Developer 2.5\\General"s) :
+				_T("Software\\Clickteam\\Fusion 2.5\\General"s);
+			if ((err = RegOpenKey(HKEY_CURRENT_USER, settingsRegPath.c_str(), &key)) ||
+				(err = RegQueryValueEx(key, _T("language"), NULL, NULL, (LPBYTE)value, &value_length)) ||
+				value_length >= std::size(value))
+			{
+				DarkEdif::MsgBox::Error(_T("Language Code error"), _T("Failed to look up Fusion editor language code: error %u."), err);
+			}
+			else
+				localeNum = _ttoi(value);
+
+			if (key)
+				RegCloseKey(key);
+		}
+		else // MMF2 uses different editor EXEs, and stores language in resources
+		{
+			// You shouldn't use .data() on a std::string_view and expect null terminator,
+			// but since we know it points to the std::string appPath, we'll make an exception.
+			const std::tstring_view appPath = DarkEdif::GetRunningApplicationPath(DarkEdif::GetRunningApplicationPathType::FullPath);
+
+			// Look up the running app and get the language code from its resources.
+			const HINSTANCE hRes = LoadLibraryEx(appPath.data(), NULL, DONT_RESOLVE_DLL_REFERENCES | LOAD_LIBRARY_AS_DATAFILE);
+			if (hRes != NULL)
+			{
+				// Load string resource ID 720, contains the language code
+				TCHAR langCode[20];
+				LoadString(hRes, 720, langCode, std::size(langCode));
+
+				localeNum = _ttoi(langCode);
+
+				// Free resources
+				FreeLibrary(hRes);
+			}
+		}
+
+		switch (localeNum) {
+		case 0x40C: // MAKELANGID(LANG_FRENCH, SUBLANG_FRENCH);
+			_tcscpy(LanguageCode, _T("FR"));
+			break;
+		case 0x411: // MAKELANGID(LANG_JAPANESE, SUBLANG_JAPANESE_JAPAN);
+			_tcscpy(LanguageCode, _T("JP"));
+			break;
+		}
+	}
 #else // Not editor build, missing things that will let Fusion use it in editor.
 	DarkEdif::RunMode = DarkEdif::MFXRunMode::BuiltEXE;
 #endif
 
 #ifdef _WIN32
-	// You shouldn't use .data() on a std::string_view and expect null terminator,
-	// but since we know it points to the std::string appPath, we'll make an exception.
-	const std::tstring_view appPath = DarkEdif::GetRunningApplicationPath(DarkEdif::GetRunningApplicationPathType::FullPath);
 
-	// Look up the running app and get the language code from its resources.
-	const HINSTANCE hRes = LoadLibraryEx(appPath.data(), NULL, DONT_RESOLVE_DLL_REFERENCES | LOAD_LIBRARY_AS_DATAFILE);
-	if (hRes != NULL)
+	// Non-Unicode ext used in Unicode-compatible runtime
+#if !defined(_UNICODE) && !defined(ALLOW_ANSI_EXT_IN_UNICODE_RUNTIME)
+	if (mvIsUnicodeVersion(mV))
 	{
-		// Load string resource ID 720, contains the language code
-		TCHAR langCode[20];
-		LoadString(hRes, 720, langCode, std::size(langCode));
-
-		int nCode = _ttoi(langCode);
-		switch (nCode) {
-			case 0x40C: // MAKELANGID(LANG_FRENCH, SUBLANG_FRENCH);
-				_tcscpy (LanguageCode, _T ("FR"));
-				break;
-			case 0x411: // MAKELANGID(LANG_JAPANESE, SUBLANG_JAPANESE_JAPAN);
-				_tcscpy (LanguageCode, _T ("JP"));
-				break;
-		}
-
-		// Free resources
-		FreeLibrary(hRes);
+		DarkEdif::MsgBox::Error(_T("Not using Unicode"), _T("You are using a non-Unicode extension when the Fusion runtime and ")
+			PROJECT_TARGET_NAME " extension is capable of Unicode.\nEnsure you have extracted all the " PROJECT_TARGET_NAME " extension files.");
 	}
+#endif
 
 	// This section catches CRT invalid parameter errors at runtime, rather than insta-crashing.
 	// Invalid parameters include e.g. sprintf format errors.
@@ -403,6 +456,8 @@ int Edif::Init(mv * mV, bool fusionStartupScreen)
 	Edif::ExternalJSON = (result == Edif::DependencyWasFile);
 
 	char * copy = (char *) malloc (JSON_Size + 1);
+	if (!copy)
+		return DarkEdif::MsgBox::Error(_T("Out of memory"), _T("JSON file for " PROJECT_NAME " couldn't allocate %zu bytes while loading"), JSON_Size + 1), -1;
 	memcpy (copy, JSON, JSON_Size);
 	copy [JSON_Size] = 0;
 	if ( result != Edif::DependencyWasResource )
@@ -524,6 +579,18 @@ Edif::SDK::SDK(mv * mV, json_value &_json) : json (_json)
 				std::abort();
 			}
 		#endif // Using UC Tagging and not Debug build
+
+	#elif /* EditorBuild == 0 && */ USE_DARKEDIF_UC_TAGGING && !defined(_DEBUG) && defined(_WIN32)
+
+	// If UC tagging is enabled, Runtime MFXes must be tagged by loading the ext in Fusion editor.
+	// This prevents anyone malicious getting the MFX blacklisted for other Fusion developers.
+	// If the edit is not found in a Runtime MFX, abort the application.
+	HRSRC hsrcForRes = FindResourceEx(hInstLib, RT_STRING, _T("UCTAG"), MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US));
+	if (hsrcForRes == NULL)
+	{
+		DarkEdif::MsgBox::Error(_T("DarkEdif error"), _T("Couldn't find UC tag, error %u. Contact the application developer."), GetLastError());
+		std::abort();
+	}
 	#endif // EditorBuild
 
 	if (CurLang.type != json_object)
@@ -605,7 +672,7 @@ Edif::SDK::SDK(mv * mV, json_value &_json) : json (_json)
 			!_stricmp(about["URL"], "https://www.example.com/");
 		if (!unchangedPropsFound)
 		{
-			std::string copy = about["Copyright"].u.string.ptr;
+			std::string copy = about["Copyright"];
 			std::transform(copy.begin(), copy.end(), copy.begin(),
 				[](unsigned char c) { return std::tolower(c); });
 			unchangedPropsFound = copy.rfind("by your name"sv) != std::string::npos;
@@ -732,6 +799,7 @@ long ActionOrCondition(void * Function, int ID, Extension * ext, const ACEInfo *
 			case Params::Compare_Time:
 			case Params::Comparison:
 				isComparisonCondition = true;
+				[[fallthrough]];
 			case Params::New_Direction:
 			case Params::Time:
 				Parameters[i] = params.GetInteger(i, info->Parameter[i].p);
@@ -894,12 +962,12 @@ struct ConditionOrActionManager_Windows : ACEParamReader
 		if (isCondition)
 		{
 			// ...or they should, all runtimes do it, but the param1/2 here strangely points to
-			// a RunObject *, so delegate OI to GetOIFromObjectParam(), which reads based on paramZero
+			// a RunObject *, so delegate OI to GetOIListIndexFromObjectParam(), which reads based on paramZero
 			if (isTwoOrLess)
-				return ext->Runtime.GetOIFromObjectParam(index);
+				return ext->Runtime.GetOIListIndexFromObjectParam(index);
 
 			if ((Params)((EventParam*)ret)->Code != Params::Object)
-				LOGE(_T("GetOIFromExtParam: Returning a OI for a non-Object parameter.\n"));
+				LOGE(_T("GetOIFromExtParam: Returning a OiList index for a non-Object parameter.\n"));
 			return ((EventParam*)ret)->evp.W[0];
 		}
 
@@ -1067,30 +1135,32 @@ jfieldID ConditionOrActionManager_Android::getRH;
 extern "C"
 {
 	// equivalent of void DarkEdif_Ext_Name_generateEvent(void * ext, int code, int param);
-	void DarkEdifObjCFunc(PROJECT_NAME_RAW, generateEvent)(void* ext, int code, int param);
-	void DarkEdifObjCFunc(PROJECT_NAME_RAW, reHandle)(void * ext);
+	void DarkEdifObjCFunc(PROJECT_TARGET_NAME_UNDERSCORES_RAW, generateEvent)(void* ext, int code, int param);
+	void DarkEdifObjCFunc(PROJECT_TARGET_NAME_UNDERSCORES_RAW, reHandle)(void * ext);
 
-	int DarkEdifObjCFunc(PROJECT_NAME_RAW, actGetParamExpression)(void* ext, void* act, int paramNum, int paramType);
-	const char* DarkEdifObjCFunc(PROJECT_NAME_RAW, actGetParamExpString)(void* ext, void* act, int paramNum);
-	double DarkEdifObjCFunc(PROJECT_NAME_RAW, actGetParamExpDouble)(void* ext, void* act, int paramNum);
+	int DarkEdifObjCFunc(PROJECT_TARGET_NAME_UNDERSCORES_RAW, actGetParamExpression)(void* ext, void* act, int paramNum, int paramType);
+	const char* DarkEdifObjCFunc(PROJECT_TARGET_NAME_UNDERSCORES_RAW, actGetParamExpString)(void* ext, void* act, int paramNum);
+	double DarkEdifObjCFunc(PROJECT_TARGET_NAME_UNDERSCORES_RAW, actGetParamExpDouble)(void* ext, void* act, int paramNum);
 
-	int DarkEdifObjCFunc(PROJECT_NAME_RAW, cndGetParamExpression)(void * ext, void * cnd, int paramNum, int paramType);
-	const char * DarkEdifObjCFunc(PROJECT_NAME_RAW, cndGetParamExpString)(void * ext, void * cnd, int paramNum);
-	double DarkEdifObjCFunc(PROJECT_NAME_RAW, cndGetParamExpDouble)(void * ext, void * cnd, int paramNum);
-	bool DarkEdifObjCFunc(PROJECT_NAME_RAW, cndCompareValues)(void * ext, void * cnd, int paramNum);
-	bool DarkEdifObjCFunc(PROJECT_NAME_RAW, cndCompareTime)(void * ext, void * cnd, int paramNum);
+	int DarkEdifObjCFunc(PROJECT_TARGET_NAME_UNDERSCORES_RAW, cndGetParamExpression)(void * ext, void * cnd, int paramNum, int paramType);
+	const char * DarkEdifObjCFunc(PROJECT_TARGET_NAME_UNDERSCORES_RAW, cndGetParamExpString)(void * ext, void * cnd, int paramNum);
+	double DarkEdifObjCFunc(PROJECT_TARGET_NAME_UNDERSCORES_RAW, cndGetParamExpDouble)(void * ext, void * cnd, int paramNum);
+	bool DarkEdifObjCFunc(PROJECT_TARGET_NAME_UNDERSCORES_RAW, cndCompareValues)(void * ext, void * cnd, int paramNum);
+	bool DarkEdifObjCFunc(PROJECT_TARGET_NAME_UNDERSCORES_RAW, cndCompareTime)(void * ext, void * cnd, int paramNum);
 
-	int DarkEdifObjCFunc(PROJECT_NAME_RAW, expGetParamInt)(void * ext);
-	const char * DarkEdifObjCFunc(PROJECT_NAME_RAW, expGetParamString)(void * ext);
-	float DarkEdifObjCFunc(PROJECT_NAME_RAW, expGetParamFloat)(void * ext);
+	int DarkEdifObjCFunc(PROJECT_TARGET_NAME_UNDERSCORES_RAW, expGetParamInt)(void * ext);
+	const char * DarkEdifObjCFunc(PROJECT_TARGET_NAME_UNDERSCORES_RAW, expGetParamString)(void * ext);
+	float DarkEdifObjCFunc(PROJECT_TARGET_NAME_UNDERSCORES_RAW, expGetParamFloat)(void * ext);
 
-	void DarkEdifObjCFunc(PROJECT_NAME_RAW, expSetReturnInt)(void * ext, int toRet);
-	void DarkEdifObjCFunc(PROJECT_NAME_RAW, expSetReturnString)(void * ext, const char * toRet);
-	void DarkEdifObjCFunc(PROJECT_NAME_RAW, expSetReturnFloat)(void * ext, float toRet);
+	void DarkEdifObjCFunc(PROJECT_TARGET_NAME_UNDERSCORES_RAW, expSetReturnInt)(void * ext, int toRet);
+	void DarkEdifObjCFunc(PROJECT_TARGET_NAME_UNDERSCORES_RAW, expSetReturnString)(void * ext, const char * toRet);
+	void DarkEdifObjCFunc(PROJECT_TARGET_NAME_UNDERSCORES_RAW, expSetReturnFloat)(void * ext, float toRet);
 
-	void DarkEdifObjCFunc(PROJECT_NAME_RAW, freeString)(void * ext, const char * cstr);
+	void DarkEdifObjCFunc(PROJECT_TARGET_NAME_UNDERSCORES_RAW, freeString)(void * ext, const char * cstr);
 }
 
+// segregate to prevent two iOS exts conflicting
+inline namespace FusionInternals {
 struct ConditionOrActionManager_iOS : ACEParamReader
 {
 	::Extension* ext;
@@ -1106,7 +1176,7 @@ struct ConditionOrActionManager_iOS : ACEParamReader
 	virtual float GetFloat(int index)
 	{
 		LOGV("Getting float param, cond=%d, index %d.\n", isCondition ? 1 : 0, index);
-		double f = (isCondition ? DarkEdifObjCFunc(PROJECT_NAME_RAW, cndGetParamExpDouble) : DarkEdifObjCFunc(PROJECT_NAME_RAW, actGetParamExpDouble))(ext->objCExtPtr, objCActOrCndObj, index);
+		double f = (isCondition ? DarkEdifObjCFunc(PROJECT_TARGET_NAME_UNDERSCORES_RAW, cndGetParamExpDouble) : DarkEdifObjCFunc(PROJECT_TARGET_NAME_UNDERSCORES_RAW, actGetParamExpDouble))(ext->objCExtPtr, objCActOrCndObj, index);
 		LOGV("Got float param, cond=%d, index %d OK: %f.\n", isCondition ? 1 : 0, index, f);
 		return (float)f;
 	}
@@ -1114,7 +1184,7 @@ struct ConditionOrActionManager_iOS : ACEParamReader
 	virtual const TCHAR* GetString(int index)
 	{
 		LOGV("Getting string param, cond=%d, index %d.\n", isCondition ? 1 : 0, index);
-		const TCHAR* str = (isCondition ? DarkEdifObjCFunc(PROJECT_NAME_RAW, cndGetParamExpString) : DarkEdifObjCFunc(PROJECT_NAME_RAW, actGetParamExpString))(ext->objCExtPtr, objCActOrCndObj, index);
+		const TCHAR* str = (isCondition ? DarkEdifObjCFunc(PROJECT_TARGET_NAME_UNDERSCORES_RAW, cndGetParamExpString) : DarkEdifObjCFunc(PROJECT_TARGET_NAME_UNDERSCORES_RAW, actGetParamExpString))(ext->objCExtPtr, objCActOrCndObj, index);
 		LOGV("Got string param, cond=%d, index %d OK: \"%s\".\n", isCondition ? 1 : 0, index, str);
 		return str;
 	}
@@ -1122,7 +1192,7 @@ struct ConditionOrActionManager_iOS : ACEParamReader
 	virtual std::int32_t GetInteger(int index, Params type)
 	{
 		LOGV("Getting integer param, cond=%d, index %d, type %d.\n", isCondition ? 1 : 0, index, (int)type);
-		std::int32_t in = (isCondition ? DarkEdifObjCFunc(PROJECT_NAME_RAW, cndGetParamExpression) : DarkEdifObjCFunc(PROJECT_NAME_RAW, actGetParamExpression))(ext->objCExtPtr, objCActOrCndObj, index, (int)type);
+		std::int32_t in = (isCondition ? DarkEdifObjCFunc(PROJECT_TARGET_NAME_UNDERSCORES_RAW, cndGetParamExpression) : DarkEdifObjCFunc(PROJECT_TARGET_NAME_UNDERSCORES_RAW, actGetParamExpression))(ext->objCExtPtr, objCActOrCndObj, index, (int)type);
 		LOGV("Got integer param, cond=%d, index %d, type %d OK: %i.\n", isCondition ? 1 : 0, index, (int)type, in);
 		return in;
 	}
@@ -1149,6 +1219,7 @@ struct ConditionOrActionManager_iOS : ACEParamReader
 	{
 	}
 };
+} // namespace FusionInternals
 #elif defined(__wasi__)
 
 namespace JSImports {
@@ -1228,7 +1299,7 @@ ProjectFunc jlong conditionJump(JNIEnv *, jobject, jlong extPtr, int ID, CCndExt
 	global<jobject> lastCEvent = ext->Runtime.curCEvent.swap_out(); // prevent subfunctions causing this variable to be incorrect
 	ext->Runtime.curCEvent = global((jobject)cndExt, "Current Cnd ext");
 #elif defined(__APPLE__)
-ProjectFunc long PROJ_FUNC_GEN(PROJECT_NAME_RAW, _conditionJump(void * cppExtPtr, int ID, void * cndExt))
+ProjectFunc long PROJ_FUNC_GEN(PROJECT_TARGET_NAME_UNDERSCORES_RAW, _conditionJump(void * cppExtPtr, int ID, void * cndExt))
 {
 	Extension* const ext = (Extension*)cppExtPtr;
 	ConditionOrActionManager_iOS params(true, ext, cndExt);
@@ -1295,7 +1366,7 @@ ProjectFunc void actionJump(JNIEnv *, jobject, jlong extPtr, jint ID, CActExtens
 	ext->Runtime.curRH4ActBasedOnCEventOnly = ext->Runtime.curCEvent.ref;
 #define actreturn /* void */
 #elif defined(__APPLE__)
-ProjectFunc void PROJ_FUNC_GEN(PROJECT_NAME_RAW, _actionJump(void * cppExtPtr, int ID, void * act))
+ProjectFunc void PROJ_FUNC_GEN(PROJECT_TARGET_NAME_UNDERSCORES_RAW, _actionJump(void * cppExtPtr, int ID, void * act))
 {
 	Extension* ext = (Extension*)cppExtPtr;
 	ConditionOrActionManager_iOS params(false, ext, act);
@@ -1438,7 +1509,7 @@ jmethodID ExpressionManager_Android::setRetInt, ExpressionManager_Android::setRe
 struct ExpressionManager_Windows : ACEParamReader {
 	RunObject * rdPtr;
 	bool isOneOrLess = false;
-	int param;
+	int param = 0;
 	ExpressionManager_Windows(RunObject * rdPtr) : rdPtr(rdPtr)
 	{
 	}
@@ -1497,6 +1568,8 @@ struct ExpressionManager_Windows : ACEParamReader {
 
 };
 #elif defined(__APPLE__)
+// segregate to prevent two iOS exts conflicting
+inline namespace FusionInternals {
 struct ExpressionManager_iOS : ACEParamReader {
 	Extension* const ext;
 
@@ -1505,20 +1578,20 @@ struct ExpressionManager_iOS : ACEParamReader {
 	{
 	}
 	void SetValue(int a) {
-		DarkEdifObjCFunc(PROJECT_NAME_RAW, expSetReturnInt)(ext->objCExtPtr, a);
+		DarkEdifObjCFunc(PROJECT_TARGET_NAME_UNDERSCORES_RAW, expSetReturnInt)(ext->objCExtPtr, a);
 	}
 	void SetValue(float a) {
-		DarkEdifObjCFunc(PROJECT_NAME_RAW, expSetReturnFloat)(ext->objCExtPtr, a);
+		DarkEdifObjCFunc(PROJECT_TARGET_NAME_UNDERSCORES_RAW, expSetReturnFloat)(ext->objCExtPtr, a);
 	}
 	void SetValue(const char* a) {
-		DarkEdifObjCFunc(PROJECT_NAME_RAW, expSetReturnString)(ext->objCExtPtr, a);
+		DarkEdifObjCFunc(PROJECT_TARGET_NAME_UNDERSCORES_RAW, expSetReturnString)(ext->objCExtPtr, a);
 	}
 
 	// Inherited via ACEParamReader
 	virtual float GetFloat(int index)
 	{
 		LOGV("Getting float param, expr, index %d OK.\n", index);
-		float f = DarkEdifObjCFunc(PROJECT_NAME_RAW, expGetParamFloat)(ext->objCExtPtr);
+		float f = DarkEdifObjCFunc(PROJECT_TARGET_NAME_UNDERSCORES_RAW, expGetParamFloat)(ext->objCExtPtr);
 		LOGV("Got float param, expr, index %d OK: %f.\n", index, f);
 		return f;
 	}
@@ -1526,7 +1599,7 @@ struct ExpressionManager_iOS : ACEParamReader {
 	virtual const TCHAR* GetString(int index)
 	{
 		LOGV("Getting string param, expr, index %d.\n", index);
-		const TCHAR* str = DarkEdifObjCFunc(PROJECT_NAME_RAW, expGetParamString)(ext->objCExtPtr);
+		const TCHAR* str = DarkEdifObjCFunc(PROJECT_TARGET_NAME_UNDERSCORES_RAW, expGetParamString)(ext->objCExtPtr);
 		LOGV("Got string param, expr, index %d OK: \"%s\".\n", index, str);
 		return str;
 	}
@@ -1534,7 +1607,7 @@ struct ExpressionManager_iOS : ACEParamReader {
 	virtual std::int32_t GetInteger(int index, Params)
 	{
 		LOGV("Getting integer param, expr, index %d OK.\n", index);
-		std::int32_t i = DarkEdifObjCFunc(PROJECT_NAME_RAW, expGetParamInt)(ext->objCExtPtr);
+		std::int32_t i = DarkEdifObjCFunc(PROJECT_TARGET_NAME_UNDERSCORES_RAW, expGetParamInt)(ext->objCExtPtr);
 		LOGV("Got integer param, expr, index %d OK: %d.\n", index, i);
 		return i;
 	}
@@ -1552,6 +1625,7 @@ struct ExpressionManager_iOS : ACEParamReader {
 	~ExpressionManager_iOS() {
 	}
 };
+} // namespace FusionInternals
 #elif defined(__wasi__)
 struct ExpressionManager_Html : ACEParamReader {
 	ExpressionManager_Html() = default;
@@ -1626,6 +1700,7 @@ long FusionAPI Edif::ExpressionJump(RUNDATA * rdPtr, long param)
 	const int ID = ForbiddenInternals::GetEventNumber((RunObject*)rdPtr);
 	Extension * const ext = ((RunObject*)rdPtr)->GetExtension();
 	ExpressionManager_Windows params((RunObject*)rdPtr);
+	LOGV(PROJECT_NAME _T(" Expression ID %i start.\n"), ID);
 #elif defined(__ANDROID__)
 ProjectFunc void expressionJump(JNIEnv *, jobject, jlong extPtr, jint ID, CNativeExpInstance expU)
 {
@@ -1637,7 +1712,7 @@ ProjectFunc void expressionJump(JNIEnv *, jobject, jlong extPtr, jint ID, CNativ
 	//if (ext->Runtime.curCEvent.invalid())
 	//	ext->Runtime.curCEvent = global((jobject)expU, "Current Exp ext");
 #elif defined(__APPLE__)
-ProjectFunc void PROJ_FUNC_GEN(PROJECT_NAME_RAW, _expressionJump(void * cppExtPtr, int ID))
+ProjectFunc void PROJ_FUNC_GEN(PROJECT_TARGET_NAME_UNDERSCORES_RAW, _expressionJump(void * cppExtPtr, int ID))
 {
 	Extension* ext = (Extension*)cppExtPtr;
 	ExpressionManager_iOS params(ext);
@@ -1647,7 +1722,6 @@ ProjectFunc void WASM_FUNC_EXPORT(expression_jump)(Extension* ext, int32_t ID) {
 #else
     #error Unsupported platform.
 #endif
-	LOGV(PROJECT_NAME _T(" Expression ID %i.\n"), ID);
 
 	if (Edif::SDK->ExpressionFunctions.size() < (unsigned int)ID)
 		return params.SetValue((int)ext->UnlinkedExpression(ID));
@@ -1710,7 +1784,7 @@ ProjectFunc void WASM_FUNC_EXPORT(expression_jump)(Extension* ext, int32_t ID) {
 				DarkEdif::MsgBox::Error(_T("Edif::Expression() error"),
 					_T("Error calling expression \"%s\" (ID %i); parameter index %i was given a null string pointer.\n"
 					"Was the parameter type different when the expression was created in the MFA?"),
-					(const char *)CurLang["Expressions"][ID]["Title"], ID, i);
+					DarkEdif::UTF8ToTString((const char *)CurLang["Expressions"][ID]["Title"]).c_str(), ID, i);
 
 				if (ExpressionRet == ExpReturnType::String)
 					Result = (long)ext->Runtime.CopyString(_T(""));
@@ -1730,7 +1804,7 @@ ProjectFunc void WASM_FUNC_EXPORT(expression_jump)(Extension* ext, int32_t ID) {
 		default:
 		{
 			DarkEdif::MsgBox::Error(_T("Edif::Expression() error"), _T("Error calling expression \"%s\" (ID %i); parameter index %i has unrecognised ExpParams %hi."),
-				(const char *)CurLang["Expressions"][ID]["Title"], ID, i, (short)info->Parameter[i].ep);
+				DarkEdif::UTF8ToTString((const char *)CurLang["Expressions"][ID]["Title"]).c_str(), ID, i, (short)info->Parameter[i].ep);
 			if (ExpressionRet == ExpReturnType::String)
 				Result = (long)ext->Runtime.CopyString(_T(""));
 			goto endFunc;
@@ -1746,6 +1820,9 @@ ProjectFunc void WASM_FUNC_EXPORT(expression_jump)(Extension* ext, int32_t ID) {
 
 	if (Edif::SDK->ExpressionFunctions[ID] == Edif::MemberFunctionPointer(&Extension::VariableFunction))
 	{
+		// Ignore undefined memory warning, we know Parameters[0] is inited,
+		// if VariableFunction is our expression function
+#pragma warning(suppress: 6001)
 		Result = ext->VariableFunction((const TCHAR *)Parameters[0], *info, Parameters);
 		_CrtCheckMemory();
 		goto endFunc;
@@ -1789,6 +1866,7 @@ endFunc:
 	// Must set return type after the expression func is evaluated, as sub-expressions inside the
 	// expression func (e.g. from generating events) could change it to something else
 	params.SetReturnType(ExpressionRet);
+	LOGV(PROJECT_NAME _T(" Expression ID %i end.\n"), ID);
 	return Result;
 
 	// if you add back old ARM ASM, remember to increment paramInc
@@ -1856,9 +1934,12 @@ int Edif::GetDependency (char *& Buffer, size_t &Size, const TCHAR * FileExtensi
 		fseek(File, 0, SEEK_SET);
 
 		Buffer = (char *) malloc(Size + 1);
+		if (!Buffer)
+			throw std::runtime_error("Out of memory");
 		Buffer[Size] = 0;
 
-		fread(Buffer, 1, Size, File);
+		if (fread(Buffer, 1, Size, File) != Size)
+			throw std::runtime_error("Reading opened file resource into RAM failed");
 
 		fclose(File);
 
@@ -1874,7 +1955,13 @@ int Edif::GetDependency (char *& Buffer, size_t &Size, const TCHAR * FileExtensi
 		return DependencyNotFound;
 
 	Size = SizeofResource (hInstLib, res);
-	Buffer = (char *) LockResource (LoadResource (hInstLib, res));
+	HGLOBAL resHandle = LoadResource(hInstLib, res);
+	if (!resHandle)
+		throw std::runtime_error("Could not load resource");
+
+	Buffer = (char *) LockResource (resHandle);
+	if (!Buffer)
+		throw std::runtime_error("Could not lock resource");
 
 	return DependencyWasResource;
 #elif defined(__ANDROID__) || defined(__APPLE__) || defined(__wasi__)
@@ -1941,13 +2028,11 @@ static void GetSiblingPath (TCHAR * Buffer, const TCHAR * FileExtension)
 
 void Edif::GetSiblingPath (TCHAR * Buffer, const TCHAR * FileExtension)
 {
-	TCHAR * Extension = (TCHAR *)
-		alloca ((_tcslen (FileExtension) + _tcslen (LanguageCode) + 2) * sizeof(TCHAR));
+	*Buffer = 0;
 
-	_tcscpy (Extension, LanguageCode);
-	_tcscat (Extension, _T ("."));
-	_tcscat (Extension, FileExtension);
-
+	TCHAR Extension[32];
+	if (_stprintf_s(Extension, std::size(Extension), _T("%s.%s"), LanguageCode, FileExtension) <= 0)
+		return DarkEdif::MsgBox::Error(_T("GetSiblingPath fail"), _T("Invalid file extension %s"), FileExtension);
 	::GetSiblingPath (Buffer, Extension);
 
 	if (*Buffer)
@@ -2136,6 +2221,10 @@ void Edif::recursive_mutex::unlock(edif_lock_debugParams)
 {
 	this->log << "Unlocked in function " << func << ", line " << line << ".\n";
 	try {
+#ifndef __analysis_assume_lock_acquired
+#define __analysis_assume_lock_acquired(x) /* no op */
+#endif
+		__analysis_assume_lock_acquired(this->intern);
 		this->intern.unlock();
 	}
 	catch (std::system_error err)

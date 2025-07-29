@@ -76,6 +76,8 @@ endif
 sdk_defines_project = [
     'PROJECT_NAME=STRIFY(' + meson.project_name() + ')',
     'PROJECT_NAME_UNDERSCORES=STRIFY(' + meson.project_name().underscorify() + ')',
+    'PROJECT_TARGET_NAME=STRIFY(' + meson.project_name() + ')',
+    'PROJECT_TARGET_NAME_UNDERSCORES=STRIFY(' + meson.project_name().underscorify() + ')',
     'EXTENSION_FANCY_VERSION=STRIFY(' + meson.project_version() + ')',
     'AUTHOR_NAME=STRIFY(' + ext_author + ')',
     'COMPANY_NAME=STRIFY(' + ext_company + ')',
@@ -92,7 +94,7 @@ sdk_defines_runtime = [
     'RUN_ONLY',
     'USE_DARKEDIF_UPDATE_CHECKER=0',
     'USE_DARKEDIF_FUSION_DEBUGGER=0',
-    'USE_DARKEDIF_UC_TAGGING=0',
+    'USE_DARKEDIF_UC_TAGGING=1',
 ]
 
 

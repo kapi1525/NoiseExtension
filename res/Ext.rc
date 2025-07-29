@@ -56,9 +56,9 @@ BEGIN
 			VALUE "CompanyName", COMPANY_NAME "\0"
 			VALUE "FileDescription", PROJECT_NAME ", " asStr(CONFIG) ", v" EXTENSION_FANCY_VERSION ", build " asStr(EXTENSION_VERSION) ".\0"
 			VALUE "FileVersion", "2.00" "\0"
-			VALUE "InternalName", PROJECT_NAME ".mfx\0"
+			VALUE "InternalName", PROJECT_TARGET_NAME ".mfx\0"
 			VALUE "LegalCopyright", "Copyright © 2025 " COMPANY_NAME "\0"
-			VALUE "OriginalFilename", PROJECT_NAME ".mfx\0"
+			VALUE "OriginalFilename", PROJECT_TARGET_NAME ".mfx\0"
 			VALUE "ProductVersion", "v" EXTENSION_FANCY_VERSION ", build " asStr(EXTENSION_VERSION) ".\0"
 		END
 	END

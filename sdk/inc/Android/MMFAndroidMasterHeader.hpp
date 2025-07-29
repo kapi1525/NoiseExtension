@@ -542,6 +542,7 @@ struct CEventProgram {
 	eventGroup* get_eventGroup();
 	// true: actions are being executed. False: conditions. Neither: undefined
 	bool GetRH2ActionOn();
+	void SetRH2ActionOn(bool);
 
 	CEventProgram(jobject me, Edif::Runtime* runtime);
 
@@ -560,6 +561,7 @@ protected:
 	// Can be NULL if runtime is not patched to include this;
 	// to check if NULL should be allowed, check if RunHeader has its fieldID set
 	static jfieldID rh4ActStartFieldID;
+	static jfieldID rh2ActionOnFieldID;
 
 	void SetEventGroup(jobject grp);
 
@@ -640,6 +642,7 @@ struct RunHeader {
 	std::size_t get_NObjects();
 
 	objInfoList * GetOIListByIndex(std::size_t index);
+	short GetOIListIndexFromOi(const short oi);
 	qualToOi * GetQualToOiListByOffset(std::size_t index);
 	RunObjectMultiPlatPtr GetObjectListOblOffsetByIndex(std::size_t index);
 	EventGroupFlags GetEVGFlags();
@@ -826,10 +829,6 @@ struct ExpressionManager_Android;
 const int REFLAG_DISPLAY = 1;
 const int REFLAG_ONESHOT = 2;
 
-
-// Defined in DarkEdif.cpp with ASM instructions to embed the binary.
-extern char darkExtJSON[];
-extern unsigned darkExtJSONSize;
 
 // Undo the warning disabling from earlier
 #pragma clang diagnostic pop
