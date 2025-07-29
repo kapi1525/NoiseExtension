@@ -37,21 +37,35 @@ const encoder = new TextEncoder;
 const decoder = new TextDecoder;
 
 
+let stdout_buffer = "";
+function stdout_write(buffer: Uint8Array) {
+    stdout_buffer += decoder.decode(buffer);
+    if (stdout_buffer.includes("\n")) {
+        for (const i of stdout_buffer.split("\n")) {
+            if (i === "") continue;
+            console.log(i);
+        }
+        stdout_buffer = "";
+    }
+}
 
 // We only use wasi apis implementation.
-const wasi = new WASI(
+export const wasi = new WASI(
     [], // args
     [], // env
     [   // open fds
-        new OpenFile(new File([])),                                                     // stdin
-        new ConsoleStdout(msg => console.log(decoder.decode(msg).replace("\n", ""))),   // stdout
-        new ConsoleStdout(msg => console.warn(decoder.decode(msg)))                     // stderr
+        // Dummy stdin
+        new OpenFile(new File([])),
+        // stdout
+        new ConsoleStdout(stdout_write),
+        // stderr
+        new ConsoleStdout(stdout_write)
     ]
 );
 
 // Init wasm module
-export const extModule = new WebAssembly.Module(extWasm);
-export const extInstance = new WebAssembly.Instance(extModule, {
+export let extModule = new WebAssembly.Module(extWasm);
+export let extInstance = new WebAssembly.Instance(extModule, {
     "wasi_snapshot_preview1": wasi.wasiImport,
     "ace_params": {
         "get_integer": (index: number) =>                                        { return wasmCallbacks.getNumber(index); },
