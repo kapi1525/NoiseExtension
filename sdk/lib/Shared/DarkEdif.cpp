@@ -3592,31 +3592,16 @@ void DarkEdif::LOGFInternal(PrintFHintInside const TCHAR * x, ...)
 	DarkEdif::MsgBox::Error(_T("Fatal error"), _T("%s"), buf);
 	std::abort();
 }
-#elif defined(__APPLE__) // APPLE
+#elif defined(__APPLE__) || defined(__wasi__)
 void DarkEdif::BreakIfDebuggerAttached()
 {
-	__builtin_trap();
-}
-
-int DarkEdif::MessageBoxA(WindowHandleType hwnd, const TCHAR * text, const TCHAR * caption, int iconAndButtons)
-{
-	::DarkEdif::Log(iconAndButtons, "Message box \"%s\" absorbed: \"%s\".", caption, text);
-	DarkEdif::BreakIfDebuggerAttached();
-	return 0;
-}
-
-void DarkEdif::LOGFInternal(PrintFHintInside const TCHAR * x, ...)
-{
-	char buf[2048];
-	va_list va;
-	va_start(va, x);
-	vsprintf(buf, x, va);
-	va_end(va);
-}
-#elif defined(__wasi__)
-void DarkEdif::BreakIfDebuggerAttached()
-{
-    // FIXME: STUB
+#ifdef __wasi__
+    #ifdef _DEBUG
+    JSImports::debug_break();
+    #endif
+#else
+    __builtin_trap();
+#endif
 }
 
 int DarkEdif::MessageBoxA(WindowHandleType hwnd, const TCHAR * text, const TCHAR * caption, int iconAndButtons)

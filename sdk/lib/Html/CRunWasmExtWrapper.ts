@@ -67,14 +67,16 @@ export const wasi = new WASI(
 export let extModule = new WebAssembly.Module(extWasm);
 export let extInstance = new WebAssembly.Instance(extModule, {
     "wasi_snapshot_preview1": wasi.wasiImport,
-    "ace_params": {
+    "extsdk": {
         "get_integer": (index: number) =>                                        { return wasmCallbacks.getNumber(index); },
         "get_float":   (index: number) =>                                        { return wasmCallbacks.getNumber(index); },
         "get_string":  (bufferPtr: number, bufferSize: number, index: number) => { return wasmCallbacks.getString(bufferPtr, bufferSize, index); },
         "set_integer": (value: number) =>                                        { wasmCallbacks.setNumber(value); },
         "set_float":   (value: number) =>                                        { wasmCallbacks.setNumber(value); },
         "set_string":  (cStrPtr: number, cStrSize: number) =>                    { wasmCallbacks.setString(cStrPtr, cStrSize); },
-    }
+
+        "debug_break": () => { debugger; }
+    },
 });
 
 wasi.initialize(extInstance as any);

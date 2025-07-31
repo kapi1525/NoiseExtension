@@ -677,6 +677,22 @@ const int REFLAG_DISPLAY = 1;
 const int REFLAG_ONESHOT = 2;
 
 
+namespace JSImports {
+    // For all ACEs, js implementation gets switched before calling x_jump().
+    ProjectFunc float WASM_FUNC_IMPORT(extsdk, get_integer)(int index);
+    ProjectFunc float WASM_FUNC_IMPORT(extsdk, get_float)(int index);
+    // if buffer == null, returns the required buffer size, otherwise fills the buffer with the string and returns the amount of bytes written.
+    ProjectFunc size_t WASM_FUNC_IMPORT(extsdk, get_string)(char* buffer, size_t buffer_size, int index);
+
+    // Only for expressions
+    ProjectFunc void WASM_FUNC_IMPORT(extsdk, set_integer)(int value);
+    ProjectFunc void WASM_FUNC_IMPORT(extsdk, set_float)(float value);
+    ProjectFunc void WASM_FUNC_IMPORT(extsdk, set_string)(const char* string, size_t string_size);
+
+
+    ProjectFunc void WASM_FUNC_IMPORT(extsdk, debug_break)();
+}
+
 
 // Undo the warning disabling from earlier
 // #pragma clang diagnostic pop
