@@ -3281,7 +3281,8 @@ event2* eventGroup::GetCAByIndex(size_t index)
 #elif defined(__wasi__)
 
 // FIXME: STUB
-Edif::Runtime::Runtime(Extension * ext)
+Edif::Runtime::Runtime(Extension * ext) :
+    ObjectSelection(ext->rhPtr)
 {
 }
 

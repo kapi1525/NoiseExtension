@@ -194,7 +194,7 @@ int main(int argc, char const *argv[]) {
                     const func_def* def = find_function_by_name(i.second, function_definitions);
 
                     if(!def) {
-                        std::fprintf(stderr, "Could'nt find function definition for: \"%s()\"\n", i.second.c_str());
+                        std::fprintf(stderr, "Couldn't find function definition for: \"%s()\"\n", i.second.c_str());
                         continue;
                     }
 
@@ -211,7 +211,7 @@ int main(int argc, char const *argv[]) {
                     const func_def* def = find_function_by_name(i.second, function_definitions);
 
                     if(!def) {
-                        std::fprintf(stderr, "Could'nt find function definition for: \"%s()\"\n", i.second.c_str());
+                        std::fprintf(stderr, "Couldn't find function definition for: \"%s()\"\n", i.second.c_str());
                         continue;
                     }
 
@@ -229,7 +229,7 @@ int main(int argc, char const *argv[]) {
                     const func_def* def = find_function_by_name(i.second, function_definitions);
 
                     if(!def) {
-                        std::fprintf(stderr, "Could'nt find function definition for: \"%s()\"\n", i.second.c_str());
+                        std::fprintf(stderr, "Couldn't find function definition for: \"%s()\"\n", i.second.c_str());
                         continue;
                     }
 
@@ -237,7 +237,7 @@ int main(int argc, char const *argv[]) {
                     // instead of loading all parameters from memory it loads only the first one and the rest are set to 0.
                     // but when the params are first saved in a variable and then later casted to the correct type it magicaly works.
                     // old code works fine with msvc so this feels like a compiler bug.
-                    // tested with wasi-sdk 25.
+                    // tested with wasi-sdk 27.
                     // TODO: recheck later with a more recent compiler. maybe find a minimal code to reproduce and submit an issue to llvm-project.
                     // TODO: check if this bug happens for actions and conditions.
                     out << indent << "case " << i.first << ": {\n";

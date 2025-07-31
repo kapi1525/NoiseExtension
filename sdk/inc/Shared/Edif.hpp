@@ -259,10 +259,7 @@ namespace Edif
 
 		bool IsUnicode();
 
-// FIXME
-#ifndef __wasi__
 		DarkEdif::ObjectSelection ObjectSelection;
-#endif
 
 		void WriteGlobal(const TCHAR * name, void * Value);
 		void * ReadGlobal(const TCHAR * name);
