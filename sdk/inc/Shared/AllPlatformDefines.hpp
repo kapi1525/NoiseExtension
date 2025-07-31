@@ -73,12 +73,16 @@ using namespace std::string_view_literals;
 #ifdef _MSC_VER
 	#define PrintFHintInside _In_z_ _Printf_format_string_
 	#define PrintFHintAfter(formatParamIndex,dotsParamIndex) /* no op */
-#elif defined(__clang__) && !defined (__INTELLISENSE__) && !defined (__wasi__)  // FIXME: Make this work with wasm
+#elif defined(__clang__) && !defined (__INTELLISENSE__)
 	#define PrintFHintInside /* no op */
 	// Where formatParamIndex is 1-based index of the format param, and dots is the 1-based index of ...
 	// Note class member functions should include the "this" pointer in the indexing.
 	// You can use 0 for dotsParamIndex for vprintf-like format instead.
-	#define PrintFHintAfter(formatParamIndex,dotsParamIndex) __printflike(formatParamIndex, dotsParamIndex)
+    #ifdef __APPLE__
+	    #define PrintFHintAfter(formatParamIndex,dotsParamIndex) __printflike(formatParamIndex, dotsParamIndex)
+    #else
+        #define PrintFHintAfter(formatParamIndex,dotsParamIndex) __attribute__((__format__(__printf__, formatParamIndex, dotsParamIndex)))
+    #endif
 #else
 	#define PrintFHintInside /* no op */
 	#define PrintFHintAfter(formatParamIndex,dotsParamIndex) /* no op */
