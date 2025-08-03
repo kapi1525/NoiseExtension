@@ -180,7 +180,10 @@ export default class CRunWasmExtWrapper extends CRunExtension {
 		// header uint32, hash uint32, hashtypes uint32, numprops uint16, pad uint16, sizeBytes uint32 (includes whole EDITDATA)
         const fileStart = file.getFilePointer();
         file.skipBytes(4 + 4 + 4 + 2 + 2);      // skip to sizeBytes
-        const edSize = file.readAInt();         // Fixme: should be unsigned
+        const edSize = file.readUnsignedByte() +
+                      (file.readUnsignedByte() << 8) +
+                      (file.readUnsignedByte() << 16) +
+                      (file.readUnsignedByte() << 24);
         file.seek(fileStart);                   // go back to the begining
 
         // TODO: refactor to not require malloc export
