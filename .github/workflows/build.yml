@@ -163,13 +163,13 @@ jobs:
           path: 'arti'
 
       - run: |
-          cd arti
-          ls -R .
+          ls -R
 
       - name: Merge all artifacts
         env:
           ext_name: "Noise"
         run: |
+          cd arti
           mkdir -p MFX
 
           # Loop over downloaded artifacts
@@ -202,7 +202,6 @@ jobs:
           cd ../arti/MFX
 
           7za a ../../dist/Noise-$version_or_hash.zip *
-          cd $GITHUB_WORKSPACE
 
       - run: ls -l dist
 
