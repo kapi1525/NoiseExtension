@@ -1,7 +1,7 @@
 project(
     'Noise',
     'cpp', 'c',
-    version: '1.2.0',
+    version: '1.2.0-beta.1',
     license: 'MIT',
     default_options: {
         'cpp_std':       'c++17',

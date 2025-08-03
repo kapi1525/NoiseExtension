@@ -52,23 +52,12 @@ sdk_defines_unicode = [
     'UNICODE',
 ]
 
-sdk_defines_project_rc = [
+sdk_defines_rc = [
     'KPX_MAGICNUMBER=200',
-    'PROJECT_NAME=asStr(' + meson.project_name() + ')',
-    'PROJECT_NAME_UNDERSCORES=asStr(' + meson.project_name().underscorify() + ')',
-    'PROJECT_TARGET_NAME=asStr(' + meson.project_name() + ')',
-    'PROJECT_TARGET_NAME_UNDERSCORES=asStr(' + meson.project_name().underscorify() + ')',
-    'EXTENSION_FANCY_VERSION=asStr(' + meson.project_version() + ')',
-    'EXTENSION_FANCY_VERSION_MAJOR=' + meson.project_version().split('.')[0],
-    'EXTENSION_FANCY_VERSION_MINOR=' + meson.project_version().split('.')[1],
-    'EXTENSION_FANCY_VERSION_PATCH=' + meson.project_version().split('.')[2],
-    'AUTHOR_NAME=asStr(' + ext_author + ')',
-    'COMPANY_NAME=asStr(' + ext_company + ')',
+    'EXTENSION_FANCY_VERSION_RC=' + meson.project_version().replace('.', ',').split('-')[0] + ',' + ext_build.to_string(),
 ]
-
-sdk_defines_rc = []
 sdk_defines_rc += sdk_defines_common
-sdk_defines_rc += sdk_defines_project_rc
+sdk_defines_rc += sdk_defines_project
 
 if unicode_build
     sdk_defines += sdk_defines_unicode
