@@ -36,19 +36,6 @@ let wasmCallbacks: WasmCallbacks = getBlankWasmCallbacks();
 const encoder = new TextEncoder;
 const decoder = new TextDecoder;
 
-
-let stdout_buffer = "";
-function stdout_write(buffer: Uint8Array) {
-    stdout_buffer += decoder.decode(buffer);
-    if (stdout_buffer.includes("\n")) {
-        for (const i of stdout_buffer.split("\n")) {
-            if (i === "") continue;
-            console.log(i);
-        }
-        stdout_buffer = "";
-    }
-}
-
 // We only use wasi apis implementation.
 export const wasi = new WASI(
     [], // args
@@ -57,9 +44,9 @@ export const wasi = new WASI(
         // Dummy stdin
         new OpenFile(new File([])),
         // stdout
-        new ConsoleStdout(stdout_write),
+        ConsoleStdout.lineBuffered((line) => { console.log(line); }),
         // stderr
-        new ConsoleStdout(stdout_write)
+        ConsoleStdout.lineBuffered((line) => { console.warn(line); })
     ]
 );
 
@@ -68,52 +55,52 @@ export let extModule = new WebAssembly.Module(extWasm);
 export let extInstance = new WebAssembly.Instance(extModule, {
     "wasi_snapshot_preview1": {
         // Workaround for closure compiler variable renames
-        "args_sizes_get": wasi.wasiImport.args_sizes_get,
-        "args_get": wasi.wasiImport.args_get,
-        "environ_sizes_get": wasi.wasiImport.environ_sizes_get,
-        "environ_get": wasi.wasiImport.environ_get,
-        "clock_res_get": wasi.wasiImport.clock_res_get,
-        "clock_time_get": wasi.wasiImport.clock_time_get,
-        "fd_advise": wasi.wasiImport.fd_advise,
-        "fd_allocate": wasi.wasiImport.fd_allocate,
-        "fd_close": wasi.wasiImport.fd_close,
-        "fd_datasync": wasi.wasiImport.fd_datasync,
-        "fd_fdstat_get": wasi.wasiImport.fd_fdstat_get,
-        "fd_fdstat_set_flags": wasi.wasiImport.fd_fdstat_set_flags,
-        "fd_fdstat_set_rights": wasi.wasiImport.fd_fdstat_set_rights,
-        "fd_filestat_get": wasi.wasiImport.fd_filestat_get,
-        "fd_filestat_set_size": wasi.wasiImport.fd_filestat_set_size,
-        "fd_filestat_set_times": wasi.wasiImport.fd_filestat_set_times,
-        "fd_pread": wasi.wasiImport.fd_pread,
-        "fd_prestat_get": wasi.wasiImport.fd_prestat_get,
-        "fd_prestat_dir_name": wasi.wasiImport.fd_prestat_dir_name,
-        "fd_pwrite": wasi.wasiImport.fd_pwrite,
-        "fd_read": wasi.wasiImport.fd_read,
-        "fd_readdir": wasi.wasiImport.fd_readdir,
-        "fd_renumber": wasi.wasiImport.fd_renumber,
-        "fd_seek": wasi.wasiImport.fd_seek,
-        "fd_sync": wasi.wasiImport.fd_sync,
-        "fd_tell": wasi.wasiImport.fd_tell,
-        "fd_write": wasi.wasiImport.fd_write,
-        "path_create_directory": wasi.wasiImport.path_create_directory,
-        "path_filestat_get": wasi.wasiImport.path_filestat_get,
+        "args_sizes_get":          wasi.wasiImport.args_sizes_get,
+        "args_get":                wasi.wasiImport.args_get,
+        "environ_sizes_get":       wasi.wasiImport.environ_sizes_get,
+        "environ_get":             wasi.wasiImport.environ_get,
+        "clock_res_get":           wasi.wasiImport.clock_res_get,
+        "clock_time_get":          wasi.wasiImport.clock_time_get,
+        "fd_advise":               wasi.wasiImport.fd_advise,
+        "fd_allocate":             wasi.wasiImport.fd_allocate,
+        "fd_close":                wasi.wasiImport.fd_close,
+        "fd_datasync":             wasi.wasiImport.fd_datasync,
+        "fd_fdstat_get":           wasi.wasiImport.fd_fdstat_get,
+        "fd_fdstat_set_flags":     wasi.wasiImport.fd_fdstat_set_flags,
+        "fd_fdstat_set_rights":    wasi.wasiImport.fd_fdstat_set_rights,
+        "fd_filestat_get":         wasi.wasiImport.fd_filestat_get,
+        "fd_filestat_set_size":    wasi.wasiImport.fd_filestat_set_size,
+        "fd_filestat_set_times":   wasi.wasiImport.fd_filestat_set_times,
+        "fd_pread":                wasi.wasiImport.fd_pread,
+        "fd_prestat_get":          wasi.wasiImport.fd_prestat_get,
+        "fd_prestat_dir_name":     wasi.wasiImport.fd_prestat_dir_name,
+        "fd_pwrite":               wasi.wasiImport.fd_pwrite,
+        "fd_read":                 wasi.wasiImport.fd_read,
+        "fd_readdir":              wasi.wasiImport.fd_readdir,
+        "fd_renumber":             wasi.wasiImport.fd_renumber,
+        "fd_seek":                 wasi.wasiImport.fd_seek,
+        "fd_sync":                 wasi.wasiImport.fd_sync,
+        "fd_tell":                 wasi.wasiImport.fd_tell,
+        "fd_write":                wasi.wasiImport.fd_write,
+        "path_create_directory":   wasi.wasiImport.path_create_directory,
+        "path_filestat_get":       wasi.wasiImport.path_filestat_get,
         "path_filestat_set_times": wasi.wasiImport.path_filestat_set_times,
-        "path_link": wasi.wasiImport.path_link,
-        "path_open": wasi.wasiImport.path_open,
-        "path_readlink": wasi.wasiImport.path_readlink,
-        "path_remove_directory": wasi.wasiImport.path_remove_directory,
-        "path_rename": wasi.wasiImport.path_rename,
-        "path_symlink": wasi.wasiImport.path_symlink,
-        "path_unlink_file": wasi.wasiImport.path_unlink_file,
-        "poll_oneoff": wasi.wasiImport.poll_oneoff,
-        "proc_exit": wasi.wasiImport.proc_exit,
-        "proc_raise": wasi.wasiImport.proc_raise,
-        "sched_yield": wasi.wasiImport.sched_yield,
-        "random_get": wasi.wasiImport.random_get,
-        "sock_recv": wasi.wasiImport.sock_recv,
-        "sock_send": wasi.wasiImport.sock_send,
-        "sock_shutdown": wasi.wasiImport.sock_shutdown,
-        "sock_accept": wasi.wasiImport.sock_accept,
+        "path_link":               wasi.wasiImport.path_link,
+        "path_open":               wasi.wasiImport.path_open,
+        "path_readlink":           wasi.wasiImport.path_readlink,
+        "path_remove_directory":   wasi.wasiImport.path_remove_directory,
+        "path_rename":             wasi.wasiImport.path_rename,
+        "path_symlink":            wasi.wasiImport.path_symlink,
+        "path_unlink_file":        wasi.wasiImport.path_unlink_file,
+        "poll_oneoff":             wasi.wasiImport.poll_oneoff,
+        "proc_exit":               wasi.wasiImport.proc_exit,
+        "proc_raise":              wasi.wasiImport.proc_raise,
+        "sched_yield":             wasi.wasiImport.sched_yield,
+        "random_get":              wasi.wasiImport.random_get,
+        "sock_recv":               wasi.wasiImport.sock_recv,
+        "sock_send":               wasi.wasiImport.sock_send,
+        "sock_shutdown":           wasi.wasiImport.sock_shutdown,
+        "sock_accept":             wasi.wasiImport.sock_accept,
     },
     "extsdk": {
         "get_integer": (index: number) =>                                        { return wasmCallbacks.getNumber(index); },
