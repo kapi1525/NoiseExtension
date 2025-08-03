@@ -51,6 +51,7 @@ jobs:
         with:
           name: Noise-windows-${{ matrix.config }}
           path: MFX
+          retention-days: 1
           if-no-files-found: error
 
   build-android:
@@ -90,6 +91,7 @@ jobs:
         with:
           name: Noise-android-${{ matrix.target }}
           path: MFX
+          retention-days: 1
           if-no-files-found: error
 
   build-html:
@@ -142,6 +144,7 @@ jobs:
         with:
           name: Noise-html
           path: MFX
+          retention-days: 1
           if-no-files-found: error
 
   create-release-bundle:
@@ -154,41 +157,50 @@ jobs:
         with:
           path: 'repo'
 
-      - run: cd
-
       - name: Download artifacts
         uses: actions/download-artifact@v4
+        with:
+          path: 'arti'
 
-      - run: ls -R .
+      - run: |
+          cd arti
+          ls -R .
 
-      - name: Combine all artifacts into one
+      - name: Merge all artifacts
         env:
           ext_name: "Noise"
         run: |
+          mkdir -p MFX
+
+          # Loop over downloaded artifacts
           for dir_entry in *; do
               echo $dir_entry
 
               zip_file="$dir_entry/Data/Runtime/Android/$ext_name.zip"
 
+              # unzip android, output will be in ./app folder
               if [[ -f $zip_file ]]; then
                   echo $zip_file
 
                   7za x $zip_file -aoa
+                  rm -f $zip_file
               fi
 
-              mkdir -p MFX
               cp $dir_entry/* MFX -r
           done
 
-          rm -f MFX/Data/Runtime/Android/$ext_name.zip
+          # zip back android
           7za a MFX/Data/Runtime/Android/$ext_name.zip app -sdel
 
-          cd repo
+          cd ../repo
           version_or_hash=`git describe --dirty=+ --always`
 
-          cd ../MFX
+          cd ../arti/MFX
 
-          7za a ../dist/Noise-$version_or_hash.zip *
+          7za a ../../dist/Noise-$version_or_hash.zip *
+          cd $GITHUB_WORKSPACE
+
+      - run: ls -l dist
 
       - run: ls -R .
 
@@ -199,3 +211,7 @@ jobs:
           path: dist
           if-no-files-found: error
 
+      - name: Create draft release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release create --draft --prerelease --generate-notes ${{ github.ref_name }} ./dist/*
