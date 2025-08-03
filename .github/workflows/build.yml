@@ -176,6 +176,10 @@ jobs:
           for dir_entry in *; do
               echo $dir_entry
 
+              if [[ "$zip_file" == "MFX" ]]; then
+                continue
+              fi
+
               zip_file="$dir_entry/Data/Runtime/Android/$ext_name.zip"
 
               # unzip android, output will be in ./app folder
@@ -212,6 +216,7 @@ jobs:
           if-no-files-found: error
 
       - name: Create draft release
+        if: startsWith(github.ref, 'refs/tags')
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: gh release create --draft --prerelease --generate-notes ${{ github.ref_name }} ./dist/*
