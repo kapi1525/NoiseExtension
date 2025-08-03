@@ -3,8 +3,17 @@ name: Build
 on:
   push:
     branches:
-      - '*'     # dont build for tags
+      - '*'
+    tags:
+      - '*'
   workflow_dispatch:
+
+
+# Cancel already running ci on a new push
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 
 jobs:
   build-windows:
@@ -17,13 +26,11 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          submodules: true
 
       - name: Setup python
         uses: actions/setup-python@v5
         with:
-          python-version: 'pypy3.9'
+          python-version: 'pypy3.11'
 
       - name: Install meson and ninja
         run: pip install meson ninja
@@ -56,22 +63,21 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          submodules: true
 
       - name: Setup python
         uses: actions/setup-python@v5
         with:
-          python-version: 'pypy3.9'
+          python-version: 'pypy3.11'
 
       - name: Install meson and ninja
         run: pip install meson ninja
 
-      - name: Create a custom cross file with correct android ndk path
+      - name: Create a cross file with correct android ndk path
         run: |
           echo [constants] > sdk/cross/android-ndk.ini
           echo android_ndk = \'$ANDROID_NDK\' >> sdk/cross/android-ndk.ini
           echo android_ndk_host_tag = \'linux-x86_64\' >> sdk/cross/android-ndk.ini
+          cat sdk/cross/android-ndk.ini
 
       - name: Configure
         run: meson setup bin --buildtype release --cross-file sdk/cross/android-${{ matrix.target }}.ini --cross-file sdk/cross/android-ndk.ini
@@ -86,7 +92,7 @@ jobs:
           path: MFX
           if-no-files-found: error
 
-  build-wasm:
+  build-html:
     runs-on: ubuntu-latest
 
     env:
@@ -96,13 +102,11 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          submodules: true
 
       - name: Setup python
         uses: actions/setup-python@v5
         with:
-          python-version: 'pypy3.9'
+          python-version: 'pypy3.11'
 
       - name: Install meson and ninja
         run: pip install meson ninja
@@ -142,18 +146,25 @@ jobs:
 
   create-release-bundle:
     runs-on: ubuntu-latest
-    needs: [build-windows, build-android, build-wasm]
+    needs: [build-windows, build-android, build-html]
 
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          path: 'repo'
+
+      - run: cd
+
       - name: Download artifacts
         uses: actions/download-artifact@v4
 
       - run: ls -R .
 
       - name: Combine all artifacts into one
+        env:
+          ext_name: "Noise"
         run: |
-          ext_name="Noise"
-
           for dir_entry in *; do
               echo $dir_entry
 
@@ -167,17 +178,24 @@ jobs:
 
               mkdir -p MFX
               cp $dir_entry/* MFX -r
-
           done
 
           rm -f MFX/Data/Runtime/Android/$ext_name.zip
           7za a MFX/Data/Runtime/Android/$ext_name.zip app -sdel
+
+          cd repo
+          version_or_hash=`git describe --dirty=+ --always`
+
+          cd ../MFX
+
+          7za a ../dist/Noise-$version_or_hash.zip *
 
       - run: ls -R .
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Noise
-          path: MFX
+          name: Noise-dist
+          path: dist
           if-no-files-found: error
+
