@@ -3,8 +3,17 @@ name: Build
 on:
   push:
     branches:
-      - '*'     # dont build for tags
+      - '*'
+    tags:
+      - '*'
   workflow_dispatch:
+
+
+# Cancel already running ci on a new push
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 
 jobs:
   build-windows:
@@ -17,13 +26,15 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          submodules: true
+
+      - name: Fetch tags
+        if: startsWith(github.ref, 'refs/tags')
+        run: git fetch --tags --force
 
       - name: Setup python
         uses: actions/setup-python@v5
         with:
-          python-version: 'pypy3.9'
+          python-version: 'pypy3.11'
 
       - name: Install meson and ninja
         run: pip install meson ninja
@@ -44,6 +55,7 @@ jobs:
         with:
           name: Noise-windows-${{ matrix.config }}
           path: MFX
+          retention-days: 1
           if-no-files-found: error
 
   build-android:
@@ -56,22 +68,25 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          submodules: true
+
+      - name: Fetch tags
+        if: startsWith(github.ref, 'refs/tags')
+        run: git fetch --tags --force
 
       - name: Setup python
         uses: actions/setup-python@v5
         with:
-          python-version: 'pypy3.9'
+          python-version: 'pypy3.11'
 
       - name: Install meson and ninja
         run: pip install meson ninja
 
-      - name: Create a custom cross file with correct android ndk path
+      - name: Create a cross file with correct android ndk path
         run: |
           echo [constants] > sdk/cross/android-ndk.ini
           echo android_ndk = \'$ANDROID_NDK\' >> sdk/cross/android-ndk.ini
           echo android_ndk_host_tag = \'linux-x86_64\' >> sdk/cross/android-ndk.ini
+          cat sdk/cross/android-ndk.ini
 
       - name: Configure
         run: meson setup bin --buildtype release --cross-file sdk/cross/android-${{ matrix.target }}.ini --cross-file sdk/cross/android-ndk.ini
@@ -84,9 +99,10 @@ jobs:
         with:
           name: Noise-android-${{ matrix.target }}
           path: MFX
+          retention-days: 1
           if-no-files-found: error
 
-  build-wasm:
+  build-html:
     runs-on: ubuntu-latest
 
     env:
@@ -96,13 +112,15 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          submodules: true
+
+      - name: Fetch tags
+        if: startsWith(github.ref, 'refs/tags')
+        run: git fetch --tags --force
 
       - name: Setup python
         uses: actions/setup-python@v5
         with:
-          python-version: 'pypy3.9'
+          python-version: 'pypy3.11'
 
       - name: Install meson and ninja
         run: pip install meson ninja
@@ -126,6 +144,7 @@ jobs:
           mv wasi-sdk-*-x86_64-linux wasi-sdk
           echo [constants] > sdk/cross/wasi-sdk.ini
           echo wasi_sdk = \'${{ github.workspace }}/wasi-sdk\' >> sdk/cross/wasi-sdk.ini
+          cat sdk/cross/wasi-sdk.ini
 
       - name: Configure
         run: meson setup bin --buildtype release --cross-file sdk/cross/wasm-wasi.ini --cross-file sdk/cross/wasi-sdk.ini
@@ -138,46 +157,88 @@ jobs:
         with:
           name: Noise-html
           path: MFX
+          retention-days: 1
           if-no-files-found: error
 
   create-release-bundle:
     runs-on: ubuntu-latest
-    needs: [build-windows, build-android, build-wasm]
+    needs: [build-windows, build-android, build-html]
 
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          path: 'repo'
+
+      # github.com/actions/checkout/issues/290
+      # workaround for broken git describe
+      - name: Fetch tags
+        if: startsWith(github.ref, 'refs/tags')
+        run: |
+          cd repo
+          git fetch --tags --force
+
       - name: Download artifacts
         uses: actions/download-artifact@v4
+        with:
+          path: 'arti'
 
-      - run: ls -R .
+      - run: |
+          ls -R
 
-      - name: Combine all artifacts into one
+      - name: Merge all artifacts
+        env:
+          ext_name: "Noise"
         run: |
-          ext_name="Noise"
+          cd arti
+          mkdir -p MFX
 
+          # Loop over downloaded artifacts
           for dir_entry in *; do
               echo $dir_entry
 
+              if [[ "$dir_entry" == "MFX" ]]; then
+                continue
+              fi
+
               zip_file="$dir_entry/Data/Runtime/Android/$ext_name.zip"
 
+              # unzip android, output will be in ./app folder
               if [[ -f $zip_file ]]; then
                   echo $zip_file
 
                   7za x $zip_file -aoa
+                  rm -f $zip_file
               fi
 
-              mkdir -p MFX
               cp $dir_entry/* MFX -r
-
           done
 
-          rm -f MFX/Data/Runtime/Android/$ext_name.zip
+          # zip back android
           7za a MFX/Data/Runtime/Android/$ext_name.zip app -sdel
+
+          cd ../repo
+          version_or_hash=`git describe --dirty=+ --always`
+
+          cd ../arti/MFX
+
+          7za a ../../dist/Noise-$version_or_hash.zip *
+
+      - run: ls -l dist
 
       - run: ls -R .
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Noise
-          path: MFX
+          name: Noise-dist
+          path: dist
           if-no-files-found: error
+
+      - name: Create draft release
+        if: startsWith(github.ref, 'refs/tags')
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          cd repo
+          gh release create --draft --prerelease --notes-from-tag ${{ github.ref_name }} ../dist/*
