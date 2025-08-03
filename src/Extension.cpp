@@ -161,14 +161,16 @@ Extension::Extension(const EDITDATA* const edPtr, const CreateObjectInfo* const 
     const std::map<std::tstring, FastNoiseLite::RotationType3D> rotation_type_3d_ids = {
         {_T("None"),                FastNoiseLite::RotationType3D_None},
         {_T("Improve XY planes"),   FastNoiseLite::RotationType3D_ImproveXYPlanes},
-        {_T("Improve XZ planes"),   FastNoiseLite::RotationType3D_ImproveXZPlanes}
+        {_T("Improve XZ planes"),   FastNoiseLite::RotationType3D_ImproveXZPlanes},
     };
 
     const std::map<std::tstring, FastNoiseLite::FractalType> noise_fractal_type_ids = {
         {_T("None"),                FastNoiseLite::FractalType_None},
         {_T("FBm"),                 FastNoiseLite::FractalType_FBm},
         {_T("Ridged"),              FastNoiseLite::FractalType_Ridged},
-        {_T("PingPong"),            FastNoiseLite::FractalType_PingPong}
+        {_T("PingPong"),            FastNoiseLite::FractalType_PingPong},
+        // For compat
+        {_T("Rigid"),               FastNoiseLite::FractalType_Ridged},
     };
 
     const std::map<std::tstring, FastNoiseLite::CellularDistanceFunction> cellular_distance_function_ids = {
@@ -185,7 +187,7 @@ Extension::Extension(const EDITDATA* const edPtr, const CreateObjectInfo* const 
         {_T("Distance2Add"),        FastNoiseLite::CellularReturnType_Distance2Add},
         {_T("Distance2Sub"),        FastNoiseLite::CellularReturnType_Distance2Sub},
         {_T("Distance2Mul"),        FastNoiseLite::CellularReturnType_Distance2Mul},
-        {_T("Distance2Div"),        FastNoiseLite::CellularReturnType_Distance2Div}
+        {_T("Distance2Div"),        FastNoiseLite::CellularReturnType_Distance2Div},
     };
 
 
