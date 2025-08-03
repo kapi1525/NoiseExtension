@@ -176,7 +176,7 @@ jobs:
           for dir_entry in *; do
               echo $dir_entry
 
-              if [[ "$zip_file" == "MFX" ]]; then
+              if [[ "$dir_entry" == "MFX" ]]; then
                 continue
               fi
 
