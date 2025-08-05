@@ -186,7 +186,7 @@ export default class CRunWasmExtWrapper extends CRunExtension {
         edView.setUint32(16, this.ho!.privateData, true);
 
         for (let i = 20; i < edSize; i++) {
-            edView.setUint8(i, file.readAByte());
+            edView.setUint8(i, file.readUnsignedByte());
         }
 
         this.cppExtPtr = cppLand.createRunObject(edPtr, 0, version);
