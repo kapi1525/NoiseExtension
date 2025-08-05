@@ -241,4 +241,5 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           cd repo
-          gh release create --draft --prerelease --notes-from-tag ${{ github.ref_name }} ../dist/*
+          version_or_hash=`git describe --dirty=+ --always`
+          gh release create --draft --prerelease --title "$version_or_hash" --notes-from-tag ${{ github.ref_name }} ../dist/*
