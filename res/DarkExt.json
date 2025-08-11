@@ -296,7 +296,7 @@
                 ]
             },
             { //26
-                "Title": "Fill %0 selected image with noise, with xoffset %1, y %2, z %3 and %4 flags",
+                "Title": "Fill %0 selected image with noise, with offset x %1, y %2, z %3 and %4 flags",
                 "Parameters": [
                     [ "Object", "Surface object" ],
                     [ "Float", "X offset (for generated noise)" ],
@@ -310,18 +310,18 @@
         ],
         "Expressions": [
             { //0
-                "Title": "Seed(",
+                "Title": "CurrentSeed(",
                 "Returns": "Integer"
             },
             { //1
-                "Title": "ToSeed(",
+                "Title": "StringToSeed(",
                 "Returns": "Integer",
                 "Parameters": [
                     [ "Text", "Text" ]
                 ]
             },
             { //2
-                "Title": "Noise3D(",
+                "Title": "GetNoise3D(",
                 "Returns": "Float",
                 "Parameters": [
                     [ "Float", "X" ],
@@ -330,7 +330,7 @@
                 ]
             },
             { //3
-                "Title": "Noise2D(",
+                "Title": "GetNoise2D(",
                 "Returns": "Float",
                 "Parameters": [
                     [ "Float", "X" ],
@@ -338,14 +338,14 @@
                 ]
             },
             { //4
-                "Title": "Noise1D(",
+                "Title": "GetNoise1D(",
                 "Returns": "Float",
                 "Parameters": [
                     [ "Float", "X" ]
                 ]
             },
             { //5
-                "Title": "Looping1D(",
+                "Title": "GetNoiseLooping1D(",
                 "Returns": "Float",
                 "Parameters": [
                     [ "Float", "X" ],
@@ -414,43 +414,43 @@
                 "Returns": "Integer"
             },
             { //21
-                "Title": "Distance1(",
+                "Title": "CellDistance(",
                 "Returns": "Integer"
             },
             { //22
-                "Title": "Distance2(",
+                "Title": "CellDistance2(",
                 "Returns": "Integer"
             },
             { //23
-                "Title": "Distance2Add(",
+                "Title": "CellDistance2Add(",
                 "Returns": "Integer"
             },
             { //24
-                "Title": "Distance2Sub(",
+                "Title": "CellDistance2Sub(",
                 "Returns": "Integer"
             },
             { //25
-                "Title": "Distance2Mul(",
+                "Title": "CellDistance2Mul(",
                 "Returns": "Integer"
             },
             { //26
-                "Title": "Distance2Div(",
+                "Title": "CellDistance2Div(",
                 "Returns": "Integer"
             },
             { //27
-                "Title": "NoiseType(",
+                "Title": "CurrentNoiseType(",
                 "Returns": "Integer"
             },
             { //28
-                "Title": "FractalType(",
+                "Title": "CurrentFractalType(",
                 "Returns": "Integer"
             },
             { //29
-                "Title": "CellularFunction(",
+                "Title": "CurrentCellFunction(",
                 "Returns": "Integer"
             },
             { //30
-                "Title": "CellularReturnType(",
+                "Title": "CurrentCellReturnType(",
                 "Returns": "Integer"
             },
             { //31
@@ -462,7 +462,7 @@
                 "Returns": "Integer"
             },
             { //33
-                "Title": "RotationType3D(",
+                "Title": "CurrentRotationType3D(",
                 "Returns": "Integer"
             },
             { //34
@@ -487,19 +487,19 @@
                 "Returns": "Integer"
             },
             { //39
-                "Title": "DWSeed(",
+                "Title": "CurrentDWSeed(",
                 "Returns": "Integer"
             },
             { //40
-                "Title": "DWType(",
+                "Title": "CurrentDWType(",
                 "Returns": "Integer"
             },
             { //41
-                "Title": "DWRotationType3D(",
+                "Title": "CurrentDWRotationType3D(",
                 "Returns": "Integer"
             },
             { //42
-                "Title": "DWFractalType(",
+                "Title": "CurrentDWFractalType(",
                 "Returns": "Integer"
             },
             { //43
@@ -598,7 +598,7 @@
             },
             {
                 "Title": "Fractal type",
-                "Info": "Contols how diffrent noise layers (octaves) are combined into one, when \"None\" is selected theres only one octave.\n(Default: \"None\")",
+                "Info": "Contols how diffrent noise layers (octaves) are combined into one. When \"None\" is selected theres only one octave.\n(Default: \"None\")",
                 "Type": "Combo Box",
                 "DefaultState": "None",
                 "Items": [
@@ -729,7 +729,7 @@
             },
             {
                 "Title": "DW fractal type",
-                "Info": "Contols how diffrent noise layers (octaves) are combined into one, when \"None\" is selected theres only one octave.\n(Default: \"None\")",
+                "Info": "Contols how diffrent noise layers (octaves) are combined into one. When \"None\" is selected theres only one octave.\n(Default: \"None\")",
                 "Type": "Combo Box",
                 "DefaultState": "None",
                 "Items": [
