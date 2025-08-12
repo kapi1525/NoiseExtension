@@ -22,6 +22,7 @@ enum FillSurfaceFlags : int {
 
 enum class PixelFormat {
     BGR24,  // 24 bits, 8 bits per color, BGR
+    BGR32,  // 32 bits, 8 bits per color, BGR A?
     A8,     // 8 bits
     RGBA32, // 32 bit, 8 bits per color RGB A
 };

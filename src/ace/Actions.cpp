@@ -187,17 +187,38 @@ void Extension::fill_surface_obj_with_noise(RunObject* surface_obj, float xoffse
 
     cSurface* target = surface_rd.selected;
 
+    if(!target->IsValid()) {
+        return;
+    }
+
+
     int target_w, target_h, target_d;
     target->GetInfo(target_w, target_h, target_d);
 
-    // Seems like all surface types support LockBuffer so no need to allocate a temp surface.
     // cSurface* temp = create_surface(target_w, target_h, 24, SurfaceType::Memory, (SurfaceDriver)target->GetDriver());
 
     if(flags & FillRed || flags & FillGreen || flags & FillBlue) {
         uint8_t* buf = target->LockBuffer();
 
+        if(buf == nullptr) {
+            DarkEdif::MsgBox::Error(_T("Unsupported"), _T("LockBuffer() failed, cSurface type unsupported?"), target_d);
+            return;
+        }
+
+        PixelFormat format;
+
+        switch(target_d) {
+        case 24:
+            format = PixelFormat::BGR24; break;
+        case 32:
+            format = PixelFormat::BGR32; break;
+        default:
+            DarkEdif::MsgBox::Error(_T("Unsupported"), _T("Unsupported cSurface depth = %d"), target_d);
+            return;
+        }
+
         // Pitch = size between lines in bytes.
-        fill_buffer_with_noise(buf, target_w, target_h, target->GetPitch(), PixelFormat::BGR24, xoffset, yoffset, zoffset, flags);
+        fill_buffer_with_noise(buf, target_w, target_h, target->GetPitch(), format, xoffset, yoffset, zoffset, flags);
         target->UnlockBuffer(buf);    // you can pass a nullptr here and it will work!
     }
 
@@ -207,6 +228,12 @@ void Extension::fill_surface_obj_with_noise(RunObject* surface_obj, float xoffse
         }
 
         uint8_t* buf = target->LockAlpha();
+
+        if(buf == nullptr) {
+            DarkEdif::MsgBox::Error(_T("Unsupported"), _T("LockAlpha() failed, cSurface type unsupported?"), target_d);
+            return;
+        }
+
         fill_buffer_with_noise(buf, target_w, target_h, target->GetAlphaPitch(), PixelFormat::A8, xoffset, yoffset, zoffset, flags);
         target->UnlockAlpha();
     }
@@ -229,6 +256,30 @@ void Extension::fill_buffer_with_noise_bgr24(uint8_t* buf, int width, int height
                 noise_val = (uint8_t)get_noise3D(x + xoffset, y + yoffset, zoffset);
 
             const size_t buf_index = (x * 3) + (y * pitch);
+
+            if (flags & FillBlue)
+                buf[buf_index + 0] = noise_val;
+
+            if (flags & FillGreen)
+                buf[buf_index + 1] = noise_val;
+
+            if (flags & FillRed)
+                buf[buf_index + 2] = noise_val;
+        }
+    }
+}
+
+void Extension::fill_buffer_with_noise_bgr32(uint8_t* buf, int width, int height, int pitch, float xoffset, float yoffset, float zoffset, int flags) {
+    uint8_t noise_val = 0;
+
+    for (int y = 0; y < height; y++) {
+        for (int x = 0; x < width; x++) {
+            if (flags & Only2D)
+                noise_val = (uint8_t)get_noise2D(x + xoffset, y + yoffset);
+            else
+                noise_val = (uint8_t)get_noise3D(x + xoffset, y + yoffset, zoffset);
+
+            const size_t buf_index = (x * 4) + (y * pitch);
 
             if (flags & FillBlue)
                 buf[buf_index + 0] = noise_val;
@@ -299,8 +350,11 @@ void Extension::fill_buffer_with_noise_rgba32(uint8_t* buf, int width, int heigh
 void Extension::fill_buffer_with_noise(uint8_t* buf, int width, int height, int pitch, PixelFormat format, float xoffset, float yoffset, float zoffset, int flags) {
     // auto start = std::chrono::high_resolution_clock::now();
 
+    // FIXME: Rethink
+
     switch (format) {
     case PixelFormat::BGR24:  fill_buffer_with_noise_bgr24 (buf, width, height, pitch, xoffset, yoffset, zoffset, flags); break;
+    case PixelFormat::BGR32:  fill_buffer_with_noise_bgr32 (buf, width, height, pitch, xoffset, yoffset, zoffset, flags); break;
     case PixelFormat::A8:     fill_buffer_with_noise_a8    (buf, width, height, pitch, xoffset, yoffset, zoffset, flags); break;
     case PixelFormat::RGBA32: fill_buffer_with_noise_rgba32(buf, width, height, pitch, xoffset, yoffset, zoffset, flags); break;
     }
