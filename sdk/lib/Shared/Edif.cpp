@@ -675,7 +675,7 @@ Edif::SDK::SDK(mv * mV, json_value &_json) : json (_json)
 			!_stricmp(about["URL"], "https://www.example.com/");
 		if (!unchangedPropsFound)
 		{
-			std::string copy = about["Copyright"];
+			std::string copy(about["Copyright"]);
 			std::transform(copy.begin(), copy.end(), copy.begin(),
 				[](unsigned char c) { return std::tolower(c); });
 			unchangedPropsFound = copy.rfind("by your name"sv) != std::string::npos;
