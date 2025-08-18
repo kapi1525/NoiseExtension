@@ -7,6 +7,8 @@
 #include <iostream>
 #include <regex>
 
+// TODO: rework to not use C++ includes, cause they increase the build time by a lot...
+// Especialy regex
 
 
 // acecalltablegen <input ACECallTable template> <Extension.cpp path> <Extension.hpp path> <output ACECallTable_Macro.cpp>

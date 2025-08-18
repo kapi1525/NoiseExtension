@@ -24,10 +24,18 @@ export default class CRunNoise extends CRunWasmExtWrapper {
 
             const surface_id = 0x53555246; // (('S'<<24)|('U'<<16)|('R'<<8)|('F'));
             if(ext.hoIdentifier != surface_id) {
+                console.warn("Noise - Fill surface object image with noise action - Passed object was not a surface object.");
+                console.warn(ext);
                 return;
             }
 
             const surface = ext.ext as any;
+
+            if(surface.oSurf.selectedImage < 0) {
+                console.warn("Noise - Fill surface object image with noise action - Surface object has no selected image.");
+                console.warn(ext);
+                return;
+            }
 
             // Get surface object rendering context
             let currentImage = surface.oSurf.imageList[surface.oSurf.selectedImage] as any;

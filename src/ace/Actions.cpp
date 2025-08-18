@@ -175,13 +175,26 @@ void Extension::fill_surface_obj_with_noise(RunObject* surface_obj, float xoffse
 
     // Make sure the object is a surface
     if(surface_obj == nullptr || surface_obj->get_rHo()->Identifier != SurfaceID) {
+	    #if EditorBuild
+        DarkEdif::MsgBox::WarningOK(_T("Fill surface object image with noise action"), _T("Passed object was not a surface object."));
+        #endif
         return;
     }
 
     SURFACE& surface_rd = *(SURFACE*)surface_obj;
 
     // Make sure the surface slected image is valid
-    if(surface_rd.selected == nullptr || surface_rd.selectedIsValid == false) {
+    if(surface_rd.selected == nullptr) {
+	    #if EditorBuild
+        DarkEdif::MsgBox::WarningOK(_T("Fill surface object image with noise action"), _T("Surface object has no selected image."));
+        #endif
+        return;
+    }
+
+    if(surface_rd.selectedIsValid == false) {
+	    #if EditorBuild
+        DarkEdif::MsgBox::WarningOK(_T("Fill surface object image with noise action"), _T("Surface object image is not valid."));
+        #endif
         return;
     }
 
@@ -201,7 +214,9 @@ void Extension::fill_surface_obj_with_noise(RunObject* surface_obj, float xoffse
         uint8_t* buf = target->LockBuffer();
 
         if(buf == nullptr) {
-            DarkEdif::MsgBox::Error(_T("Unsupported"), _T("LockBuffer() failed, cSurface type unsupported?"), target_d);
+	        #if EditorBuild
+            DarkEdif::MsgBox::Error(_T("Fill surface object image with noise action"), _T("LockBuffer() failed, cSurface type unsupported? This is probably a bug."), target_d);
+            #endif
             return;
         }
 
@@ -213,7 +228,9 @@ void Extension::fill_surface_obj_with_noise(RunObject* surface_obj, float xoffse
         case 32:
             format = PixelFormat::BGR32; break;
         default:
-            DarkEdif::MsgBox::Error(_T("Unsupported"), _T("Unsupported cSurface depth = %d"), target_d);
+	        #if EditorBuild
+            DarkEdif::MsgBox::Error(_T("Fill surface object image with noise action"), _T("Unsupported cSurface depth: %d. This is probably a bug."), target_d);
+            #endif
             return;
         }
 
@@ -230,7 +247,9 @@ void Extension::fill_surface_obj_with_noise(RunObject* surface_obj, float xoffse
         uint8_t* buf = target->LockAlpha();
 
         if(buf == nullptr) {
-            DarkEdif::MsgBox::Error(_T("Unsupported"), _T("LockAlpha() failed, cSurface type unsupported?"), target_d);
+	        #if EditorBuild
+            DarkEdif::MsgBox::Error(_T("Fill surface object image with noise action"), _T("LockAlpha() failed, cSurface type unsupported? This is probably a bug."), target_d);
+            #endif
             return;
         }
 
