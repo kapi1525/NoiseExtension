@@ -4,6 +4,13 @@ on:
   gollum:
   workflow_dispatch:
 
+
+# Cancel already running ci on a new push
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+
 jobs:
   Wiki:
     runs-on: ubuntu-latest
