@@ -645,7 +645,7 @@
             },
             {
                 "Title": "Cellular distance function",
-                "Info": "Function used to create a cell for a given point. Only noise type cellular.\n(Default: \"EuclideanSq\")",
+                "Info": "Function used to create a cell for a given point. Only noise type \"Cellular\".\n(Default: \"EuclideanSq\")",
                 "Type": "Combo Box",
                 "DefaultState": "EuclideanSq",
                 "Items": [
@@ -657,7 +657,7 @@
             },
             {
                 "Title": "Cellular return type",
-                "Info": "What value should cellular function return.\n(Default: \"Distance\")",
+                "Info": "What value should cellular function return. Only noise type \"Cellular\".\n(Default: \"Distance\")",
                 "Type": "Combo Box",
                 "DefaultState": "Distance",
                 "Items": [
@@ -672,7 +672,7 @@
             },
             {
                 "Title": "Cellular jitter",
-                "Info": "Maximum distance cell point can move from grid position.\n(Default: 1.0)",
+                "Info": "Maximum distance cell point can move from grid position. Only noise type \"Cellular\".\n(Default: 1.0)",
                 "Type": "Editbox Float",
                 "DefaultState": 1.0
             },
@@ -683,7 +683,7 @@
             },
             {
                 "Title": "Domain warp type",
-                "Info": "Algorythm for generating noise thats used to warp returned noise values, creating more random results.\n(Default: \"Disabled\")",
+                "Info": "Algorythm for generating noise thats used to warp returned noise values, creating more random, warped results.\n(Default: \"Disabled\")",
                 "Type": "Combo Box",
                 "DefaultState": "Disabled",
                 "Items": [
