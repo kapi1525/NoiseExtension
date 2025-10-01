@@ -201,7 +201,7 @@ void Edif::Runtime::GenerateEvent(int EventID)
 	// Fix event group being incorrect after event finishes.
 	// This being incorrect doesn't have any major effects, as the event parsing part of
 	// runtime sets rhEventGroup based on a local variable evgPtr, which it relies on instead
-	eventGroup* const evg = rhPtr->EventGroup;
+	EventGroupMP* const evg = rhPtr->EventGroup;
 
 	// Fix rh2ActionOn - affects whether object selection is modified by expressions, or used
 	const bool rh2ActOn = rhPtr->rh2.ActionOn;
@@ -669,7 +669,7 @@ event2* RunHeader::GetRH4ActionStart() {
 bool RunHeader::GetRH2ActionOn() {
 	return rh2.ActionOn != 0;
 }
-eventGroup* RunHeader::get_EventGroup() {
+EventGroupMP * RunHeader::get_EventGroup() {
 	return EventGroup;
 }
 std::size_t RunHeader::GetNumberOi() {
@@ -853,27 +853,27 @@ short qualToOi::get_OiList(std::size_t idx) {
 	return OiAndOiList[idx * 2 + 1];
 }
 
-std::uint8_t eventGroup::get_evgNCond() {
+std::uint8_t EventGroupMP::get_evgNCond() {
 	return evgNCond;
 }
-std::uint8_t eventGroup::get_evgNAct() {
+std::uint8_t EventGroupMP::get_evgNAct() {
 	return evgNAct;
 }
-std::uint16_t eventGroup::get_evgIdentifier() {
+std::uint16_t EventGroupMP::get_evgIdentifier() {
 	return evgIdentifier;
 }
-std::uint16_t eventGroup::get_evgInhibit() {
+std::uint16_t EventGroupMP::get_evgInhibit() {
 	return evgInhibit;
 }
 
-event2 * eventGroup::GetCAByIndex(size_t index)
+event2 * EventGroupMP::GetCAByIndex(std::size_t index)
 {
 	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
-	if (index >= (size_t)(evgNCond + evgNAct))
+	if (index >= (std::size_t)(evgNCond + evgNAct))
 		return nullptr;
 
 	event2 * ret = (event2*)(&this[1]);
-	for (size_t i = 0; i < index && ret; i++) {
+	for (std::size_t i = 0; i < index && ret; ++i) {
 		ret = ret->Next();
 	}
 	return ret;
@@ -1091,7 +1091,7 @@ void Edif::Runtime::GenerateEvent(int EventID)
 	// This being incorrect doesn't have any major effects, as the event parsing part of
 	// runtime sets this rhEventGroup based on a local variable evgPtr, which it relies on instead
 	// We won't be using this while we're off running this event, so we can swap the reference out to a local
-	std::unique_ptr<eventGroup> evg = rhPtr->eventProgram ? std::move(rhPtr->eventProgram->eventGrp) : nullptr;
+	std::unique_ptr<EventGroupMP> evg = rhPtr->eventProgram ? std::move(rhPtr->eventProgram->eventGrp) : nullptr;
 
 	// Cached variables to do with object selection will be invalidated by this new event
 	rhPtr->InvalidatedByNewGeneratedEvent();
@@ -1596,9 +1596,9 @@ event2 * RunHeader::GetRH4ActionStart() {
 		if (!rh4ActStart)
 		{
 			// Assume EventGroup is out of date if curCEvent is, and reset it too
-			if (EventGroup.has_value())
+			if (evntGroup.has_value())
 			{
-				EventGroup.reset();
+				evntGroup.reset();
 				// We load eventgroup from eventProgram, which is tied to the frame so program should be valid
 				get_EventProgram()->eventGrp.reset();
 				threadEnv->DeleteGlobalRef(runtime->curRH4ActStart.ref);
@@ -1630,9 +1630,9 @@ event2 * RunHeader::GetRH4ActionStart() {
 	if (!rh4ActStart || rh4ActStart->me.ref != runtime->curCEvent.ref)
 	{
 		// Assume EventGroup is out of date if curCEvent is, and reset it too
-		if (EventGroup.has_value())
+		if (evntGroup.has_value())
 		{
-			EventGroup.reset();
+			evntGroup.reset();
 			// We load eventgroup from eventProgram, which is tied to the frame so program should be valid
 			get_EventProgram()->eventGrp.reset();
 		}
@@ -1679,8 +1679,8 @@ jfieldID RunHeader::rh4TokensFieldID, RunHeader::rh4CurTokenFieldID,
 
 void RunHeader::InvalidatedByNewGeneratedEvent()
 {
-	if (EventGroup)
-		EventGroup.reset();
+	if (evntGroup)
+		evntGroup.reset();
 	if (eventProgram)
 		eventProgram->InvalidatedByNewGeneratedEvent();
 	if (OiList.valid())
@@ -1717,7 +1717,7 @@ void RunHeader::InvalidatedByNewGeneratedEvent()
 // Static definitions - default inited to zero
 jfieldID CEventProgram::rh4ActStartFieldID, CEventProgram::rh2ActionOnFieldID;
 
-eventGroup * CEventProgram::get_eventGroup() {
+EventGroupMP * CEventProgram::get_eventGroup() {
 	LOGV(_T("Running %s()."), _T(__FUNCTION__));
 	if (!eventGrp)
 	{
@@ -1728,7 +1728,7 @@ eventGroup * CEventProgram::get_eventGroup() {
 		// This can be null, if running events from Handle tick.
 		if (eventGroupJava != nullptr)
 		{
-			eventGrp = std::make_unique<eventGroup>(eventGroupJava, runtime);
+			eventGrp = std::make_unique<EventGroupMP>(eventGroupJava, runtime);
 			LOGV(_T("Running %s() - got a new eventGroup of %p, going to store it in eventGroup struct at %p."), _T(__FUNCTION__), eventGroupJava, eventGrp.get());
 		}
 	}
@@ -1772,8 +1772,8 @@ void CEventProgram::SetEventGroup(jobject grp)
 	JNIExceptionCheck();
 	mainThreadJNIEnv->SetObjectField(me, rhEventProgFieldID, grp);
 	JNIExceptionCheck();
-	eventGrp = grp ? std::make_unique<eventGroup>(grp, runtime) : nullptr;
-	runtime->ObjectSelection.pExtension->rhPtr->EventGroup = grp ? eventGrp.get() : nullptr;
+	eventGrp = grp ? std::make_unique<EventGroupMP>(grp, runtime) : nullptr;
+	runtime->ObjectSelection.pExtension->rhPtr->evntGroup = grp ? eventGrp.get() : nullptr;
 }
 
 int CEventProgram::get_rh2EventCount() {
@@ -1897,16 +1897,16 @@ void CEventProgram::SetRH2ActionOn(bool newSet) {
 	JNIExceptionCheck();
 }
 
-eventGroup * RunHeader::get_EventGroup() {
+EventGroupMP * RunHeader::get_EventGroup() {
 	LOGV(_T("Running %s()."), _T(__FUNCTION__));
 
-	if (!EventGroup.has_value() || !EventGroup.value())
+	if (!evntGroup.has_value() || !this->evntGroup.value())
 	{
 		LOGV(_T("Running %s() - eventgroup out of date, updating it."), _T(__FUNCTION__));
-		EventGroup = get_EventProgram()->get_eventGroup();
+		evntGroup = get_EventProgram()->get_eventGroup();
 	}
 
-	return EventGroup.value();
+	return evntGroup.value();
 }
 
 std::size_t RunHeader::GetNumberOi() {
@@ -2231,7 +2231,7 @@ CRunAppMultiPlat::CRunAppMultiPlat(jobject me, Edif::Runtime* runtime) :
 // static definition - zero inited
 jfieldID event2::evtFlagsFieldID, event2::evtSizeFieldID, event2::evtCodeFieldID, event2::evtOiFieldID;
 
-event2::event2(eventGroup * owner, int index, jobject evt, Edif::Runtime * run) :
+event2::event2(EventGroupMP * owner, int index, jobject evt, Edif::Runtime * run) :
 	me(evt, "event2 global"), runtime(run), owner(owner), index(index)
 {
 	meClass = global(threadEnv->GetObjectClass(me), "event2 class");
@@ -2494,15 +2494,8 @@ const TCHAR* objInfoList::get_name() {
 	LOGV(_T("Running %s()."), _T(__FUNCTION__));
 	if (!name.has_value())
 	{
-		JavaAndCString str;
-		str.ctx = (jstring)mainThreadJNIEnv->GetObjectField(me, nameFieldID);
-		JNIExceptionCheck();
-		str.ptr = mainThreadJNIEnv->GetStringUTFChars((jstring)str.ctx, NULL);
-		name = str.ptr ? std::string(str.ptr) : std::string();
-		JNIExceptionCheck();
-
-		threadEnv->DeleteLocalRef((jobject)str.ctx);
-		JNIExceptionCheck();
+		JavaAndCString str((jstring)mainThreadJNIEnv->GetObjectField(me, nameFieldID));
+		name = str.str();
 	}
 	return name.value().c_str();
 }
@@ -2749,7 +2742,7 @@ qualToOi::qualToOi(qualToOi&& q) {
 	oiAndOiListJava = std::move(q.oiAndOiListJava);
 }
 
-std::uint8_t eventGroup::get_evgNCond() {
+std::uint8_t EventGroupMP::get_evgNCond() {
 	LOGV(_T("Running %s()."), _T(__FUNCTION__));
 	if (!evgNCond.has_value())
 	{
@@ -2758,7 +2751,7 @@ std::uint8_t eventGroup::get_evgNCond() {
 	}
 	return evgNCond.value();
 }
-std::uint8_t eventGroup::get_evgNAct() {
+std::uint8_t EventGroupMP::get_evgNAct() {
 	LOGV(_T("Running %s()."), _T(__FUNCTION__));
 	if (!evgNAct.has_value())
 	{
@@ -2767,7 +2760,7 @@ std::uint8_t eventGroup::get_evgNAct() {
 	}
 	return evgNAct.value();
 }
-std::int16_t eventGroup::get_evgIdentifier() {
+std::int16_t EventGroupMP::get_evgIdentifier() {
 	LOGV(_T("Running %s()."), _T(__FUNCTION__));
 	if (!evgIdentifier.has_value())
 	{
@@ -2778,7 +2771,7 @@ std::int16_t eventGroup::get_evgIdentifier() {
 	return evgIdentifier.value();
 }
 
-EventGroupFlags eventGroup::get_evgFlags() {
+EventGroupFlags EventGroupMP::get_evgFlags() {
 	LOGV(_T("Running %s()."), _T(__FUNCTION__));
 	if (!evgFlags.has_value())
 	{
@@ -2788,7 +2781,7 @@ EventGroupFlags eventGroup::get_evgFlags() {
 	return evgFlags.value();
 }
 
-std::unique_ptr<event2> eventGroup::GetCAByIndex(std::size_t index) {
+std::unique_ptr<event2> EventGroupMP::GetCAByIndex(std::size_t index) {
 	LOGV(_T("Running %s()."), _T(__FUNCTION__));
 	if (evgEvents.invalid())
 		GetEventList(); // ignore return
@@ -2801,7 +2794,7 @@ std::unique_ptr<event2> eventGroup::GetCAByIndex(std::size_t index) {
 	return std::make_unique<event2>(this, index, item, runtime);
 }
 
-jobjectArray eventGroup::GetEventList() {
+jobjectArray EventGroupMP::GetEventList() {
 	LOGV(_T("Running %s()."), _T(__FUNCTION__));
 	if (evgEvents.invalid())
 	{
@@ -2818,11 +2811,11 @@ jobjectArray eventGroup::GetEventList() {
 
 
 // Static definition - default inited to zero, i.e. nullptr
-jfieldID eventGroup::evgNCondFieldID, eventGroup::evgNActFieldID,
-	eventGroup::evgFlagsFieldID, eventGroup::evgLineFieldID,
-	eventGroup::evgEventsFieldID;
-eventGroup::eventGroup(jobject me, Edif::Runtime * runtime) :
-	me(me, "eventGroup ctor"), runtime(runtime)
+jfieldID EventGroupMP::evgNCondFieldID, EventGroupMP::evgNActFieldID,
+	EventGroupMP::evgFlagsFieldID, EventGroupMP::evgLineFieldID,
+	EventGroupMP::evgEventsFieldID;
+EventGroupMP::EventGroupMP(jobject me, Edif::Runtime * runtime) :
+	me(me, "EventGroupMP ctor"), runtime(runtime)
 {
 	meClass = global(threadEnv->GetObjectClass(me), "eventGroup class");
 	JNIExceptionCheck();
@@ -3103,8 +3096,8 @@ objInfoList* RunHeader::GetOIListByIndex(std::size_t index)
 event2* RunHeader::GetRH4ActionStart() {
 	return (event2*)((CRun*)this)->rhEvtProg->rh4ActionStart;
 }
-eventGroup* RunHeader::get_EventGroup() {
-	return (eventGroup*)((CRun*)this)->rhEvtProg->rhEventGroup;
+FusionInternals::EventGroupMP* RunHeader::get_EventGroup() {
+	return (EventGroupMP*)((CRun*)this)->rhEvtProg->rhEventGroup;
 }
 
 std::size_t RunHeader::GetNumberOi() {
@@ -3252,23 +3245,23 @@ short objInfoList::get_QualifierByIndex(std::size_t index) const {
 	return ((CObjInfo*)this)->oilQualifiers[index];
 }
 
-std::uint8_t eventGroup::get_evgNCond() const {
-	return ((eventGroup2*)this)->evgNCond;
+std::uint8_t EventGroupMP::get_evgNCond() const {
+	return ((tagEVG*)this)->evgNCond;
 }
-std::uint8_t eventGroup::get_evgNAct() const {
-	return ((eventGroup2*)this)->evgNAct;
+std::uint8_t EventGroupMP::get_evgNAct() const {
+	return ((tagEVG*)this)->evgNAct;
 }
-std::uint16_t eventGroup::get_evgIdentifier() const {
-	return ((eventGroup2*)this)->evgFree;
+std::uint16_t EventGroupMP::get_evgIdentifier() const {
+	return ((tagEVG*)this)->evgFree;
 }
-std::uint16_t eventGroup::get_evgInhibit() const {
-	return *(std::uint16_t*)&((eventGroup2*)this)->evgInhibit;
+std::uint16_t EventGroupMP::get_evgInhibit() const {
+	return *(std::uint16_t*)&((tagEVG*)this)->evgInhibit;
 }
 
-event2* eventGroup::GetCAByIndex(size_t index)
+event2* EventGroupMP::GetCAByIndex(size_t index)
 {
 	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
-	if (index >= (size_t)(((eventGroup2*)this)->evgNCond) + ((eventGroup2*)this)->evgNAct)
+	if (index >= (size_t)(((tagEVG*)this)->evgNCond) + ((eventGroup*)this)->evgNAct)
 		return nullptr;
 
 	event2* ret = (event2*)(&((event2*)this)[1]);
@@ -3416,7 +3409,7 @@ objInfoList* RunHeader::GetOIListByIndex(std::size_t index)
 }
 event2* RunHeader::GetRH4ActionStart() {
 }
-eventGroup* RunHeader::get_EventGroup() {
+EventGroupMP* RunHeader::get_EventGroup() {
 }
 
 std::size_t RunHeader::GetNumberOi() {
@@ -3514,16 +3507,16 @@ void objInfoList::set_EventCountOR(int ec) {
 short objInfoList::get_QualifierByIndex(std::size_t index) /*const FIXME: why?*/ {
 }
 
-std::uint8_t eventGroup::get_evgNCond() /*const FIXME: why?*/ {
+std::uint8_t EventGroupMP::get_evgNCond() /*const FIXME: why?*/ {
 }
-std::uint8_t eventGroup::get_evgNAct() /*const FIXME: why?*/ {
+std::uint8_t EventGroupMP::get_evgNAct() /*const FIXME: why?*/ {
 }
-std::int16_t eventGroup::get_evgIdentifier() /*const FIXME: why?*/ {
+std::int16_t EventGroupMP::get_evgIdentifier() /*const FIXME: why?*/ {
 }
-// std::uint16_t eventGroup::get_evgInhibit() /*const FIXME: why?*/ {
+// std::uint16_t EventGroupMP::get_evgInhibit() /*const FIXME: why?*/ {
 // }
 
-std::unique_ptr<event2> eventGroup::GetCAByIndex(size_t index){
+std::unique_ptr<event2> EventGroupMP::GetCAByIndex(size_t index){
 }
 
 
