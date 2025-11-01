@@ -56,7 +56,7 @@ jobs:
         cp Noise.chm ./NoiseExtension/Help
 
     - name: Upload artifact
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v5
       with:
         name: Noise.chm
         path: Noise.chm
