@@ -8,6 +8,7 @@ sdk_ext_target_type = 'executable'
 
 sdk_link_args += [
     '-Wl,--no-entry',
+    '-Wl,--stack-first',    # Simplifies finding potential stack overflow errors, https://github.com/WebAssembly/wasi-sdk/issues/551
 ]
 
 if not get_option('debug')

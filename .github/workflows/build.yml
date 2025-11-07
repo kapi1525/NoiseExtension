@@ -107,8 +107,8 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      WASI_SDK_VERSION: wasi-sdk-27
-      BINARYEN_VERSION: version_123
+      WASI_SDK_VERSION: wasi-sdk-28
+      BINARYEN_VERSION: version_124
 
     steps:
       - name: Checkout
