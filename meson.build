@@ -18,7 +18,7 @@ project(
 )
 
 # Used by SDK meson.build file
-ext_author = 'Kacper Bugla'
+ext_author = 'Kacper Bugla (kapi1525)'
 ext_company = ext_author
 ext_build = 24
 
