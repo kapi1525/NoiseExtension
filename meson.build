@@ -1,7 +1,7 @@
 project(
     'Noise',
     'cpp', 'c',
-    version: '1.2.0-rc.1',
+    version: '1.2.0',
     license: 'MIT',
     default_options: {
         'cpp_std':       'c++17',
@@ -20,7 +20,7 @@ project(
 # Used by SDK meson.build file
 ext_author = 'Kacper Bugla (kapi1525)'
 ext_company = ext_author
-ext_build = 25
+ext_build = 26
 
 ext_examples_path = meson.current_source_dir() / 'Examples'
 ext_help_path = meson.current_source_dir() / 'Help'
