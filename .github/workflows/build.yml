@@ -52,7 +52,7 @@ jobs:
         run: meson install -C bin
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: Noise-windows-${{ matrix.config }}
           path: MFX
@@ -96,7 +96,7 @@ jobs:
         run: meson install -C bin
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: Noise-android-${{ matrix.target }}
           path: MFX
@@ -154,7 +154,7 @@ jobs:
         run: meson install -C bin
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: Noise-html
           path: MFX
@@ -230,7 +230,7 @@ jobs:
       - run: ls -R .
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: Noise-dist
           path: dist
