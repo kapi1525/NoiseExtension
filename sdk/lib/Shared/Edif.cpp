@@ -2077,8 +2077,7 @@ int Edif::GetDependency (char *& Buffer, size_t &Size, const TCHAR * FileExtensi
 
 	return DependencyWasResource;
 #elif defined(__ANDROID__) || defined(__APPLE__) || defined(__wasi__)
-	if (_tcsicmp(FileExtension, _T("json")))
-		return DependencyNotFound;
+	return DependencyNotFound;
 
 	// A start at reading JSON from file.
 #if 0

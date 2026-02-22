@@ -12,7 +12,7 @@ Extension::Extension(RunObject* const _rdPtr, const EDITDATA* const edPtr, const
 Extension::Extension(const EDITDATA* const edPtr, const jobject javaExtPtr, const CreateObjectInfo* const cobPtr) :
 	javaExtPtr(javaExtPtr, "Extension::javaExtPtr from Extension ctor"),
 	Runtime(this, this->javaExtPtr)
-#else
+#elif defined(__APPLE__)
 Extension::Extension(const EDITDATA* const edPtr, void* const objCExtPtr, const CreateObjectInfo* const cobPtr) :
 	objCExtPtr(objCExtPtr), Runtime(this, objCExtPtr)
 #elif defined(__wasi__)

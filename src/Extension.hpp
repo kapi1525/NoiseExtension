@@ -33,8 +33,12 @@ public:
 	Extension(RunObject* const rdPtr, const EDITDATA* const edPtr, const CreateObjectInfo* const cobPtr);
 #elif defined(__ANDROID__)
 	Extension(const EDITDATA* const edPtr, const jobject javaExtPtr, const CreateObjectInfo* const cobPtr);
-#else
+#elif defined(__APPLE__)
 	Extension(const EDITDATA* const edPtr, void* const objCExtPtr, const CreateObjectInfo* const cobPtr);
+#elif defined(__wasi__)
+    Extension(const EDITDATA* const edPtr, const CreateObjectInfo* const cobPtr);
+#else
+    #error Unsupported platform.
 #endif
 	~Extension();
 
