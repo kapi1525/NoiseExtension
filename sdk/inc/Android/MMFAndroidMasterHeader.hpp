@@ -15,7 +15,7 @@
 #include "../Shared/AllPlatformDefines.hpp"
 #include "../Shared/NonWindowsDefines.hpp"
 
-#include <asm-generic\posix_types.h>
+#include <asm-generic/posix_types.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <iostream>
@@ -1055,10 +1055,6 @@ struct ExpressionManager_Android;
 
 const int REFLAG_DISPLAY = 1;
 const int REFLAG_ONESHOT = 2;
-
-// Defined in DarkEdif.cpp with ASM instructions to embed the binary.
-extern char darkExtJSON[];
-extern unsigned darkExtJSONSize;
 
 // Undo the warning disabling from earlier
 #pragma clang diagnostic pop

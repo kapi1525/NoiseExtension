@@ -5658,8 +5658,13 @@ int DarkEdif::GetCurrentFusionEventNum(const Extension * const ext)
 	}
 
 	return threadEnv->CallIntMethod(ext->javaExtPtr, getEventIDMethod);
-#else // iOS
+#elif defined(__APPLE__)
 	return DarkEdifObjCFunc(PROJECT_TARGET_NAME_UNDERSCORES_RAW, getCurrentFusionEventNum)(ext->objCExtPtr);
+#elif defined(__wasi__)
+	// FIXME(wasm): STUB
+	return 0;
+#else
+	#error Unsupported platform.
 #endif
 }
 
@@ -5697,8 +5702,13 @@ std::tstring DarkEdif::MakePathUnembeddedIfNeeded(const Extension * ext, const s
 	JavaAndCString newPath((jstring)threadEnv->CallObjectMethod(ext->javaExtPtr, getEventIDMethod, origPath.javaRef));
 	// Copy the C++ memory out into its own variable
 	const std::string truePath(newPath.str());
-#else
+#elif defined(__APPLE__)
 	const std::string truePath = DarkEdifObjCFunc(PROJECT_TARGET_NAME_UNDERSCORES_RAW, makePathUnembeddedIfNeeded)(ext->objCExtPtr, std::string(filePath).c_str());
+#elif defined(__wasi__)
+	// FIXME: STUB
+	const std::string truePath = "";
+#else
+	#error Unsupported platform.
 #endif
 	if (filePath != truePath)
 		LOGV(_T("File path extracted from \"%s\" to \"%s\".\n"), std::tstring(filePath).c_str(), truePath.c_str());
@@ -6254,7 +6264,7 @@ void DarkEdif::LOGFInternal(PrintFHintInside const TCHAR * x, ...)
 	DarkEdif::MsgBox::Error(_T("Fatal error"), _T("%s"), buf);
 	std::abort();
 }
-#else // APPLE
+#elif defined(__APPLE__)
 
 #include <unistd.h>
 #include <sys/syscall.h>
@@ -6391,6 +6401,38 @@ void DarkEdif::LOGFInternal(PrintFHintInside const TCHAR * x, ...)
 	va_end(va);
 	exit(EXIT_FAILURE);
 }
+
+#elif defined(__wasi__)
+void DarkEdif::SetDataBreakpoint(const void* memory, std::size_t size, DataBreakpointType dbt /* = DataBreakpointType::Write */)
+{
+	// TODO(wasm): Check:
+	LOGE(_T("SetDataBreakpoint not possible on wasm.\n"));
+	(void)memory;
+	(void)size;
+	(void)dbt;
+	return;
+}
+
+int DarkEdif::MessageBoxA(WindowHandleType hwnd, const TCHAR * text, const TCHAR * caption, int iconAndButtons)
+{
+	// TODO(wasm): Implement using alert()
+	DarkEdif::Log(iconAndButtons, "Message box \"%s\" absorbed: \"%s\".", caption, text);
+	DarkEdif::BreakIfDebuggerAttached();
+}
+
+[[noreturn]]
+void DarkEdif::LOGFInternal(PrintFHintInside const TCHAR * x, ...)
+{
+	char buf[2048];
+	va_list va;
+	va_start(va, x);
+	vsprintf(buf, x, va);
+	DarkEdif::MsgBox::Error(_T("Fatal error"), _T("LOGF:\n%s"), buf);
+	va_end(va);
+	exit(EXIT_FAILURE);
+}
+#else
+	#error Unsupported platform.
 #endif
 
 
@@ -6447,6 +6489,8 @@ void DarkEdif::BreakIfDebuggerAttached()
 		return;
 #ifdef _WIN32
 	__debugbreak(); // DebugBreak() requires system symbols
+#elif defined(__wasi__)
+	JSImports::debug_break();
 #else
 	raise(SIGTRAP); // SIGTRAP will terminate process if no handler
 #endif
@@ -6775,7 +6819,7 @@ namespace DarkEdif
 
 		// To not make this ANSI ext clobber the debugger's text with replacement characters,
 		// we always talk to CF2.5+ with Wide characters
-		
+
 		// Move caret to end of Fusion debugger text
 		int curTextLen = GetWindowTextLengthW(CF25PlusEditBoxHandle);
 		// On error, default to passing -1, -1, which resets caret
@@ -8311,56 +8355,3 @@ void DarkEdif::Sleep(unsigned int milliseconds)
 }
 
 #endif
-
-
-
-// =====
-// Embed the minified JSON file in Android and iOS
-// =====
-
-// Causes the produced extension to include DarkExt.PostMinify.json.
-// Hat tip: https://stackoverflow.com/a/4910421
-// Also note https://github.com/graphitemaster/incbin/blob/master/incbin.h
-
-#ifdef __ANDROID__
-__asm__(".section .rodata				\n\
-	.global darkExtJSON					\n\
-	.type   darkExtJSON, %object		\n\
-	.align  4							\n\
-darkExtJSON:							\n\
-	.incbin \"DarkExt.PostMinify.json\"	\n\
-darkExtJSON_end:						\n\
-	.global darkExtJSONSize				\n\
-	.type   darkExtJSONSize, %object	\n\
-	.align  4							\n\
-darkExtJSONSize:						\n\
-	.int	darkExtJSON_end - darkExtJSON");
-#elif defined(__APPLE__)
-/**
- * @file incbin.h
- * @author Dale Weiler
- * @brief Utility for including binary files
- *
- * Facilities for including binary files into the current translation unit and
- * making use from them externally in other translation units.
- */
-
-INCBIN(PROJECT_TARGET_NAME_UNDERSCORES_RAW, _darkExtJSON, "DarkExt.PostMinify.json");
-
-// See https://stackoverflow.com/a/19725269
-// Note the file will NOT be transmitted to Mac unless it's set as a C/C++ header file.
-/*__asm__(".const_data					\n\
-	.global darkExtJSON					\n\
-	.align  4							\n\
-darkExtJSON:							\n\
-	.incbin \"DarkExt.PostMinify.json\"	\n\
-__asm__("darkExtJSON_end:						\n\
-	.global darkExtJSONSize				\n\
-	.align  4							\n\
-darkExtJSONSize:						\n\
-	.int	darkExtJSON_end - darkExtJSON");*/
-
-#endif
-// These are caused by the above ASM block. (these are also declared in the Android/iOS master header)
-// char darkExtJSON[];
-// unsigned darkExtJSONSize;

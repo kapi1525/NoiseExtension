@@ -767,7 +767,7 @@ ProjectFunc void JNICALL JNI_OnUnload([[maybe_unused]] JavaVM * vm, [[maybe_unus
 #endif // DARKEDIF_SIGNAL_HANDLERS
 }
 
-#else // iOS
+#elif defined(__APPLE__) // iOS
 #include "Extension.hpp"
 #include "MMF2Lib/CTexture.h"
 #include "MMF2Lib/CImage.h"
@@ -839,7 +839,78 @@ Extension* RunObject::GetExtension()
 	return (Extension *)DarkEdifObjCFunc(PROJECT_TARGET_NAME_UNDERSCORES_RAW, getCPtr)((CExtension *)this);
 }
 
-#endif // Apple
+#elif defined(__wasi__)
+
+
+ProjectFunc void* WASM_FUNC_EXPORT(wasm_malloc)(int size) {
+	return malloc(size);
+}
+
+ProjectFunc void WASM_FUNC_EXPORT(wasm_free)(void* ptr) {
+	free(ptr);
+}
+
+
+ProjectFunc void WASM_FUNC_EXPORT(init)() {
+	mv* mV = nullptr;
+	if (!Edif::SDK) {
+		LOGV("The SDK is being initialized.\n");
+		Edif::Init(mV, false);
+	}
+}
+
+ProjectFunc void WASM_FUNC_EXPORT(dealloc)() {
+	LOGV("The SDK is being freed.\n");
+}
+
+ProjectFunc int WASM_FUNC_EXPORT(get_number_of_conditions)() {
+	return CurLang["Conditions"].u.array.length;
+}
+
+ProjectFunc Extension* WASM_FUNC_EXPORT(create_run_object)(EDITDATA* edPtr, CreateObjectInfo* cob, int version) {
+	assert(version == Extension::Version);
+
+	Extension* extPtr = new Extension(edPtr, cob);
+
+	return extPtr;
+}
+
+ProjectFunc void WASM_FUNC_EXPORT(destroy_run_object)(Extension* extPtr, bool fast) {
+	delete extPtr;
+}
+
+ProjectFunc int16_t WASM_FUNC_EXPORT(handle_run_object)(Extension* extPtr) {
+	return (int16_t)extPtr->Handle();
+}
+
+ProjectFunc int16_t WASM_FUNC_EXPORT(display_run_object)(Extension* extPtr) {
+	return (int16_t)extPtr->Display();
+}
+
+ProjectFunc int16_t WASM_FUNC_EXPORT(pause_run_object)(Extension* extPtr) {
+	return extPtr->FusionRuntimePaused();
+}
+
+ProjectFunc int16_t WASM_FUNC_EXPORT(continue_run_object)(Extension* extPtr) {
+	return extPtr->FusionRuntimeContinued();
+}
+
+
+// stubs for exceptions
+// https://libcxxabi.llvm.org/spec.html
+// FIXME(wasm): Remove when wasi starts supporting exceptions. As of wasi-sdk 30 there is experimental exceptions support, but it requires building wasi-sdk from source.
+extern "C" void* __cxa_allocate_exception(size_t thrown_size) {
+	LOGE("__cxa_allocate_exception stub called. Aborting...");
+	abort();
+};
+extern "C" void __cxa_throw(void* thrown_exception, struct std::type_info * tinfo, void (*dest)(void*)) {
+	LOGE("__cxa_throw stub called. Aborting...");
+	abort();
+};
+
+#else
+	#error Unsupported platform.
+#endif
 
 
 #if DARKEDIF_DISPLAY_TYPE > DARKEDIF_DISPLAY_ANIMATIONS

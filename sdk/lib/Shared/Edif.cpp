@@ -326,7 +326,7 @@ int Edif::Init(mv * mV, bool fusionStartupScreen)
 	{
 		DarkEdif::Internal_WindowHandle = mV->HMainWin;
 		DarkEdif::IsFusion25 = ((mV->GetVersion() & MMFVERSION_MASK) == CFVERSION_25);
-		
+
 		// 2.0 uses floats for angles if it's a Direct3D display, Software or DirectDraw uses int
 		// Fusion 2.5 always uses floats, even in Software, and doesn't use DirectDraw at all
 		DarkEdif::IsHWAFloatAngles = DarkEdif::IsFusion25 || mvIsHWAVersion(mV) != FALSE;
@@ -370,7 +370,7 @@ int Edif::Init(mv * mV, bool fusionStartupScreen)
 			= (decltype(pIsWow64Process2))GetProcAddress(kernDll, "IsWow64Process2");
 		BOOL (WINAPI * pIsWow64Process)(HANDLE hProcess, _Out_ PBOOL Wow64Process)
 			= (decltype(pIsWow64Process))GetProcAddress(kernDll, "IsWow64Process");
-		
+
 		// If this Win10+ func is defined, use it to check if emulation is active
 		// This is the way to distinguish Windows ARM64.
 		if (pIsWow64Process2)
@@ -378,7 +378,7 @@ int Edif::Init(mv * mV, bool fusionStartupScreen)
 			USHORT procMachine, nativeMachine;
 			if (!pIsWow64Process2(curProc, &procMachine, &nativeMachine))
 				return DarkEdif::MsgBox::Error(_T("DarkEdif CPU detection error"), _T("Couldn't detect CPU arch: IsWow64Process2() error %u."), GetLastError()), -1;
-			
+
 			// If unknown process machine, it matches native machine, so we're not under emulation.
 			if (procMachine == IMAGE_FILE_MACHINE_UNKNOWN)
 				procMachine = nativeMachine;
@@ -973,7 +973,7 @@ long ActionOrCondition(void * Function, int ID, Extension * ext, const ACEInfo *
 		switch (ID)
 		{
 			#define DARKEDIF_ACE_CALL_TABLE_INDEX 0
-			#include "Temp_ACECallTable.cpp"
+			#include "Temp_ACECallTable.hpp"
 
 			default:
 				DarkEdif::MsgBox::Error(_T("ActionOrCondition error"), _T("Error calling condition ID %i, not found."), ID);
@@ -986,7 +986,7 @@ long ActionOrCondition(void * Function, int ID, Extension * ext, const ACEInfo *
 		{
 			#undef DARKEDIF_ACE_CALL_TABLE_INDEX
 			#define DARKEDIF_ACE_CALL_TABLE_INDEX 1
-			#include "Temp_ACECallTable.cpp"
+			#include "Temp_ACECallTable.hpp"
 
 			default:
 				DarkEdif::MsgBox::Error(_T("ActionOrCondition error"), _T("Error calling action ID %i, not found."), ID);
@@ -1254,7 +1254,7 @@ jmethodID ConditionOrActionManager_Android::getActOrCondParamInt,
 	ConditionOrActionManager_Android::getCndParamString, ConditionOrActionManager_Android::getCndParamFloat, ConditionOrActionManager_Android::getCndParamObject,
 	ConditionOrActionManager_Android::setCndRetInt, ConditionOrActionManager_Android::setCndRetFloat, ConditionOrActionManager_Android::setCndRetString;
 jfieldID ConditionOrActionManager_Android::getRH;
-#else
+#elif defined(__APPLE__)
 
 extern "C"
 {
@@ -1344,6 +1344,55 @@ struct ConditionOrActionManager_iOS : ACEParamReader
 	}
 };
 } // namespace FusionInternals
+#elif defined(__wasi__)
+
+struct ConditionOrActionManager_Html : ACEParamReader {
+	ConditionOrActionManager_Html() = default;
+
+	// Inherited via ACEParamReader
+	virtual std::int32_t GetInteger(int index, Params type) {
+		std::int32_t value = JSImports::get_integer(index);
+		LOGV(PROJECT_NAME _T(" param index: %d, type: integer, value: %d.\n"), index, value);
+		return value;
+	}
+
+	virtual float GetFloat(int index) {
+		float value = JSImports::get_float(index);
+		LOGV(PROJECT_NAME _T(" param index: %d, type: float, value: %f.\n"), index, value);
+		return value;
+	}
+
+	virtual const TCHAR* GetString(int index) {
+		size_t buffer_size = JSImports::get_string(nullptr, 0, index);
+		char* string = new char[buffer_size];
+
+		if(JSImports::get_string(string, buffer_size, index) >= buffer_size) {
+			LOGE("get_string from js land returned more bytes than the buffer size, expect problems.");
+		}
+		strings_to_free.push_back(string);
+
+		LOGV(PROJECT_NAME _T(" param index: %d, type: string, value: %s.\n"), index, string);
+		return string;
+	}
+
+	virtual long GetObject(int index) {
+		// FIXME(wasm): STUB
+		DarkEdif::Log(DARKEDIF_LOG_ERROR, "Object action/condition parameter is not supported in webassembly!");
+		return 0;
+	}
+
+	~ConditionOrActionManager_Html() {
+		// clean up memory after strings.
+		for (auto str : strings_to_free) {
+			delete str;
+		}
+	};
+
+protected:
+	std::vector<const char*> strings_to_free;
+};
+#else
+	#error Unsupported platform.
 #endif
 
 #ifdef _WIN32
@@ -1359,12 +1408,18 @@ ProjectFunc jlong conditionJump(JNIEnv *, jobject, jlong extPtr, int ID, CCndExt
 	ConditionOrActionManager_Android params(true, ext, (jobject)cndExt);
 	global<jobject> lastCEvent = ext->Runtime.curCEvent.swap_out(); // prevent subfunctions causing this variable to be incorrect
 	ext->Runtime.curCEvent = global((jobject)cndExt, "Current Cnd ext");
-#else
+#elif defined(__APPLE__)
 ProjectFunc long PROJ_FUNC_GEN(PROJECT_TARGET_NAME_UNDERSCORES_RAW, _conditionJump(void * cppExtPtr, int ID, void * cndExt))
 {
 	Extension* const ext = (Extension*)cppExtPtr;
 	ConditionOrActionManager_iOS params(true, ext, cndExt);
 	ext->Runtime.curCEvent = cndExt;
+#elif defined(__wasi__)
+ProjectFunc int32_t WASM_FUNC_EXPORT(condition_jump)(Extension* ext, int32_t ID)
+{
+	ConditionOrActionManager_Html params;
+#else
+	#error Unsupported platform.
 #endif
 	LOGV(PROJECT_NAME _T(" Condition ID %i start.\n"), ID);
 
@@ -1420,7 +1475,7 @@ ProjectFunc void actionJump(JNIEnv *, jobject, jlong extPtr, jint ID, CActExtens
 	const jobject lastAct = ext->Runtime.curRH4ActBasedOnCEventOnly;
 	ext->Runtime.curRH4ActBasedOnCEventOnly = ext->Runtime.curCEvent.ref;
 #define actreturn /* void */
-#else
+#elif defined(__APPLE__)
 ProjectFunc void PROJ_FUNC_GEN(PROJECT_TARGET_NAME_UNDERSCORES_RAW, _actionJump(void * cppExtPtr, int ID, void * act))
 {
 	Extension* ext = (Extension*)cppExtPtr;
@@ -1428,6 +1483,13 @@ ProjectFunc void PROJ_FUNC_GEN(PROJECT_TARGET_NAME_UNDERSCORES_RAW, _actionJump(
 	auto lastCEvent = ext->Runtime.curCEvent;
 	ext->Runtime.curCEvent = act;
 #define actreturn /* void */
+#elif defined(__wasi__)
+ProjectFunc void WASM_FUNC_EXPORT(action_jump)(Extension* ext, int32_t ID)
+{
+	ConditionOrActionManager_Html params;
+#define actreturn /* void */
+#else
+	#error Unsupported platform.
 #endif
 	LOGV(PROJECT_NAME _T(" Action ID %i start.\n"), ID);
 
@@ -1613,7 +1675,7 @@ struct ExpressionManager_Windows : ACEParamReader {
 	}
 
 };
-#else
+#elif defined(__APPLE__)
 // segregate to prevent two iOS exts conflicting
 inline namespace FusionInternals {
 struct ExpressionManager_iOS : ACEParamReader {
@@ -1672,6 +1734,72 @@ struct ExpressionManager_iOS : ACEParamReader {
 	}
 };
 } // namespace FusionInternals
+#elif defined(__wasi__)
+struct ExpressionManager_Html : ACEParamReader {
+	ExpressionManager_Html() = default;
+
+	void SetValue(int value) {
+		LOGV(PROJECT_NAME _T(" expression return, type: integer, value: %d.\n"), value);
+		JSImports::set_integer(value);
+	}
+
+	void SetValue(float value) {
+		LOGV(PROJECT_NAME _T(" expression return, type: float, value: %f.\n"), value);
+		JSImports::set_float(value);
+	}
+
+	void SetValue(const char* string) {
+		LOGV(PROJECT_NAME _T(" expression return, type: string, value: %s.\n"), string);
+		JSImports::set_string(string, strlen(string));
+	}
+
+	// Inherited via ACEParamReader
+	virtual std::int32_t GetInteger(int index, Params type) {
+		std::int32_t value = JSImports::get_integer(index);
+		LOGV(PROJECT_NAME _T(" param index: %d, type: integer, value: %d.\n"), index, value);
+		return value;
+	}
+
+	virtual float GetFloat(int index) {
+		float value = JSImports::get_float(index);
+		LOGV(PROJECT_NAME _T(" param index: %d, type: float, value: %f.\n"), index, value);
+		return value;
+	}
+
+	virtual const TCHAR* GetString(int index) {
+		size_t buffer_size = JSImports::get_string(nullptr, 0, index);
+		char* string = new char[buffer_size];
+
+		if(JSImports::get_string(string, buffer_size, index) >= buffer_size) {
+			LOGE("get_string from js land returned more bytes than the buffer size, expect problems.");
+		}
+		strings_to_free.push_back(string);
+
+		LOGV(PROJECT_NAME _T(" param index: %d, type: string, value: %s.\n"), index, string);
+		return string;
+	}
+
+	virtual long GetObject(int) {
+		// Expressions can't use object parameters
+		return 0;
+	}
+
+	void SetReturnType(ExpReturnType rt) {
+		// Do nothing. We only care on Windows.
+	}
+
+	~ExpressionManager_Html() {
+		// clean up memory after strings.
+		for (auto str : strings_to_free) {
+			delete str;
+		}
+	};
+
+protected:
+	std::vector<const char*> strings_to_free;
+};
+#else
+	#error Unsupported platform.
 #endif
 
 #ifdef _WIN32
@@ -1691,11 +1819,17 @@ ProjectFunc void expressionJump(JNIEnv *, jobject, jlong extPtr, jint ID, CNativ
 	// whereas an expresssion is a sub-variable of a CEvent.
 	//if (ext->Runtime.curCEvent.invalid())
 	//	ext->Runtime.curCEvent = global((jobject)expU, "Current Exp ext");
-#else
+#elif defined(__APPLE__)
 ProjectFunc void PROJ_FUNC_GEN(PROJECT_TARGET_NAME_UNDERSCORES_RAW, _expressionJump(void * cppExtPtr, int ID))
 {
 	Extension* ext = (Extension*)cppExtPtr;
 	ExpressionManager_iOS params(ext);
+#elif defined(__wasi__)
+ProjectFunc void WASM_FUNC_EXPORT(expression_jump)(Extension* ext, int32_t ID)
+{
+	ExpressionManager_Html params;
+#else
+	#error Unsupported platform.
 #endif
 
 	if (Edif::SDK->ExpressionFunctions.size() < (unsigned int)ID)
@@ -1854,7 +1988,7 @@ endFunc:
 		#ifndef __INTELLISENSE__
 		#undef DARKEDIF_ACE_CALL_TABLE_INDEX
 		#define DARKEDIF_ACE_CALL_TABLE_INDEX 2
-		#include "Temp_ACECallTable.cpp"
+		#include "Temp_ACECallTable.hpp"
 		#endif // __INTELLISENSE__
 		default:
 			DarkEdif::MsgBox::Error(_T("Expression error"), _T("Error calling expression: expression ID %i not found."), ID);
@@ -1882,8 +2016,18 @@ endFunc:
 #endif
 }
 
+// DarkExt.json
+#include "DarkExt.json.h"
+
 int Edif::GetDependency (char *& Buffer, size_t &Size, const TCHAR * FileExtension, int Resource)
 {
+	// PLatform independent, file bytes are stored inside a generated c header
+	if (_tcsicmp(FileExtension, _T("json")) == 0) {
+		Buffer = (char*)DarkExtJSON;
+		Size = DarkExtJSON_len;
+		return DependencyWasResource;
+	}
+
 #ifdef _WIN32
 	TCHAR Filename [MAX_PATH];
 	GetSiblingPath (Filename, FileExtension);
@@ -1932,22 +2076,10 @@ int Edif::GetDependency (char *& Buffer, size_t &Size, const TCHAR * FileExtensi
 		throw std::runtime_error("Could not lock resource");
 
 	return DependencyWasResource;
-#elif defined(__ANDROID__)
+#elif defined(__ANDROID__) || defined(__APPLE__) || defined(__wasi__)
 	if (_tcsicmp(FileExtension, _T("json")))
 		return DependencyNotFound;
 
-	Buffer = (char *)(void *) darkExtJSON;
-	Size = darkExtJSONSize;
-	return DependencyWasResource;
-#else
-	if (_tcsicmp(FileExtension, _T("json")))
-		return DependencyNotFound;
-
-#define COMBINE2(a,b) a ## b
-#define COMBINE(a,b) COMBINE2(a,b)
-	Buffer = (char *)(void *)COMBINE(PROJECT_TARGET_NAME_UNDERSCORES_RAW, _darkExtJSON);
-	Size = COMBINE(PROJECT_TARGET_NAME_UNDERSCORES_RAW, _darkExtJSONSize);
-	return DependencyWasResource;
 	// A start at reading JSON from file.
 #if 0
 	// https://stackoverflow.com/questions/25559996/using-resource-files-in-ndk/25560443#25560443
@@ -1976,6 +2108,8 @@ int Edif::GetDependency (char *& Buffer, size_t &Size, const TCHAR * FileExtensi
 	AAssetDir_close(assetDir);
 	return DependencyWasFile;
 #endif // File reading
+#else
+	#error Unsupported platform.
 #endif // _WIN32
 }
 
