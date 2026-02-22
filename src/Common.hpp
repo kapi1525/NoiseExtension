@@ -28,6 +28,4 @@ struct EDITDATA final
 };
 #pragma pack (pop)
 
-#include "FastNoiseLite.h"
-#include "SurfaceObject.hpp"
 #include "Extension.hpp"

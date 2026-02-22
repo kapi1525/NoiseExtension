@@ -25,6 +25,13 @@ if editor_build
 endif
 
 
+# Includes
+
+sdk_include += include_directories(
+    '..' / '..' / 'inc' / 'Windows',
+)
+
+
 # Dependencies
 
 sdk_deps += meson.get_compiler('cpp').find_library(

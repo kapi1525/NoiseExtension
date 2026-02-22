@@ -1,5 +1,9 @@
 #pragma once
 #include "DarkEdif.hpp"
+#include "FastNoiseLite.h"
+#include "SurfaceObject.hpp"
+
+
 
 class Extension final
 {

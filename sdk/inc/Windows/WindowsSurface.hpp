@@ -423,17 +423,17 @@ struct FusionD3DSurfDriverInfo final
 	// Device pointer, e.g. LPDIRECT3DDEVICE9, ID3D11Device *.
 	// @remarks Does not report as a live object in D3D11 Debug on end of app, as it's already deleted.
 	FusionD3DDevice D3DDevice;
-	
+
 
 	// @brief A direct pointer to a D3D texture in D3D8-9, but a pointer-to-pointer in D3D11.
 	//		  Only inited with cSurface if HWA_RenderTargetTexture type (which is D3D11 only),
 	//		  otherwise null and set on first blit. Not set for frame surface.
 	// @remarks
 	// For D3D9, it is a IDirect3DTexture9 *.
-	// 
+	//
 	// For D3D11, set to a ID3D11ShaderResourceView **. Get a ID3D11Texture2D * by calling GetResource.
 	// https://learn.microsoft.com/en-us/windows/win32/api/d3d11/ns-d3d11-cd3d11_texture2d_desc
-	// 
+	//
 	// CComPtr<ID3D11Texture2D> texture;
 	// (*((ID3D11ShaderResourceView **)x.m_ppD3DTexture))->GetResource((ID3D11Resource**)&texture);
 	FusionD3DTexture D3DTexture;

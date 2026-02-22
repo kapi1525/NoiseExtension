@@ -36,16 +36,17 @@ sdk_source = files(
     'Shared/Edif.Runtime.cpp',
     'Shared/json.cpp',
     'Shared/ObjectSelection.cpp',
+    'Shared/SurfaceMultiPlat.cpp',
 )
 
 
 # Includes
 
-sdk_include = include_directories(
+sdk_include = [include_directories(
     'Shared',
     '..' / 'inc',
     '..' / 'inc' / 'Shared',
-)
+)]
 
 
 # Dependencies
@@ -67,6 +68,7 @@ sdk_defines_common = [
     'UniBuild=' + unicode_build.to_int().to_string(),
     'MacBuild=0',
     'EXTENSION_VERSION=' + ext_build.to_string(),
+    'FUSION_INTERNAL_ACCESS',   # FIXME
 ]
 
 if get_option('debug')

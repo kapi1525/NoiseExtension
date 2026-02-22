@@ -2,9 +2,9 @@
 
 #if EditorBuild
 
+#include "Common.hpp"
 #include <functional>
 #include <map>
-#include "Common.hpp"
 
 
 
@@ -54,7 +54,7 @@ struct CustomPropertyReader : DarkEdif::Properties::PropertyReader {
     const DarkEdif::Properties::ConverterState* convState;
 
     // Start the property reader/converter. Return ConverterUnsuitable if the converter isn't usable.
-    void Initialise(DarkEdif::Properties::ConverterState& convState, DarkEdif::Properties::ConverterReturn* const convRet);
+    void Initialize(DarkEdif::Properties::ConverterState& convState, DarkEdif::Properties::ConverterReturn* const convRet);
 
     // Get property by ID.
     // Note that IDs will always be increasing, but you should program GetProperty() as if IDs can be skipped (non-monotonic).
@@ -64,7 +64,7 @@ struct CustomPropertyReader : DarkEdif::Properties::PropertyReader {
 
 
 
-void CustomPropertyReader::Initialise(DarkEdif::Properties::ConverterState& convState, DarkEdif::Properties::ConverterReturn* const convRet) {
+void CustomPropertyReader::Initialize(DarkEdif::Properties::ConverterState& convState, DarkEdif::Properties::ConverterReturn* const convRet) {
     this->convState = &convState;
 
     if(convState.oldEdPtrProps == nullptr && convState.oldEdPtr != nullptr && convState.oldEdPtr->eHeader.extVersion >= 13 && convState.oldEdPtr->eHeader.extVersion <= 20) {
@@ -76,7 +76,7 @@ void CustomPropertyReader::Initialise(DarkEdif::Properties::ConverterState& conv
 
 
 void CustomPropertyReader::GetProperty(size_t id, DarkEdif::Properties::ConverterReturn* const convRet) {
-    auto prop = CurLang["Properties"][id];
+    auto prop = CurLang["Properties"sv][id];
     auto version_id = convState->oldEdPtr->eHeader.extVersion;
 
     // Combobox options for properties
@@ -174,11 +174,11 @@ void CustomPropertyReader::GetProperty(size_t id, DarkEdif::Properties::Converte
     };
 
     try {
-        prop_map.at(DarkEdif::UTF8ToTString(std::string(prop["Title"])))();
+        prop_map.at(DarkEdif::UTF8ToTString(std::string(prop["Title"sv])))();
     }
     catch(std::out_of_range x) {
         // Load defaults from json so pre smart converter cant break anything
-        auto state = prop["DefaultState"];
+        auto state = prop["DefaultState"sv];
 
         switch(state.type) {
         case json_integer:
@@ -188,7 +188,7 @@ void CustomPropertyReader::GetProperty(size_t id, DarkEdif::Properties::Converte
             return ret_float(static_cast<const float>(state.u.dbl));
 
         case json_string:
-            return ret_str(state);
+            return ret_str(state.c_str());
 
         case json_none:
             return convRet->Return_Pass();
@@ -207,9 +207,9 @@ void CustomPropertyReader::GetPropertyCheckbox(size_t id, DarkEdif::Properties::
 }
 
 
-static CustomPropertyReader customPropertyReader;
 
 DarkEdif::Properties::PropertyReader* EDITDATA::UserConverter() {
+    static CustomPropertyReader customPropertyReader;
     return &customPropertyReader;
 }
 
