@@ -174,7 +174,7 @@ void Extension::fill_surface_obj_with_noise(RunObject* surface_obj, float xoffse
     #ifdef _WIN32
 
     // Make sure the object is a surface
-    if(surface_obj == nullptr || surface_obj->get_rHo()->Identifier != SurfaceID) {
+    if(surface_obj == nullptr || surface_obj->get_rHo()->get_Identifier() != SurfaceID) {
 	    #if EditorBuild
         DarkEdif::MsgBox::WarningOK(_T("Fill surface object image with noise action"), _T("Passed object was not a surface object."));
         #endif
@@ -257,7 +257,7 @@ void Extension::fill_surface_obj_with_noise(RunObject* surface_obj, float xoffse
         target->UnlockAlpha();
     }
 
-    surface_rd.rc.rcChanged = true;
+    surface_rd.rc.set_changed(true);
 
     #endif
 }
