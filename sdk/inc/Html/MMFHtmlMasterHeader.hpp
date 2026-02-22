@@ -21,9 +21,6 @@
 #include <iomanip>
 #include <stddef.h>
 
-#define SUBSTRIFY(X) #X
-#define STRIFY(X) #X
-
 void Sleep(unsigned int milliseconds);
 #define _CrtCheckMemory() /* no op */
 
@@ -667,8 +664,8 @@ struct mv {
 static int globalCount;
 
 // Some macro abuse, imports a function implemented in javascript.
-#define WASM_FUNC_IMPORT(module, name) __attribute__((import_module(STRIFY(module)))) __attribute__((import_name(STRIFY(name)))) name
-#define WASM_FUNC_EXPORT(name) __attribute__((export_name(STRIFY(name)))) name
+#define WASM_FUNC_IMPORT(module, name) __attribute__((import_module(DE_STRIFY(module)))) __attribute__((import_name(DE_STRIFY(name)))) name
+#define WASM_FUNC_EXPORT(name) __attribute__((export_name(DE_STRIFY(name)))) name
 
 struct ConditionOrActionManager_Html;
 struct ExpressionManager_Html;

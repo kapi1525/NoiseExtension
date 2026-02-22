@@ -3,8 +3,8 @@
 #include "resource.h"
 
 // Wraps str into double-quotes, like "str". This function cannot be defined via /D.
-#define SUB_STRIFY(X) #X
-#define STRIFY(X) SUB_STRIFY(X)
+#define DE_1STRIFY(X) #X
+#define DE_STRIFY(X) DE_1STRIFY(X)
 
 
 #define APSTUDIO_READONLY_SYMBOLS
@@ -54,12 +54,12 @@ BEGIN
 		BEGIN
 			VALUE "ProductName", PROJECT_NAME "\0"
 			VALUE "CompanyName", COMPANY_NAME "\0"
-			VALUE "FileDescription", PROJECT_NAME ", " STRIFY(CONFIG) ", v" EXTENSION_FANCY_VERSION ", build " STRIFY(EXTENSION_VERSION) ".\0"
+			VALUE "FileDescription", PROJECT_NAME ", " DE_STRIFY(CONFIG) ", v" EXTENSION_FANCY_VERSION ", build " DE_STRIFY(EXTENSION_VERSION) ".\0"
 			VALUE "FileVersion", "2.00" "\0"
 			VALUE "InternalName", PROJECT_TARGET_NAME ".mfx\0"
 			VALUE "LegalCopyright", "Copyright © 2025 " COMPANY_NAME "\0"
 			VALUE "OriginalFilename", PROJECT_TARGET_NAME ".mfx\0"
-			VALUE "ProductVersion", "v" EXTENSION_FANCY_VERSION ", build " STRIFY(EXTENSION_VERSION) ".\0"
+			VALUE "ProductVersion", "v" EXTENSION_FANCY_VERSION ", build " DE_STRIFY(EXTENSION_VERSION) ".\0"
 		END
 	END
 	BLOCK "VarFileInfo"

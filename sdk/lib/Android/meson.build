@@ -5,6 +5,8 @@ sdk_ext_name_suffix = 'so'
 sdk_android_ndk = meson.get_compiler('cpp').get_define('__NDK_MAJOR__', prefix: '#include <android/ndk-version.h>').to_int()
 
 
+# TODO: Port over ndk api check
+
 
 # Additional build arguments
 sdk_cpp_args += [
@@ -30,6 +32,8 @@ endif
 sdk_link_args += [
     '-static-libstdc++',
 ]
+
+# TODO: Link with correct renderer .so
 
 sdk_deps += meson.get_compiler('cpp').find_library('log')
 
