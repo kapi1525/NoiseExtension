@@ -4612,7 +4612,7 @@ rMvt* RunObject::get_rom() {
 }
 rAni* RunObject::get_roa() {
 }
-Sprite* RunObject::get_ros() {
+RunSprite* RunObject::get_ros() {
 }
 AltVals* RunObject::get_rov() {
 }

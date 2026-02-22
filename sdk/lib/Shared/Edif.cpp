@@ -1350,19 +1350,19 @@ struct ConditionOrActionManager_Html : ACEParamReader {
 	ConditionOrActionManager_Html() = default;
 
 	// Inherited via ACEParamReader
-	virtual std::int32_t GetInteger(int index, Params type) {
+	virtual std::int32_t GetIntegerParam(int index, Params type) {
 		std::int32_t value = JSImports::get_integer(index);
 		LOGV(PROJECT_NAME _T(" param index: %d, type: integer, value: %d.\n"), index, value);
 		return value;
 	}
 
-	virtual float GetFloat(int index) {
+	virtual float GetFloatParam(int index) {
 		float value = JSImports::get_float(index);
 		LOGV(PROJECT_NAME _T(" param index: %d, type: float, value: %f.\n"), index, value);
 		return value;
 	}
 
-	virtual const TCHAR* GetString(int index) {
+	virtual const TCHAR* GetStringParam(int index) {
 		size_t buffer_size = JSImports::get_string(nullptr, 0, index);
 		char* string = new char[buffer_size];
 
@@ -1375,7 +1375,7 @@ struct ConditionOrActionManager_Html : ACEParamReader {
 		return string;
 	}
 
-	virtual long GetObject(int index) {
+	virtual long GetObjectParam(int index) {
 		// FIXME(wasm): STUB
 		DarkEdif::Log(DARKEDIF_LOG_ERROR, "Object action/condition parameter is not supported in webassembly!");
 		return 0;
@@ -1754,19 +1754,19 @@ struct ExpressionManager_Html : ACEParamReader {
 	}
 
 	// Inherited via ACEParamReader
-	virtual std::int32_t GetInteger(int index, Params type) {
+	virtual std::int32_t GetIntegerParam(int index, Params type) {
 		std::int32_t value = JSImports::get_integer(index);
 		LOGV(PROJECT_NAME _T(" param index: %d, type: integer, value: %d.\n"), index, value);
 		return value;
 	}
 
-	virtual float GetFloat(int index) {
+	virtual float GetFloatParam(int index) {
 		float value = JSImports::get_float(index);
 		LOGV(PROJECT_NAME _T(" param index: %d, type: float, value: %f.\n"), index, value);
 		return value;
 	}
 
-	virtual const TCHAR* GetString(int index) {
+	virtual const TCHAR* GetStringParam(int index) {
 		size_t buffer_size = JSImports::get_string(nullptr, 0, index);
 		char* string = new char[buffer_size];
 
@@ -1779,7 +1779,7 @@ struct ExpressionManager_Html : ACEParamReader {
 		return string;
 	}
 
-	virtual long GetObject(int) {
+	virtual long GetObjectParam(int) {
 		// Expressions can't use object parameters
 		return 0;
 	}

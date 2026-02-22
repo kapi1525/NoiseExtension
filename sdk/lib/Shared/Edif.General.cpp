@@ -864,7 +864,7 @@ ProjectFunc void WASM_FUNC_EXPORT(dealloc)() {
 }
 
 ProjectFunc int WASM_FUNC_EXPORT(get_number_of_conditions)() {
-	return CurLang["Conditions"].u.array.length;
+	return CurLang["Conditions"sv].u.array.length;
 }
 
 ProjectFunc Extension* WASM_FUNC_EXPORT(create_run_object)(EDITDATA* edPtr, CreateObjectInfo* cob, int version) {
@@ -884,15 +884,24 @@ ProjectFunc int16_t WASM_FUNC_EXPORT(handle_run_object)(Extension* extPtr) {
 }
 
 ProjectFunc int16_t WASM_FUNC_EXPORT(display_run_object)(Extension* extPtr) {
+#if DARKEDIF_DISPLAY_TYPE == DARKEDIF_DISPLAY_MANUAL
 	return (int16_t)extPtr->Display();
+#endif
+	return 0;
 }
 
 ProjectFunc int16_t WASM_FUNC_EXPORT(pause_run_object)(Extension* extPtr) {
+#if PAUSABLE_EXTENSION
 	return extPtr->FusionRuntimePaused();
+#endif
+	return 0;
 }
 
 ProjectFunc int16_t WASM_FUNC_EXPORT(continue_run_object)(Extension* extPtr) {
+#if PAUSABLE_EXTENSION
 	return extPtr->FusionRuntimeContinued();
+#endif
+	return 0;
 }
 
 

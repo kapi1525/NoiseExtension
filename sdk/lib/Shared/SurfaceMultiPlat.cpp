@@ -37,7 +37,7 @@
 			int hotSpotX, int hotspotY,
 			int x, int y, int w, int h,
 			int shaderIndex, int inkEffect, int inkEffectParam);
-	#else // apple
+	#elif defined(__APPLE__)
 		#ifndef __INTELLISENSE__
 			#import "MMF2Lib/CBitmap.h"
 			#import "MMF2Lib/CImage.h"
@@ -53,7 +53,11 @@
 			#pragma clang diagnostic push
 			#pragma clang diagnostic ignored "-Wunreachable-code"
 		#endif
-	#endif // iOS/Mac
+	#elif defined(__wasi__)
+		// FIXME(wasm): stub
+	#else
+		#error Platform unsupported.
+	#endif
 #endif // not Windows
 
 DarkEdif::Rect::Rect(const std::int32_t right, const std::int32_t bottom) :
@@ -1086,7 +1090,7 @@ std::size_t DarkEdif::Surface::Internal_CreateMask(void* mask, const std::uint32
 	return surf->CreateMask((sMask *)mask, flags);
 #else
 	LOGF(_T("%sCannot create mask; not implemented on this platform.\n"), debugID);
-	return SIZE_T_MAX;
+	return SIZE_MAX;
 #endif
 }
 
@@ -1718,7 +1722,7 @@ DarkEdif::Surface::Surface(RunHeader* const rhPtr, bool needBitmapFuncs, bool ne
 	format = PixelFormat::ABGR;
 	hasGeometryCapacity = needBitmapFuncs;
 	hasTextCapacity = needTextFuncs;
-#else // apple
+#elif defined(__APPLE__) // apple
 	//img = [CImage alloc];
 	//[img initWithWidth: (int)width andHeight : (int)height] ;
 
@@ -1739,6 +1743,10 @@ DarkEdif::Surface::Surface(RunHeader* const rhPtr, bool needBitmapFuncs, bool ne
 		format = PixelFormat::ABGR;
 	else
 		format = PixelFormat::BGR;
+#elif defined(__wasi__)
+	// FIXME(wasm): stub
+#else
+	#error Unsupported platform.
 #endif
 
 	LOGI(_T("%sCreated a surface, describing as \"%s\".\n"), debugID, Describe().c_str());
@@ -1854,8 +1862,12 @@ std::tstring DarkEdif::Surface::Describe() const {
 	result << _T("cSurface 0x"sv) << (void*)surf;
 #elif defined(__ANDROID__)
 	result << _T("Java BMP ref 0x"sv) << (void *)textSurface.ref;
-#else // apple
+#elif defined(__APPLE__) // apple
 	result << _T("CBitmap 0x"sv) << (void*)bmp; // << _T(", CImage 0x") << (void*)img;
+#elif defined(__wasi__)
+	// FIXME(wasm): stub
+#else
+	#error Unsupported platform.
 #endif
 	result << _T(". Image ("sv) << GetSize()
 		<< _T("), "sv) << std::dec << sizeBytes << _T(" bytes, "sv);
@@ -1878,12 +1890,16 @@ std::tstring DarkEdif::Surface::Describe() const {
 std::size_t DarkEdif::Surface::GetWidth() const {
 #ifdef _WIN32
 	return (std::size_t)surf->GetWidth();
-#elif defined (__ANDROID__)
+#elif defined(__ANDROID__)
 	const jint width = threadEnv->CallIntMethod(bmp, bitmapGetWidthMethod);
 	JNIExceptionCheck();
 	return width;
-#else // apple
+#elif defined(__APPLE__)
 	return bmp->width;
+#elif defined(__wasi__)
+	// FIXME(wasm): stub
+#else
+	#error Platform unsupported.
 #endif
 }
 std::size_t DarkEdif::Surface::GetHeight() const {
@@ -1893,8 +1909,12 @@ std::size_t DarkEdif::Surface::GetHeight() const {
 	const jint height = threadEnv->CallIntMethod(bmp, bitmapGetHeightMethod);
 	JNIExceptionCheck();
 	return height;
-#else // apple
+#elif defined(__APPLE__)
 	return bmp->height;
+#elif defined(__wasi__)
+	// FIXME(wasm): stub
+#else
+	#error Platform unsupported.
 #endif
 }
 std::size_t DarkEdif::Surface::GetDepth() const {
@@ -2035,9 +2055,13 @@ DarkEdif::Surface::~Surface()
 	surf = nullptr;
 #elif defined(__ANDROID__)
 	// Should auto-free the global refs and delete the object by GC
-#else
+#elif defined(__APPLE__)
 	[bmp release];
 	bmp = nullptr;
+#elif defined(__wasi__)
+	// FIXME(wasm): stub
+#else
+	#error Platform unsupported.
 #endif
 }
 bool DarkEdif::Surface::CopySection(Rect srcRect, Surface& dest, Rect destRect,
@@ -2301,9 +2325,13 @@ bool DarkEdif::Surface::FillImageWith(const SurfaceFill& sf)
 		// Overwrites alpha as well
 		threadEnv->CallVoidMethod(bmp, bitmapEraseMethod, sf.solid.color);
 		JNIExceptionCheck();
-#else // apple
+#elif defined(__APPLE__)
 		// TODO: Alpha?
 		[bmp fillWithColor: sf.solid.color];
+#elif defined(__wasi__)
+	// FIXME(wasm): stub
+#else
+	#error Platform unsupported.
 #endif
 		WasAltered();
 		return true;

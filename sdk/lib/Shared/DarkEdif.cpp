@@ -5355,7 +5355,7 @@ void DarkEdif::FontInfoMultiPlat::SetFont(const jobject ptr) {
 	JavaAndCString str((jstring)threadEnv->GetObjectField(ptr, lfFaceName));
 	fontNameDesired = str.str();
 }
-#else // apple
+#elif defined(__APPLE__)
 DarkEdif::FontInfoMultiPlat::FontInfoMultiPlat(CFontInfo* ptr) {
 	cfontinfo = ptr;
 	SetFont(cfontinfo);
@@ -5369,7 +5369,10 @@ void DarkEdif::FontInfoMultiPlat::SetFont(const void * ptr2) {
 	strikeOut = ptr->lfStrikeOut != 0;
 	fontNameDesired = [ptr->lfFaceName UTF8String];
 }
-
+#elif defined(__wasi__)
+	// FIXME(wasm): stub
+#else
+	#error Platform unsupported.
 #endif
 
 DarkEdif::FontInfoMultiPlat::FontInfoMultiPlat() {
@@ -6459,7 +6462,7 @@ bool DarkEdif::IsDebuggerAttached()
 				return std::stoi(line.substr(10)) != 0;
 		// if no match, fall thru
 	}
-#else // APPLE
+#elif defined(__APPLE__)
 	// Apple is heavily sandboxed. This solution seems like it should work on non-jailbroken iOS.
 	// Other possible alternatives for Apple: getppid() != 1 or isatty(STDERR_FILENO)
 	int mib[4] = { CTL_KERN, KERN_PROC, KERN_PROC_PID, getpid() };
@@ -6470,7 +6473,11 @@ bool DarkEdif::IsDebuggerAttached()
 	if (!sysctl(mib, 4, &info, &size, nullptr, 0))
 		return (info.kp_proc.p_flag & P_TRACED) != 0;
 	LOGE(_T("Couldn't detect debugger: sysctl() returned error %d\n"), errno);
-#endif // Apple
+#elif defined(__wasi__)
+	// FIXME(wasm): stub
+#else
+	#error Platform unsupported.
+#endif
 
 #ifdef _DEBUG
 	// If debug, if debugger detect fails, we'll assume a debugger is present.

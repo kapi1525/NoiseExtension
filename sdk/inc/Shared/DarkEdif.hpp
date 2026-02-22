@@ -303,7 +303,7 @@ namespace DarkEdif {
 			// Win 11 is major ver 10, like Win10, but starts at build number 22000+
 			Win11 = 0x0A0055F0
 		};
-		
+
 		// OS version; compare with WinOSVersion enum, use NTDDI_XX defines
 		// or use OSVER(OSVersion), SPVER() for service pack, SUBVER() for sub-version like 22H2.
 		// https://learn.microsoft.com/en-gb/windows/win32/winprog/using-the-windows-headers?#:~:text=describe%20other%20macros
@@ -680,12 +680,16 @@ namespace DarkEdif {
 		FontInfoMultiPlat(jobject nativeFont);
 		// Creates a copy of font settings of this native font
 		void SetFont(const jobject nativeFont);
-#else // Apple
+#elif defined(__APPLE__)
 		CFontInfo* cfontinfo = nullptr;
 		// Creates a font info pointing to a native font
 		FontInfoMultiPlat(CFontInfo* nativeFont);
 		// Creates a copy of font settings of this native font
 		void SetFont(const void* const nativeFont);
+#elif defined(__wasi__)
+	// FIXME(wasm): stub
+#else
+	#error Platform unsupported.
 #endif
 #if TEXT_OEFLAG_EXTENSION
 		// Creates a runtime-usable font from a EDITDATA font, tying it to an ext
