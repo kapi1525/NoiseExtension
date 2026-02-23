@@ -68,7 +68,6 @@ sdk_defines_common = [
     'UniBuild=' + unicode_build.to_int().to_string(),
     'MacBuild=0',
     'EXTENSION_VERSION=' + ext_build.to_string(),
-    'FUSION_INTERNAL_ACCESS',   # FIXME
 ]
 
 if get_option('debug')

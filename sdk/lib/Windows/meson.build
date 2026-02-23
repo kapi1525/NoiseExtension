@@ -83,6 +83,7 @@ endif
 if meson.get_compiler('cpp').get_id() == 'msvc'
     sdk_cpp_args += [
         '/Zc:__cplusplus',
+        '/permissive',      # FIXME: Make this not needed
     ]
 endif
 
