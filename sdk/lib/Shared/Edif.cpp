@@ -5,17 +5,13 @@
 
 // Used for Win32 resource ID numbers
 #include "Resource.h"
+using namespace DarkEdif;
 
 // ============================================================================
 // GLOBAL DEFINES
 // Contains the definitions of all the Edif class global variables.
 // ============================================================================
-
-// Global SDK pointer
-namespace Edif {
-	class SDK;
-	class SDK * SDK = nullptr;
-}
+Edif::SDKClass * Edif::SDK = nullptr;
 
 // 2-char language code; EN, FR or JP, since that's all the Fusion versions.
 TCHAR Edif::LanguageCode[3];
@@ -29,20 +25,19 @@ bool Edif::IsEdittime;
 bool Edif::ExternalJSON;
 
 #ifdef __ANDROID__
-// Do not use everywhere! JNIEnv * are thread-specific. Use Edif::Runtime JNI functions to get a thread-local one.
-JNIEnv * mainThreadJNIEnv;
+// Declared master header, not for ext dev use
 JavaVM * global_vm;
+// Inits DarkEdif::Android internals
+namespace DarkEdif::Android { void Init_Internals(); }
 #endif
-namespace Edif {
-// Checks Fusion runtime is compatible with your extension.
-// In Runtime, this expression should not be called and always returns false.
-bool IS_COMPATIBLE(mv * v)
+
+#if EditorBuild
+// Checks Fusion runtime is compatible with your extension. Editor-only.
+bool Edif::IS_COMPATIBLE(mv * v)
 {
-#if RuntimeBuild
 	// mV is not valid at runtime; so someone's trying to use a Runtime MFX as Editor,
 	// which won't work anyway because Runtime MFX lacks A/C/E menus and such.
-	return false;
-#else
+
 	// No GetVersion function provided, abort
 	if (!v->GetVersion)
 		return false;
@@ -73,9 +68,8 @@ bool IS_COMPATIBLE(mv * v)
 	#else // TGFEXT
 		return true;
 	#endif
-#endif
 }
-}
+#endif // EditorBuild
 
 std::string Edif::CurrentFolder()
 {
@@ -99,145 +93,146 @@ void Edif::GetExtensionName(char * const writeTo)
 	strcpy(writeTo, PROJECT_NAME);
 }
 
-Params Edif::ReadActionOrConditionParameterType(const char * Text, bool &IsFloat)
+Params Edif::ReadActionOrConditionParameterType(const std::string_view &Text, bool &IsFloat)
 {
-	if (!_stricmp(Text, "Text") || !_stricmp(Text, "String"))
+	if (SVICompare(Text, "Text"sv) || SVICompare(Text, "String"sv))
 		return Params::String_Expression;
 
-	if (!_stricmp(Text, "Filename") || !_stricmp(Text, "File"))
+	if (SVICompare(Text, "Filename"sv) || SVICompare(Text, "File"sv))
 		return Params::Filename;
 
-	if (!_stricmp(Text, "Float"))
+	if (SVICompare(Text, "Float"sv))
 	{
 		IsFloat = true;
 		return Params::Expression;
 	}
 
-	if (!_stricmp(Text, "Integer"))
+	if (SVICompare(Text, "Integer"sv))
 		return Params::Expression;
 
-	if (!_stricmp(Text, "Unsigned Integer"))
+	if (SVICompare(Text, "Unsigned Integer"sv))
 		return Params::Expression;
 
-	if (!_stricmp(Text, "Object"))
+	if (SVICompare(Text, "Object"sv))
 		return Params::Object;
 
-	if (!_stricmp(Text, "Time"))
+	if (SVICompare(Text, "Time"sv))
 		return Params::Time;
 
-	if (!_stricmp(Text, "Position"))
+	if (SVICompare(Text, "Position"sv))
 		return Params::Position;
 
-	if (!_stricmp(Text, "Create"))
+	if (SVICompare(Text, "Create"sv))
 		return Params::Create;
 
-	if (!_stricmp(Text, "SysCreate"))
+	if (SVICompare(Text, "SysCreate"))
 		return Params::System_Create;
 
-	if (!_stricmp(Text, "Animation"))
+	if (SVICompare(Text, "Animation"))
 		return Params::Animation;
 
-	if (!_stricmp(Text, "Nop"))
+	if (SVICompare(Text, "Nop"))
 		return Params::NoP;
 
-	if (!_stricmp(Text, "Player"))
+	if (SVICompare(Text, "Player"))
 		return Params::Player;
 
-	if (!_stricmp(Text, "Every"))
+	if (SVICompare(Text, "Every"))
 		return Params::Every;
 
-	if (!_stricmp(Text, "Key"))
+	if (SVICompare(Text, "Key"))
 		return Params::Key;
 
-	if (!_stricmp(Text, "Speed"))
+	if (SVICompare(Text, "Speed"))
 		return Params::Speed;
 
-	if (!_stricmp(Text, "JoyDirection"))
+	if (SVICompare(Text, "JoyDirection"))
 		return Params::Joystick_Direction;
 
-	if (!_stricmp(Text, "Shoot"))
+	if (SVICompare(Text, "Shoot"))
 		return Params::Shoot;
 
-	if (!_stricmp(Text, "Zone"))
+	if (SVICompare(Text, "Zone"sv))
 		return Params::Playfield_Zone;
 
-	if (!_stricmp(Text, "Comparison"))
+	if (SVICompare(Text, "Comparison"sv))
 		return Params::Comparison;
 
-	if (!_stricmp(Text, "StringComparison"))
+	if (SVICompare(Text, "StringComparison"sv))
 		return Params::String_Comparison;
 
-	if (!_stricmp(Text, "Colour") || !_stricmp(Text, "Color"))
-		return Params::Colour;
+	if (SVICompare(Text, "Color"sv) || SVICompare(Text, "Colour"sv))
+		return Params::Color;
 
-	if (!_stricmp(Text, "Frame"))
+	if (SVICompare(Text, "Frame"sv))
 		return Params::Frame;
 
-	if (!_stricmp(Text, "SampleLoop"))
+	if (SVICompare(Text, "SampleLoop"sv))
 		return Params::Sample_Loop;
 
-	if (!_stricmp(Text, "MusicLoop"))
+	if (SVICompare(Text, "MusicLoop"sv))
 		return Params::Music_Loop;
 
-	if (!_stricmp(Text, "NewDirection"))
+	if (SVICompare(Text, "NewDirection"sv))
 		return Params::New_Direction;
 
-	if (!_stricmp(Text, "TextNumber"))
+	if (SVICompare(Text, "TextNumber"sv))
 		return Params::Text_Number;
 
-	if (!_stricmp(Text, "Click"))
+	if (SVICompare(Text, "Click"sv))
 		return Params::Click;
 
-	if (!_stricmp(Text, "Program"))
+	if (SVICompare(Text, "Program"sv))
 		return Params::Program;
 
-	if (!_strnicmp(Text, "Custom", sizeof("Custom") - 1))
-		return (Params)((short)Params::Custom_Base + ((short)atoi(Text + sizeof("Custom") - 1)));
+	if (SVIComparePrefix(Text, "Custom"sv))
+		return (Params)((short)Params::Custom_Base + ((short)atoi(Text.data() + sizeof("Custom") - 1)));
 
-	DarkEdif::MsgBox::Error(_T("DarkEdif Params error"), _T("Error reading parameter type \"%s\", couldn't match it to a Params value."), DarkEdif::UTF8ToTString(Text).c_str());
+	MsgBox::Error(_T("DarkEdif Params error"), _T("Error reading parameter type \"%s\", couldn't match it to a Params value."),
+		UTF8ToTString(Text).c_str());
 	return (Params)(std::uint16_t)0;
 }
 
-ExpParams Edif::ReadExpressionParameterType(const char * Text, bool &IsFloat)
+ExpParams Edif::ReadExpressionParameterType(const std::string_view& Text, bool &IsFloat)
 {
-	if (!_stricmp(Text, "Text") || !_stricmp(Text, "String"))
+	if (SVICompare(Text, "Text"sv) || SVICompare(Text, "String"sv))
 		return ExpParams::String;
 
-	if (!_stricmp(Text, "Float"))
+	if (SVICompare(Text, "Float"sv))
 	{
 		IsFloat = true;
 		return ExpParams::Float;
 	}
 
-	if (!_stricmp(Text, "Integer"))
+	if (SVICompare(Text, "Integer"sv))
 		return ExpParams::Integer;
 
-	if (!_stricmp(Text, "Unsigned Integer"))
+	if (SVICompare(Text, "Unsigned Integer"sv))
 		return ExpParams::UnsignedInteger;
 
 	DarkEdif::MsgBox::Error(_T("DarkEdif ExpParams error"), _T("Error reading expression parameter type \"%s\", couldn't match it to a ExpParams value."), DarkEdif::UTF8ToTString(Text).c_str());
 	return (ExpParams)(std::uint16_t)0;
 }
 
-ExpReturnType Edif::ReadExpressionReturnType(const char * Text)
+ExpReturnType Edif::ReadExpressionReturnType(const std::string_view & Text)
 {
-	if (!_stricmp(Text, "Integer"))
+	if (SVICompare(Text, "Integer"sv))
 		return ExpReturnType::Integer;
 
-	if (!_stricmp(Text, "Float"))
+	if (SVICompare(Text, "Float"sv))
 		return ExpReturnType::Float;
 
-	if (!_stricmp(Text, "Text") || !_stricmp(Text, "String"))
+	if (SVICompare(Text, "Text"sv) || SVICompare(Text, "String"sv))
 		return ExpReturnType::String;
 
 	// More specialised, but not allowed for
-	if (!_stricmp(Text, "Short"))
+	if (SVICompare(Text, "Short"sv))
 		return ExpReturnType::Integer;
 
-	if (!_stricmp(Text, "Unsigned Integer"))
+	if (SVICompare(Text, "Unsigned Integer"sv))
 		return ExpReturnType::UnsignedInteger;
 
-	DarkEdif::MsgBox::Error(_T("DarkEdif ExpReturnType error"), _T("Error reading expression return type \"%s\", couldn't match it to a ExpReturnType value."), DarkEdif::UTF8ToTString(Text).c_str());
+	MsgBox::Error(_T("DarkEdif ExpReturnType error"), _T("Error reading expression return type \"%s\", couldn't match it to a ExpReturnType value."), DarkEdif::UTF8ToTString(Text).c_str());
 	return ExpReturnType::Integer; // default
 }
 
@@ -254,7 +249,11 @@ void Edif::Init(mv * mV, EDITDATA * edPtr)
 		if (DarkEdif::RunMode == DarkEdif::MFXRunMode::Editor)
 			mvInvalidateObject(mV, edPtr);
 	#endif
-#endif
+
+	// Note: mv does not have all its loaded items yet. Noteably, mvIdAppli may be set, but be unusable.
+	// See DarkEdif::LateInit() instead if you want to make sure Fusion app data and a frame is loaded.
+	// LateInit happens just prior to first instance of this ext created at runtime.
+#endif // _WIN32
 }
 
 void Edif::Free(mv * mV)
@@ -282,7 +281,7 @@ extern "C" void DarkEdif_Invalid_Parameter(const wchar_t* /*expression - NULL*/,
 
 	// To get proper debug information, build your application under Debug Unicode (or Debug), not Edittime/Runtime.
 	LOGE(_T("CRT invalid parameter crash - since it's not Debug, no trace information."));
-	DarkEdif::MsgBox::Error(_T("Invalid parameter crash!"), _T("Intercepted a crash from invalid parameter in a CRT function.\n"
+	MsgBox::Error(_T("Invalid parameter crash!"), _T("Intercepted a crash from invalid parameter in a CRT function.\n"
 		"If you're a Fusion extension developer, attach a debugger now for information.\n"
 		"Otherwise, the program will attempt to continue."));
 }
@@ -295,157 +294,298 @@ int Edif::Init(mv * mV, bool fusionStartupScreen)
 	// We want DarkEdif::MsgBox::XX as soon as possible.
 	// Main thread ID is used to prevent crashes from message boxes not being task-modal.
 	// Since we're initializing this, might as well set all the DarkEdif mV variables.
+	// This is set earlier in Android in JNI_OnLoad
+#ifndef __ANDROID__
 	DarkEdif::MainThreadID = std::this_thread::get_id();
-#ifdef _WIN32
-	DarkEdif::IsFusion25 = ((mV->GetVersion() & MMFVERSION_MASK) == CFVERSION_25);
-	DarkEdif::Internal_WindowHandle = mV->HMainWin;
-
-	// 2.0 uses floats for angles if it's a Direct3D display, Software or DirectDraw uses int
-	// Fusion 2.5 always uses floats, even in Software, and doesn't use DirectDraw at all
-	DarkEdif::IsHWAFloatAngles = DarkEdif::IsFusion25 || mvIsHWAVersion(mV) != FALSE;
-
-	// Detect wine by presence of wine_get_version() inside their wrapper ntdll
-	HMODULE ntDll = GetModuleHandle(_T("ntdll.dll"));
-	if (ntDll == NULL)
-		return DarkEdif::MsgBox::Error(_T("DarkEdif Wine detection error"), _T("Couldn't search for Wine, couldn't load ntdll: error %u."), GetLastError()), -1;
-
-	const char* (__cdecl * pwine_get_version)(void) =
-		(decltype(pwine_get_version))GetProcAddress(ntDll, "wine_get_version");
-	DarkEdif::IsRunningUnderWine = pwine_get_version != NULL;
 #endif
 
-#if EditorBuild
-	// Calculate run mode
-	if (fusionStartupScreen)
-		DarkEdif::RunMode = DarkEdif::MFXRunMode::SplashScreen;
-	else if (mV->HMainWin != 0)
-		DarkEdif::RunMode = DarkEdif::MFXRunMode::Editor;
-	else
+#ifdef _WIN32
+	if (mV->GetVersion == NULL)
 	{
-		// This could be either Run Application or Built EXE. We'll assume built EXE for simpler code, but check.
-		DarkEdif::RunMode = DarkEdif::MFXRunMode::BuiltEXE;
-
-		std::tstring_view mfxFolder = DarkEdif::GetMFXRelativeFolder(DarkEdif::GetFusionFolderType::MFXLocation);
-
-		DarkEdif::RemoveSuffixIfExists(mfxFolder, _T("Unicode\\"sv));
-
-		if (DarkEdif::EndsWith(mfxFolder, _T("Extensions\\"sv)))
+		// The ZipToJson tool is used to package a Fusion zip containing MFX, help file, examples etc.,
+		// and upload it to Clickteam Extension Manager.
+		// The tool loads this ext with a fusionStartupScreen of false and a zeroed mV,
+		// making most mv-related function pointers and variables break if they're called.
+		// We'll allow mv functions to not work if running under this tool, otherwise we'll get upset.
+#if EditorBuild
+		const TCHAR zipToJSONFilename[] = _T("\\ZipToJson.exe");
+		const std::tstring path(DarkEdif::GetRunningApplicationPath(DarkEdif::GetRunningApplicationPathType::FullPath));
+		if (!path.empty() && !_tcsicmp(path.substr(path.size() - (std::size(zipToJSONFilename) - 1)).data(), zipToJSONFilename))
 		{
-			// Note: In Run Application, the Extensions MFXs are used, but the edrt app is in Data\Runtime, not Extensions.
-			std::tstring_view appPath = DarkEdif::GetRunningApplicationPath(DarkEdif::GetRunningApplicationPathType::FullPath);
+			// Assume ZipToJson is targeting CF2.5 exts
+			DarkEdif::IsHWAFloatAngles = DarkEdif::IsFusion25 = true;
+		}
+		else
+#endif
+		{
+			DarkEdif::MsgBox::Error(_T("Unexpected mV"), _T("The extension is incorrectly initialized. Pass a valid mV struct."));
+			std::abort(); // ZipToJSON ignores return
+			return -1;
+		}
+	}
+	else // mv functions are available
+	{
+		DarkEdif::Internal_WindowHandle = mV->HMainWin;
+		DarkEdif::IsFusion25 = ((mV->GetVersion() & MMFVERSION_MASK) == CFVERSION_25);
 
-			if (DarkEdif::RemoveSuffixIfExists(appPath, _T("\\edrt.exe"sv)) || DarkEdif::RemoveSuffixIfExists(appPath, _T("\\edrtex.exe"sv)))
+		// 2.0 uses floats for angles if it's a Direct3D display, Software or DirectDraw uses int
+		// Fusion 2.5 always uses floats, even in Software, and doesn't use DirectDraw at all
+		DarkEdif::IsHWAFloatAngles = DarkEdif::IsFusion25 || mvIsHWAVersion(mV) != FALSE;
+
+		// Detect wine by presence of wine_get_version() inside their wrapper ntdll
+		// Note GetModuleHandle does not increment ntdll ref count. LoadLibrary would,
+		// but we don't need to call that for a OS dll we import.
+		HMODULE ntDll = GetModuleHandle(_T("ntdll.dll"));
+		if (ntDll == NULL)
+			return DarkEdif::MsgBox::Error(_T("DarkEdif Wine detection error"), _T("Couldn't search for Wine, couldn't load ntdll: error %u."), GetLastError()), -1;
+
+		const char* (__cdecl * pwine_get_version)(void) =
+			(decltype(pwine_get_version))GetProcAddress(ntDll, "wine_get_version");
+		DarkEdif::Windows::IsRunningUnderWine = pwine_get_version != NULL;
+
+		// Detect true CPU arch
+		HMODULE kernDll = GetModuleHandle(_T("kernel32.dll"));
+		if (kernDll == NULL)
+			return DarkEdif::MsgBox::Error(_T("DarkEdif CPU detection error"), _T("Couldn't detect CPU arch, couldn't load kernel32: error %u."), GetLastError()), -1;
+
+		// This section will need updating when Windows Fusion runtime has x64 and possibly ARM64 support,
+		// to create errors when running the ext under 32-bit when runtime is 64-bit,
+		// or warnings when runtime + ext is 32-bit when OS is 64-bit, etc.
+
+		// Assume native CPU arch
+#ifdef _WIN32
+		CPUArch = CPUArchType::x86;
+#elif defined(_M_ARM64)
+		CPUArch = CPUArchType::arm64;
+#elif defined(_M_AMD64)
+		CPUArch = CPUArchType::x86_64;
+#else // MIPS, the deprecated Windows ARM32? can't imagine Fusion runtime will be updated for those, anyway
+#error Unrecognised native arch
+#endif
+
+		// There are two funcs to call, which MS recommends to read by GetProcAddress for compatiiblity
+		// Absence of both doesn't mean we aren't emulating, but I expect that will only apply
+		// for a small Windows OS version window.
+		const HANDLE curProc = GetCurrentProcess();
+		BOOL (WINAPI * pIsWow64Process2)(HANDLE hProcess, _Out_ USHORT * pProcessMachine, _Out_opt_ USHORT * pNativeMachine)
+			= (decltype(pIsWow64Process2))GetProcAddress(kernDll, "IsWow64Process2");
+		BOOL (WINAPI * pIsWow64Process)(HANDLE hProcess, _Out_ PBOOL Wow64Process)
+			= (decltype(pIsWow64Process))GetProcAddress(kernDll, "IsWow64Process");
+
+		// If this Win10+ func is defined, use it to check if emulation is active
+		// This is the way to distinguish Windows ARM64.
+		if (pIsWow64Process2)
+		{
+			USHORT procMachine, nativeMachine;
+			if (!pIsWow64Process2(curProc, &procMachine, &nativeMachine))
+				return DarkEdif::MsgBox::Error(_T("DarkEdif CPU detection error"), _T("Couldn't detect CPU arch: IsWow64Process2() error %u."), GetLastError()), -1;
+
+			// If unknown process machine, it matches native machine, so we're not under emulation.
+			if (procMachine == IMAGE_FILE_MACHINE_UNKNOWN)
+				procMachine = nativeMachine;
+			// else: warn runtime/ext is not 64-bit to match 64-bit runtime
+
+			// Machine is x86
+			if (nativeMachine == IMAGE_FILE_MACHINE_I386)
+				CPUArch = CPUArchType::x86;
+			// ARM64 has one value
+			else if (nativeMachine == 0xAA64 /* IMAGE_FILE_MACHINE_ARM64 */)
+				CPUArch = CPUArchType::arm64;
+			// Conflate AMD64 and IA-64 (Itanium) - they're both 64-bit.
+			// Itanium is an older 64-bit used on server OSes machines.
+			else if (nativeMachine == IMAGE_FILE_MACHINE_AMD64 || procMachine == IMAGE_FILE_MACHINE_IA64)
+				CPUArch = CPUArchType::x86_64;
+			else // Supposedly, there may be values like MIPS Windows, but eh.
+				return DarkEdif::MsgBox::Error(_T("DarkEdif CPU detection error"), _T("Couldn't detect CPU arch: IsWow64Process2() returned proc machine %#04X, native %#04X."), procMachine, nativeMachine), -1;
+		}
+		// If not defined, do we have older WinXP+ func?
+		else if (pIsWow64Process != NULL)
+		{
+			BOOL isWow64Emulation;
+			// Older func exists but can't run it
+			if (!pIsWow64Process(curProc, &isWow64Emulation))
+				return DarkEdif::MsgBox::Error(_T("DarkEdif CPU detection error"), _T("Couldn't detect CPU arch: IsWow64Process() error %u."), GetLastError()), -1;
+
+			// Is a x86 app running under x64
+			if (isWow64Emulation)
+				CPUArch = CPUArchType::x86_64;
+		}
+		// else assume too old and it is native
+
+#if EditorBuild
+		// Calculate run mode
+		if (fusionStartupScreen)
+			DarkEdif::RunMode = DarkEdif::MFXRunMode::SplashScreen;
+		else if (mV->HMainWin != 0)
+			DarkEdif::RunMode = DarkEdif::MFXRunMode::Editor;
+		else
+		{
+			// This could be either Run Application or Built EXE. We'll assume built EXE for simpler code, but check.
+			DarkEdif::RunMode = DarkEdif::MFXRunMode::BuiltEXE;
+
+			std::tstring_view mfxFolder = DarkEdif::GetMFXRelativeFolder(DarkEdif::GetFusionFolderType::MFXLocation);
+
+			DarkEdif::RemoveSuffixIfExists(mfxFolder, _T("Unicode\\"sv));
+
+			if (DarkEdif::EndsWith(mfxFolder, _T("Extensions\\"sv)))
 			{
-				DarkEdif::RemoveSuffixIfExists(appPath, _T("\\Unicode"sv));
-				DarkEdif::RemoveSuffixIfExists(appPath, _T("\\Hwa"sv));
+				// Note: In Run Application, the Extensions MFXs are used, but the edrt app is in Data\Runtime, not Extensions.
+				std::tstring_view appPath = DarkEdif::GetRunningApplicationPath(DarkEdif::GetRunningApplicationPathType::FullPath);
 
-				// else program is named edrt[ex].exe, but isn't running in Data\Runtime, so it's just an app called edrt.exe
-				if (DarkEdif::RemoveSuffixIfExists(appPath, _T("Data\\Runtime"sv)))
+				if (DarkEdif::RemoveSuffixIfExists(appPath, _T("\\edrt.exe"sv)) || DarkEdif::RemoveSuffixIfExists(appPath, _T("\\edrtex.exe"sv)))
 				{
-					std::tstring fusionPath(appPath);
-					if (mvIsUnicodeVersion(mV))
-						fusionPath += _T("mmf2u.exe"sv);
-					else
-						fusionPath += _T("mmf2.exe"sv);
+					DarkEdif::RemoveSuffixIfExists(appPath, _T("\\Unicode"sv));
+					DarkEdif::RemoveSuffixIfExists(appPath, _T("\\Hwa"sv));
 
-					// We found Fusion!
-					if (DarkEdif::FileExists(fusionPath))
-						DarkEdif::RunMode = DarkEdif::MFXRunMode::RunApplication;
+					// else program is named edrt[ex].exe, but isn't running in Data\Runtime, so it's just an app called edrt.exe
+					if (DarkEdif::RemoveSuffixIfExists(appPath, _T("Data\\Runtime"sv)))
+					{
+						std::tstring fusionPath(appPath);
+						if (mvIsUnicodeVersion(mV))
+							fusionPath += _T("mmf2u.exe"sv);
+						else
+							fusionPath += _T("mmf2.exe"sv);
+
+						// We found Fusion!
+						if (DarkEdif::FileExists(fusionPath))
+							DarkEdif::RunMode = DarkEdif::MFXRunMode::RunApplication;
+					}
 				}
 			}
 		}
-	}
 
-	if (DarkEdif::RunMode == DarkEdif::MFXRunMode::Editor || DarkEdif::RunMode == DarkEdif::MFXRunMode::SplashScreen)
-	{
-		int localeNum = 1033;
-
-		// CF2.5 editor language code is a setting, stored in registry
-		if (DarkEdif::IsFusion25)
+		if (DarkEdif::RunMode == DarkEdif::MFXRunMode::Editor || DarkEdif::RunMode == DarkEdif::MFXRunMode::SplashScreen)
 		{
-			HKEY key = NULL;
-			TCHAR value[6];
-			DWORD value_length = std::size(value), err;
-			const std::tstring settingsRegPath =
-				((mV->GetVersion() & MMFVERFLAG_MASK) == MMFVERFLAG_PRO) ?
-				_T("Software\\Clickteam\\Fusion Developer 2.5\\General"s) :
-				_T("Software\\Clickteam\\Fusion 2.5\\General"s);
-			if ((err = RegOpenKey(HKEY_CURRENT_USER, settingsRegPath.c_str(), &key)) ||
-				(err = RegQueryValueEx(key, _T("language"), NULL, NULL, (LPBYTE)value, &value_length)) ||
-				value_length >= std::size(value))
-			{
-				// If the user never went into Tools > Preferences and pressed OK,
-				// a ton of registry keys won't exist. Default to US English.
-				if (err != ERROR_FILE_NOT_FOUND)
-					DarkEdif::MsgBox::Error(_T("Language Code error"), _T("Failed to look up Fusion editor language code: error %u."), err);
-			}
-			else
-				localeNum = _ttoi(value);
+			int localeNum = 1033;
 
-			if (key)
-				RegCloseKey(key);
+			// CF2.5 editor language code is a setting, stored in registry
+			if (DarkEdif::IsFusion25)
+			{
+				HKEY key = NULL;
+				TCHAR value[6];
+				DWORD value_length = std::size(value), err;
+				const std::tstring settingsRegPath =
+					((mV->GetVersion() & MMFVERFLAG_MASK) == MMFVERFLAG_PRO) ?
+					_T("Software\\Clickteam\\Fusion Developer 2.5\\General"s) :
+					_T("Software\\Clickteam\\Fusion 2.5\\General"s);
+				if ((err = RegOpenKey(HKEY_CURRENT_USER, settingsRegPath.c_str(), &key)) ||
+					(err = RegQueryValueEx(key, _T("language"), NULL, NULL, (LPBYTE)value, &value_length)) ||
+					value_length >= std::size(value))
+				{
+					// If the user never went into Tools > Preferences and pressed OK,
+					// a ton of registry keys won't exist. Default to US English.
+					if (err != ERROR_FILE_NOT_FOUND)
+						DarkEdif::MsgBox::Error(_T("Language Code error"), _T("Failed to look up Fusion editor language code: error %u."), err);
+				}
+				else
+					localeNum = _ttoi(value);
+
+				if (key)
+					RegCloseKey(key);
+			}
+			else // MMF2 uses different editor EXEs, and stores language in resources
+			{
+				// You shouldn't use .data() on a std::string_view and expect null terminator,
+				// but since we know it points to the std::string appPath, we'll make an exception.
+				const std::tstring_view appPath = DarkEdif::GetRunningApplicationPath(DarkEdif::GetRunningApplicationPathType::FullPath);
+
+				// Look up the running app and get the language code from its resources.
+				const HINSTANCE hRes = LoadLibraryEx(appPath.data(), NULL, DONT_RESOLVE_DLL_REFERENCES | LOAD_LIBRARY_AS_DATAFILE);
+				if (hRes != NULL)
+				{
+					// Load string resource ID 720, contains the language code
+					TCHAR langCode[20];
+					LoadString(hRes, 720, langCode, std::size(langCode));
+
+					localeNum = _ttoi(langCode);
+
+					// Free resources
+					FreeLibrary(hRes);
+				}
+			}
+
+			switch (localeNum) {
+			case 0x40C: // MAKELANGID(LANG_FRENCH, SUBLANG_FRENCH);
+				_tcscpy(LanguageCode, _T("FR"));
+				break;
+			case 0x411: // MAKELANGID(LANG_JAPANESE, SUBLANG_JAPANESE_JAPAN);
+				_tcscpy(LanguageCode, _T("JP"));
+				break;
+			}
 		}
-		else // MMF2 uses different editor EXEs, and stores language in resources
+
+		// Detect CF2.5+ DLC, editor only, by looking for CF2.5+ only DLL cfex.dll.
+		// Runtime detection is in the other Edif::Init(),
+		// as it relies on reading image bank and mvAppli isn't available on app start.
+		if (DarkEdif::IsFusion25 && DarkEdif::RunMode != DarkEdif::MFXRunMode::BuiltEXE)
 		{
-			// You shouldn't use .data() on a std::string_view and expect null terminator,
-			// but since we know it points to the std::string appPath, we'll make an exception.
-			const std::tstring_view appPath = DarkEdif::GetRunningApplicationPath(DarkEdif::GetRunningApplicationPathType::FullPath);
-
-			// Look up the running app and get the language code from its resources.
-			const HINSTANCE hRes = LoadLibraryEx(appPath.data(), NULL, DONT_RESOLVE_DLL_REFERENCES | LOAD_LIBRARY_AS_DATAFILE);
-			if (hRes != NULL)
-			{
-				// Load string resource ID 720, contains the language code
-				TCHAR langCode[20];
-				LoadString(hRes, 720, langCode, std::size(langCode));
-
-				localeNum = _ttoi(langCode);
-
-				// Free resources
-				FreeLibrary(hRes);
-			}
+			std::tstring dllPath(DarkEdif::GetMFXRelativeFolder(DarkEdif::GetFusionFolderType::FusionRoot));
+			dllPath += _T("cfex.dll"sv);
+			DarkEdif::IsFusion25Plus = DarkEdif::FileExists(dllPath);
 		}
 
-		switch (localeNum) {
-		case 0x40C: // MAKELANGID(LANG_FRENCH, SUBLANG_FRENCH);
-			_tcscpy(LanguageCode, _T("FR"));
-			break;
-		case 0x411: // MAKELANGID(LANG_JAPANESE, SUBLANG_JAPANESE_JAPAN);
-			_tcscpy(LanguageCode, _T("JP"));
-			break;
-		}
-	}
 #else // Not editor build, missing things that will let Fusion use it in editor.
-	DarkEdif::RunMode = DarkEdif::MFXRunMode::BuiltEXE;
+		DarkEdif::RunMode = DarkEdif::MFXRunMode::BuiltEXE;
 #endif
 
-#ifdef _WIN32
-
-	// Non-Unicode ext used in Unicode-compatible runtime
+		// Non-Unicode ext used in Unicode-compatible runtime
 #if !defined(_UNICODE) && !defined(ALLOW_ANSI_EXT_IN_UNICODE_RUNTIME)
-	if (mvIsUnicodeVersion(mV))
-	{
-		DarkEdif::MsgBox::Error(_T("Not using Unicode"), _T("You are using a non-Unicode extension when the Fusion runtime and ")
-			PROJECT_TARGET_NAME " extension is capable of Unicode.\nEnsure you have extracted all the " PROJECT_TARGET_NAME " extension files.");
-	}
+		if (mvIsUnicodeVersion(mV))
+		{
+			DarkEdif::MsgBox::Error(_T("Not using Unicode"), _T("You are using a non-Unicode extension when the Fusion runtime and ")
+				PROJECT_TARGET_NAME " extension is capable of Unicode.\nEnsure you have extracted all the " PROJECT_TARGET_NAME " extension files.");
+		}
 #endif
 
-	// This section catches CRT invalid parameter errors at runtime, rather than insta-crashing.
-	// Invalid parameters include e.g. sprintf format errors.
-	// Debug builds have their own handler that makes a message box, so don't register ours
+
+		// This section catches CRT invalid parameter errors at runtime, rather than insta-crashing.
+		// Invalid parameters include e.g. sprintf format errors.
+		// Debug builds have their own handler that makes a message box, so don't register ours
 #ifndef _DEBUG
-	// Don't register for splash screen, or override an existing handler
-	if (
+		// Don't register for splash screen, or override an existing handler
+		if (
 #if EditorBuild
-		DarkEdif::RunMode != DarkEdif::MFXRunMode::SplashScreen &&
+			DarkEdif::RunMode != DarkEdif::MFXRunMode::SplashScreen &&
 #endif
-		_get_invalid_parameter_handler() == NULL)
-	{
-		_set_invalid_parameter_handler(DarkEdif_Invalid_Parameter);
-	}
+			_get_invalid_parameter_handler() == NULL)
+		{
+			_set_invalid_parameter_handler(DarkEdif_Invalid_Parameter);
+		}
 #endif // not Debug
 
-#endif // Windows
+		// GetVersion() is affected by app manifest; RtlGetVersion is not.
+		// They're both affected by "run with compatibility" settings, but no need to bypass that.
+		HMODULE hMod = GetModuleHandle(_T("ntdll.dll"));
+		if (!hMod)
+			return DarkEdif::MsgBox::Error(_T("DarkEdif OS detection error"), _T("Couldn't detect OS version: don't have ntdll.")), -1;
+
+		// Don't know how you'd tell version below Win 2000
+#if defined(WINVER) && WINVER < _WIN32_WINNT_NT4
+#error RtlGetVersion not available
+#endif
+		OSVERSIONINFOA info = { sizeof(info) };
+		LONG (WINAPI * RtlGetVersionPtr)(OSVERSIONINFOA *) = (decltype(RtlGetVersionPtr))GetProcAddress(hMod, "RtlGetVersion");
+		if (!RtlGetVersionPtr)
+			return DarkEdif::MsgBox::Error(_T("DarkEdif OS detection error"), _T("Couldn't detect OS version: Couldn't load version function.")), -1;
+
+		if (RtlGetVersionPtr(&info) != 0)
+			return DarkEdif::MsgBox::Error(_T("DarkEdif OS detection error"), _T("Couldn't detect OS version: Version function returned failure (%u)."), GetLastError()), -1;
+
+		DarkEdif::Windows::OSVersion = (DarkEdif::Windows::WinOSVersion)((info.dwMajorVersion << 24) | (info.dwMinorVersion << 16) | (info.dwBuildNumber & 0xFFFF));
+
+		// ReactOS appends extra text after the null terminator, like "Service Pack 6", NULL, "ReactOS 0.2.5-RC1 (Build 20041227)"
+		// Due to zero-init of info var, it's safe to read past the null if not React, should just be blank string
+		if (DarkEdif::Windows::OSVersion >= DarkEdif::Windows::WinOSVersion::WinXP &&
+			SVIComparePrefix(info.szCSDVersion + strlen(info.szCSDVersion), "ReactOS"sv))
+		{
+			DarkEdif::Windows::IsRunningInReactOS = true;
+		}
+	}
+#elif defined (__ANDROID__)
+	// Init several useful runtime classes
+	if (!DarkEdif::Android::AppContext)
+		DarkEdif::Android::Init_Internals();
+#endif // Android
 
 	// Get JSON file
 	char * JSON;
@@ -485,10 +625,10 @@ int Edif::Init(mv * mV, bool fusionStartupScreen)
 	// On XP, the code above zero-fills gSDK, and doesn't run the constructor, resulting in a
 	// crash later, when GetRunObjectInfos() tries to use the null ::SDK->json via "CurLang".
 #ifdef ThreadSafeStaticInitIsSafe
-	static class Edif::SDK gSDK(mV, *json);
+	static Edif::SDKClass gSDK(mV, *json);
 	Edif::SDK = &gSDK;
 #else // workaround, don't use static but singleton
-	Edif::SDK = new class Edif::SDK(mV, *json);
+	Edif::SDK = new Edif::SDKClass(mV, *json);
 #endif
 
 	return 0;	// no error
@@ -500,7 +640,7 @@ FusionAPIImport BOOL FusionAPI ImportImageFromInputFile(CImageFilterMgr* pImgMgr
 
 #endif
 
-Edif::SDK::SDK(mv * mV, json_value &_json) : json (_json)
+Edif::SDKClass::SDKClass(mv * mV, json_value &_json) : json (_json)
 {
 	this->mV = mV;
 
@@ -512,9 +652,9 @@ Edif::SDK::SDK(mv * mV, json_value &_json) : json (_json)
 		if (GetSurfacePrototype(&proto, 32, (int)SurfaceType::Memory_DeviceContext, (int)SurfaceDriver::Bitmap) == FALSE)
 			DarkEdif::MsgBox::Error(_T("DarkEdif error"), _T("Getting surface prototype failed."));
 
-		Icon = new cSurface();
 		if (mV->ImgFilterMgr)
 		{
+			Icon = new cSurface();
 			char * IconData;
 			size_t IconSize;
 
@@ -557,6 +697,7 @@ Edif::SDK::SDK(mv * mV, json_value &_json) : json (_json)
 				if (loadedOK && tempIcon->Blit(*Icon) == FALSE)
 					DarkEdif::MsgBox::Error(_T("DarkEdif error"), _T("Blitting to ext icon surface failed. Last error: %i."), tempIcon->GetLastError());
 			}
+			ExtIcon = new DarkEdif::Surface(nullptr, Icon);
 		}
 
 		#if USE_DARKEDIF_UPDATE_CHECKER
@@ -602,9 +743,9 @@ Edif::SDK::SDK(mv * mV, json_value &_json) : json (_json)
 		return;
 	}
 
-	const json_value &Actions = CurLang["Actions"];
-	const json_value &Conditions = CurLang["Conditions"];
-	const json_value &Expressions = CurLang["Expressions"];
+	const json_value &Actions = CurLang["Actions"sv];
+	const json_value &Conditions = CurLang["Conditions"sv];
+	const json_value &Expressions = CurLang["Expressions"sv];
 
 	#ifdef _WIN32
 		ActionJumps = new void * [Actions.u.object.length + 1];
@@ -660,22 +801,22 @@ Edif::SDK::SDK(mv * mV, json_value &_json) : json (_json)
 	// Object properties, as they appear in Properties tab, in the frame editor only.
 	DarkEdif::DLL::GeneratePropDataFromJSON();
 
-	ActionMenu = LoadMenuJSON(Edif::ActionID(0), CurLang["ActionMenu"]);
-	ConditionMenu = LoadMenuJSON(Edif::ConditionID(0), CurLang["ConditionMenu"]);
-	ExpressionMenu = LoadMenuJSON(Edif::ExpressionID(0), CurLang["ExpressionMenu"]);
+	ActionMenu = LoadMenuJSON(Edif::ActionID(0), CurLang["ActionMenu"sv]);
+	ConditionMenu = LoadMenuJSON(Edif::ConditionID(0), CurLang["ConditionMenu"sv]);
+	ExpressionMenu = LoadMenuJSON(Edif::ExpressionID(0), CurLang["ExpressionMenu"sv]);
 
 	// Check for ext dev forgetting to overwrite some of the Template properties
 	#if defined(_DEBUG) && !defined(IS_DARKEDIF_TEMPLATE)
-		const json_value& about = CurLang["About"];
+		const json_value& about = CurLang["About"sv];
 		bool unchangedPropsFound =
-			!_stricmp(about["Name"], "DarkEdif Template") ||
-			!_stricmp(about["Author"], "Your Name") ||
-			!_stricmp(about["Comment"], "A sentence or two to describe your extension") ||
-			!_stricmp(about["Help"], "Help/Example.chm") ||
-			!_stricmp(about["URL"], "https://www.example.com/");
+			SVICompare(about["Name"sv], "DarkEdif Template"sv) ||
+			SVICompare(about["Author"sv], "Your Name"sv) ||
+			SVICompare(about["Comment"sv], "A sentence or two to describe your extension"sv) ||
+			SVICompare(about["Help"sv], "Help/Example.chm"sv) ||
+			SVICompare(about["URL"sv], "https://www.example.com/"sv);
 		if (!unchangedPropsFound)
 		{
-			std::string copy(about["Copyright"]);
+			std::string copy(about["Copyright"sv]);
 			std::transform(copy.begin(), copy.end(), copy.begin(),
 				[](unsigned char c) { return std::tolower(c); });
 			unchangedPropsFound = copy.rfind("by your name"sv) != std::string::npos;
@@ -694,7 +835,7 @@ Edif::SDK::SDK(mv * mV, json_value &_json) : json (_json)
 #endif // EditorBuild
 }
 
-Edif::SDK::~SDK()
+Edif::SDKClass::~SDKClass()
 {
 	LOGV(_T("Edif::SDK::~SDK() call.\n"));
 	json_value_free(&json);
@@ -713,21 +854,10 @@ long* actParameters;
 #ifdef _WIN32
 // The access restrictions prevent the ext dev accidentally modifying these, but we have to bypass it to set it ourselves
 struct ForbiddenInternals {
-	static inline void UpdateParamToZero(Extension* ext) {
-		ext->rdPtr->rHo.CurrentParam = ext->Runtime.ParamZero;
-	}
 	static inline int GetEventNumber(RunObject* rdPtr) {
-		return rdPtr->rHo.EventNumber;
-	}
-	static inline EventParam* GetCurrentParam(RunObject* rdPtr) {
-		return rdPtr->rHo.CurrentParam;
+		return rdPtr->rHo.hoEventNumber;
 	}
 };
-
-// WinGDI intercepts our reasonable function name to GetObjectA/W, prevent that
-#ifdef GetObject
-	#undef GetObject
-#endif
 
 #endif
 
@@ -759,30 +889,31 @@ long ActionOrCondition(void * Function, int ID, Extension * ext, const ACEInfo *
 	// it in the ASM, we can't pass it to the function.
 	// Worth noting that if all non-auto parameters are not interpreted, a crash will occur.
 	// Also, don't set NumAutoProps to negative.
-	const json_value & numAutoProps = CurLang[isCond ? "Conditions" : "Actions"][ID]["NumAutoProps"];
+	const json_value & numAutoProps = CurLang[isCond ? "Conditions"sv : "Actions"sv][ID]["NumAutoProps"sv];
 	if (numAutoProps.type == json_integer)
 		ParameterCount = (int)numAutoProps.u.integer;
 
 	bool isComparisonCondition = false;
 
-	for (int i = 0; i < ParameterCount; ++ i)
+	for (int i = 0; i < ParameterCount; ++i)
 	{
 		switch (info->Parameter[i].p)
 		{
 			case Params::Expression:
-				if (info->FloatFlags & (1 << i))
+				if ((info->FloatFlags & (1 << i)) != 0)
 				{
-					float f = params.GetFloat(i);
+					float f = params.GetFloatParam(i);
 					Parameters[i] = *(int*)(&f);
 				}
 				else
-					Parameters[i] = params.GetInteger(i, info->Parameter[i].p);
+					Parameters[i] = params.GetIntegerParam(i, info->Parameter[i].p);
 				break;
 
 			case Params::String_Comparison:
 			case Params::String_Expression:
 			case Params::Filename:
-				Parameters[i] = (long)params.GetString(i);
+			case Params::Filename_2:
+				Parameters[i] = (long)params.GetStringParam(i);
 				// Catch null string parameters and return default 0
 				if (!Parameters[i])
 				{
@@ -790,7 +921,7 @@ long ActionOrCondition(void * Function, int ID, Extension * ext, const ACEInfo *
 						_T("Error calling %s \"%s\" (ID %i); text parameter index %i was given a null string pointer.\n"
 							"Was the parameter type different when the %s was created in the MFA?"),
 						isCond ? _T("condition") : _T("action"),
-						DarkEdif::UTF8ToTString((const char *)CurLang[isCond ? "Conditions" : "Actions"][ID]["Title"]).c_str(),
+						DarkEdif::UTF8ToTString(CurLang[isCond ? "Conditions"sv : "Actions"sv][ID]["Title"sv]).c_str(),
 						ID, i,
 						isCond ? _T("condition") : _T("action"));
 					goto endFunc;
@@ -805,22 +936,21 @@ long ActionOrCondition(void * Function, int ID, Extension * ext, const ACEInfo *
 				[[fallthrough]];
 			case Params::New_Direction:
 			case Params::Time:
-				Parameters[i] = params.GetInteger(i, info->Parameter[i].p);
+				Parameters[i] = params.GetIntegerParam(i, info->Parameter[i].p);
 				break;
 			// Returns a RunObject * for actions, and a OINUM for conditions
 			case Params::Object:
-				Parameters[i] = params.GetObject(i);
+				Parameters[i] = params.GetObjectParam(i);
 				break;
 
 			default:
-				// GetString uses GetParam, as opposed to GetIntParam.
-				Parameters[i] = (long)params.GetString(i);
+				// GetStringParam uses a param-generic Get Param call, as opposed to GetIntParam which is int only.
+				Parameters[i] = (long)params.GetStringParam(i);
 				break;
 		}
 	}
 
 #ifdef _WIN32
-	ForbiddenInternals::UpdateParamToZero(ext);
 	__asm
 	{
 		pushad					; Start new register set (do not interfere with already existing registers)
@@ -879,6 +1009,7 @@ endFunc:
 #ifdef __ANDROID__
 	JNIExceptionCheck();
 #endif
+
 	// Comparisons return an integer or string pointer, pass as-is
 	if (isComparisonCondition)
 		return Result;
@@ -888,6 +1019,7 @@ endFunc:
 }
 
 #ifdef _WIN32
+
 struct ConditionOrActionManager_Windows : ACEParamReader
 {
 	RunObject * const rdPtr;
@@ -897,33 +1029,53 @@ struct ConditionOrActionManager_Windows : ACEParamReader
 	ConditionOrActionManager_Windows(bool isCondition, RunObject * rdPtr, long param1, long param2)
 		: rdPtr(rdPtr), ext(rdPtr->GetExtension()), isCondition(isCondition)
 	{
-		const ACEInfo* const info = (isCondition ? Edif::SDK->ConditionInfos : Edif::SDK->ActionInfos)[rdPtr->rHo.EventNumber];
-		// param1/param2 are pre-calculated parameters, but we can't use them if the params are float;
-		// Fusion defaults the pre-calculations as integer parameters, and so calculates them incorrectly
-		isTwoOrLess = info->NumOfParams <= 2 && (info->FloatFlags & 0b11) == 0;
+		const ACEInfo* const info = (isCondition ? Edif::SDK->ConditionInfos : Edif::SDK->ActionInfos)[rdPtr->rHo.hoEventNumber];
+
+		ext->Runtime.ParamZero = rdPtr->rHo.hoCurrentParam;
+
+		// param1/param2 are runtime pre-evaluated parameters on Windows, if there is 2 or less params.
+		// This is an old tactic from pre-MMF2 where only two parameters were possible.
+		// But we can't use them as-is, if the params are float.
+		// Fusion provides the pre-calculations for numbers as integer parameters, even if the math
+		// was float, and thus it calculates them incorrectly.
+		isTwoOrLess = info->NumOfParams <= 2;
+
+		// If we auto-read the 2 params pased, we want to increment hoCurrentParam to fix the runtime bug
+		// Using CNC_GetXX to read parameters if <= 2 params is not recommended,
+		// may mess up if the pre-evaluated params generated events.
+		for (int i = 0; isTwoOrLess && i < info->NumOfParams; ++i)
+		{
+			if ((info->FloatFlags & (1 << i)) != 0)
+				(i == 0 ? param1 : param2) = CNC_GetFloatValue(rdPtr, i);
+
+			rdPtr->rHo.hoCurrentParam = (EventParam*)(((char*)rdPtr->rHo.hoCurrentParam) + rdPtr->rHo.hoCurrentParam->size);
+		}
+
 		ext->Runtime.param1 = param1;
 		ext->Runtime.param2 = param2;
-		ext->Runtime.ParamZero = rdPtr->rHo.CurrentParam;
 	}
+
 	// Inherited via ACEParamReader
-	virtual float GetFloat(int index)
+	virtual float GetFloatParam(int index)
 	{
-		// Cannot use the optimization for float parameters
-		assert(!isTwoOrLess);
+		if (isTwoOrLess)
+			return *(const float*)(index == 0 ? &ext->Runtime.param1 : &ext->Runtime.param2);
+		// CNC_GetFloatValue works more consistently when events are generated inside params,
+		// than CNC_GetFloatParameter does
 		int i = (int)CNC_GetFloatParameter(rdPtr);
 		return *(float*)&i;
 	}
 
-	virtual const TCHAR * GetString(int index)
+	virtual const TCHAR * GetStringParam(int index)
 	{
 		if (isTwoOrLess)
 			return (const TCHAR *)(index == 0 ? ext->Runtime.param1 : ext->Runtime.param2);
 		return (const TCHAR *)CNC_GetStringParameter(rdPtr);
 	}
 
-	virtual std::int32_t GetInteger(int index, Params type)
+	virtual std::int32_t GetIntegerParam(int index, Params type)
 	{
-		// TODO: Does this work with NewDirection?
+		// TODO: Does pre-evaluated parameters work with NewDirection, or does it loop directions?
 		if (isTwoOrLess)
 			return (index == 0 ? ext->Runtime.param1 : ext->Runtime.param2);
 
@@ -933,8 +1085,9 @@ struct ConditionOrActionManager_Windows : ACEParamReader
 		// This value -> bitmask workaround is handled by the DarkEdif wrappers in Android/iOS.
 		if (type == Params::New_Direction)
 		{
-			if (rdPtr->rHo.CurrentParam->Code == (int)Params::New_Direction)
-				return rdPtr->rHo.CurrentParam->evp.L[0];
+			// TODO: Should hoCurrentParam be incremented to next param?
+			if (rdPtr->rHo.hoCurrentParam->Code == (int)Params::New_Direction)
+				return rdPtr->rHo.hoCurrentParam->evp.L[0];
 			// Convert 0-31 to New Direction bitmask; also, -1 becomes empty bitmask (0)
 			int ret = (std::int32_t)CNC_GetIntParameter(rdPtr);
 			if (ret == -1)
@@ -949,7 +1102,7 @@ struct ConditionOrActionManager_Windows : ACEParamReader
 		return (std::int32_t)CNC_GetIntParameter(rdPtr);
 	}
 
-	virtual long GetObject(int index)
+	virtual long GetObjectParam(int index)
 	{
 		long ret;
 		if (isTwoOrLess)
@@ -970,7 +1123,7 @@ struct ConditionOrActionManager_Windows : ACEParamReader
 				return ext->Runtime.GetOIListIndexFromObjectParam(index);
 
 			if ((Params)((EventParam*)ret)->Code != Params::Object)
-				LOGE(_T("GetOIFromExtParam: Returning a OiList index for a non-Object parameter.\n"));
+				LOGE(_T("ConditionOrActionManager::GetObject: Returning a OiList index for a non-Object parameter.\n"));
 			return ((EventParam*)ret)->evp.W[0];
 		}
 
@@ -983,19 +1136,6 @@ struct ConditionOrActionManager_Windows : ACEParamReader
 
 // how many a/c/e are running in this ext at the mo
 int aceIndex = 0;
-
-/*typedef jobject CRun;
-
-jclass GetExtClass(void* javaExtPtr) {
-	assert(threadEnv && mainThreadJNIEnv == threadEnv);
-	static global<jclass> clazz(mainThreadJNIEnv->GetObjectClass((jobject)javaExtPtr), "static global<> ext class, GetExtClass(), from javaExtPtr");
-	return clazz;
-};
-jobject GetRH(void* javaExtPtr) {
-	assert(threadEnv && mainThreadJNIEnv == threadEnv);
-	static jfieldID getRH(mainThreadJNIEnv->GetFieldID(GetExtClass(javaExtPtr), "rh", "LRunLoop/CRun;"));
-	return mainThreadJNIEnv->GetObjectField((jobject)javaExtPtr, getRH);
-};*/
 
 struct ConditionOrActionManager_Android : ACEParamReader
 {
@@ -1025,64 +1165,65 @@ struct ConditionOrActionManager_Android : ACEParamReader
 
 		if (extClass.invalid())
 		{
-			extClass = global<jclass>(mainThreadJNIEnv->GetObjectClass(javaExtPtr), "static global<> ext class, GetExtClass(), from javaExtPtr");
+			extClass = global<jclass>(threadEnv->GetObjectClass(javaExtPtr), "static global<> ext class, GetExtClass(), from javaExtPtr");
 
 			// Shared by both A/C, has special cases for Direction, Time and Object
-			getActOrCondParamInt = mainThreadJNIEnv->GetMethodID(extClass, "darkedif_jni_getActionOrConditionIntParam", "(LEvents/CEvent;II)I");
+			getActOrCondParamInt = threadEnv->GetMethodID(extClass, "darkedif_jni_getActionOrConditionIntParam", "(LEvents/CEvent;II)I");
 
 			// init one from passed param, the counterpart from a search
-			(isCondition ? cndClass : actClass) = global<jclass>(mainThreadJNIEnv->GetObjectClass(javaActOrCndObj), "Act or Cnd class in ConditionOrActionManager ctor [1]");
-			(isCondition ? actClass : cndClass) = global<jclass>(mainThreadJNIEnv->FindClass(isCondition ? "Actions/CActExtension" : "Conditions/CCndExtension"), "Act or Cnd class in ConditionOrActionManager ctor [2]");
+			(isCondition ? cndClass : actClass) = global<jclass>(threadEnv->GetObjectClass(javaActOrCndObj), "Act or Cnd class in ConditionOrActionManager ctor [1]");
+			(isCondition ? actClass : cndClass) = global<jclass>(threadEnv->FindClass(isCondition ? "Actions/CActExtension" : "Conditions/CCndExtension"), "Act or Cnd class in ConditionOrActionManager ctor [2]");
 
 			// getParamFilename2 handles both filename params and plain string expressions, so we use that
-			getActParamString = mainThreadJNIEnv->GetMethodID(actClass, "getParamFilename2", "(LRunLoop/CRun;I)Ljava/lang/String;");
-			getActParamFloat = mainThreadJNIEnv->GetMethodID(actClass, "getParamExpFloat", "(LRunLoop/CRun;I)F");
-			getActParamObject = mainThreadJNIEnv->GetMethodID(actClass, "getParamObject", "(LRunLoop/CRun;I)LObjects/CObject;");
+			getActParamString = threadEnv->GetMethodID(actClass, "getParamFilename2", "(LRunLoop/CRun;I)Ljava/lang/String;");
+			getActParamFloat = threadEnv->GetMethodID(actClass, "getParamExpFloat", "(LRunLoop/CRun;I)F");
+			getActParamObject = threadEnv->GetMethodID(actClass, "getParamObject", "(LRunLoop/CRun;I)LObjects/CObject;");
 
-			getCndParamString = mainThreadJNIEnv->GetMethodID(cndClass, "getParamFilename2", "(LRunLoop/CRun;I)Ljava/lang/String;");
-			getCndParamFloat = mainThreadJNIEnv->GetMethodID(cndClass, "getParamExpFloat", "(LRunLoop/CRun;I)F");
-			getCndParamObject = mainThreadJNIEnv->GetMethodID(cndClass, "getParamObject", "(LRunLoop/CRun;I)LParams/PARAM_OBJECT;");
+			getCndParamString = threadEnv->GetMethodID(cndClass, "getParamFilename2", "(LRunLoop/CRun;I)Ljava/lang/String;");
+			getCndParamFloat = threadEnv->GetMethodID(cndClass, "getParamExpFloat", "(LRunLoop/CRun;I)F");
+			getCndParamObject = threadEnv->GetMethodID(cndClass, "getParamObject", "(LRunLoop/CRun;I)LParams/PARAM_OBJECT;");
 
-			getRH = mainThreadJNIEnv->GetFieldID(extClass, "rh", "LRunLoop/CRun;");
+			getRH = threadEnv->GetFieldID(extClass, "rh", "LRunLoop/CRun;");
 		}
 	}
 
 	// Inherited via ACEParamReader
-	virtual float GetFloat(int index)
+	virtual float GetFloatParam(int index)
 	{
 		LOGV("Getting float param, cond=%d, index %d.\n", isCondition ? 1 : 0, index);
-		const float f = mainThreadJNIEnv->CallFloatMethod(javaActOrCndObj, isCondition ? getCndParamFloat : getActParamFloat, javaExtRHPtr, index);
+		const float f = threadEnv->CallFloatMethod(javaActOrCndObj, isCondition ? getCndParamFloat : getActParamFloat, javaExtRHPtr, index);
 		JNIExceptionCheck();
 		LOGV("Got float param, cond=%d, index %d OK: %f.\n", isCondition ? 1 : 0, index, f);
 		return f;
 	}
 
-	virtual const TCHAR * GetString(int index)
+	virtual const TCHAR * GetStringParam(int index)
 	{
 		LOGV("Getting string param, cond=%d, index %d.\n", isCondition ? 1 : 0, index);
-		strings[stringIndex].ctx = (jstring)mainThreadJNIEnv->CallObjectMethod(javaActOrCndObj, isCondition ? getCndParamString : getActParamString, javaExtRHPtr, index);
+		strings[stringIndex].init(
+			(jstring)threadEnv->CallObjectMethod(javaActOrCndObj,
+				isCondition ? getCndParamString : getActParamString, javaExtRHPtr, index));
 		JNIExceptionCheck();
-		strings[stringIndex].ptr = mainThreadJNIEnv->GetStringUTFChars(strings[stringIndex].ctx, NULL);
-		LOGV("Got string param, cond=%d, index %d OK: \"%s\".\n", isCondition ? 1 : 0, index, strings[stringIndex].ptr);
-		return strings[stringIndex++].ptr;
+		LOGV("Got string param, cond=%d, index %d OK: \"%s\".\n", isCondition ? 1 : 0, index, strings[stringIndex].str().data());
+		return strings[stringIndex++].str().data();
 	}
 
-	virtual std::int32_t GetInteger(int index, Params type)
+	virtual std::int32_t GetIntegerParam(int index, Params type)
 	{
 		LOGV("Getting integer param, cond=%d, index %d, type %d.\n", isCondition ? 1 : 0, index, (int)type);
-		const std::int32_t in = mainThreadJNIEnv->CallIntMethod(javaExtPtr, getActOrCondParamInt, javaActOrCndObj, index, type);
+		const std::int32_t in = threadEnv->CallIntMethod(javaExtPtr, getActOrCondParamInt, javaActOrCndObj, index, type);
 		JNIExceptionCheck();
 		LOGV("Got integer param, cond=%d, index %d, type %d OK: %d.\n", isCondition ? 1 : 0, index, (int)type, in);
 		return in;
 	}
 
-	virtual long GetObject(int index)
+	virtual long GetObjectParam(int index)
 	{
 		// If condition, getParamObject() returns a PARAM_OBJECT; dereference it and read its OIList var via Java side
 		if (isCondition)
 		{
 			LOGV("Getting object param, cond=%d, index %d, type %d.\n", isCondition ? 1 : 0, index, (int)Params::Object);
-			const std::int32_t oiListInt = mainThreadJNIEnv->CallIntMethod(javaExtPtr, getActOrCondParamInt, javaActOrCndObj, index, (int)Params::Object);
+			const std::int32_t oiListInt = threadEnv->CallIntMethod(javaExtPtr, getActOrCondParamInt, javaActOrCndObj, index, (int)Params::Object);
 			JNIExceptionCheck();
 			LOGV("Got object param, cond=%d, index %d OK: %i.\n", isCondition ? 1 : 0, index, oiListInt);
 			return oiListInt;
@@ -1092,7 +1233,7 @@ struct ConditionOrActionManager_Android : ACEParamReader
 
 		// Not sure if this can have a zero selection and thus return null, but allow it
 		JNIExceptionCheck();
-		jobject jObj = mainThreadJNIEnv->CallObjectMethod(javaActOrCndObj, isCondition ? getCndParamObject : getActParamObject, javaExtRHPtr, index);
+		jobject jObj = threadEnv->CallObjectMethod(javaActOrCndObj, isCondition ? getCndParamObject : getActParamObject, javaExtRHPtr, index);
 		JNIExceptionCheck();
 		if (jObj == nullptr)
 			return 0; // null
@@ -1165,7 +1306,7 @@ struct ConditionOrActionManager_iOS : ACEParamReader
 	}
 
 	// Inherited via ACEParamReader
-	virtual float GetFloat(int index)
+	virtual float GetFloatParam(int index)
 	{
 		LOGV("Getting float param, cond=%d, index %d.\n", isCondition ? 1 : 0, index);
 		double f = (isCondition ? DarkEdifObjCFunc(PROJECT_TARGET_NAME_UNDERSCORES_RAW, cndGetParamExpDouble) : DarkEdifObjCFunc(PROJECT_TARGET_NAME_UNDERSCORES_RAW, actGetParamExpDouble))(ext->objCExtPtr, objCActOrCndObj, index);
@@ -1173,7 +1314,7 @@ struct ConditionOrActionManager_iOS : ACEParamReader
 		return (float)f;
 	}
 
-	virtual const TCHAR* GetString(int index)
+	virtual const TCHAR* GetStringParam(int index)
 	{
 		LOGV("Getting string param, cond=%d, index %d.\n", isCondition ? 1 : 0, index);
 		const TCHAR* str = (isCondition ? DarkEdifObjCFunc(PROJECT_TARGET_NAME_UNDERSCORES_RAW, cndGetParamExpString) : DarkEdifObjCFunc(PROJECT_TARGET_NAME_UNDERSCORES_RAW, actGetParamExpString))(ext->objCExtPtr, objCActOrCndObj, index);
@@ -1181,7 +1322,7 @@ struct ConditionOrActionManager_iOS : ACEParamReader
 		return str;
 	}
 
-	virtual std::int32_t GetInteger(int index, Params type)
+	virtual std::int32_t GetIntegerParam(int index, Params type)
 	{
 		LOGV("Getting integer param, cond=%d, index %d, type %d.\n", isCondition ? 1 : 0, index, (int)type);
 		std::int32_t in = (isCondition ? DarkEdifObjCFunc(PROJECT_TARGET_NAME_UNDERSCORES_RAW, cndGetParamExpression) : DarkEdifObjCFunc(PROJECT_TARGET_NAME_UNDERSCORES_RAW, actGetParamExpression))(ext->objCExtPtr, objCActOrCndObj, index, (int)type);
@@ -1189,7 +1330,7 @@ struct ConditionOrActionManager_iOS : ACEParamReader
 		return in;
 	}
 
-	virtual long GetObject(int index)
+	virtual long GetObjectParam(int index)
 	{
 		// If condition, the parameter look-up gets an EventParam from runtime, which we dereference into a OINUM
 		if (isCondition)
@@ -1215,52 +1356,52 @@ struct ConditionOrActionManager_iOS : ACEParamReader
 #elif defined(__wasi__)
 
 struct ConditionOrActionManager_Html : ACEParamReader {
-    ConditionOrActionManager_Html() = default;
+	ConditionOrActionManager_Html() = default;
 
-    // Inherited via ACEParamReader
-    virtual std::int32_t GetInteger(int index, Params type) {
-        std::int32_t value = JSImports::get_integer(index);
-        LOGV(PROJECT_NAME _T(" param index: %d, type: integer, value: %d.\n"), index, value);
-        return value;
-    }
+	// Inherited via ACEParamReader
+	virtual std::int32_t GetIntegerParam(int index, Params type) {
+		std::int32_t value = JSImports::get_integer(index);
+		LOGV(PROJECT_NAME _T(" param index: %d, type: integer, value: %d.\n"), index, value);
+		return value;
+	}
 
-    virtual float GetFloat(int index) {
-        float value = JSImports::get_float(index);
-        LOGV(PROJECT_NAME _T(" param index: %d, type: float, value: %f.\n"), index, value);
-        return value;
-    }
+	virtual float GetFloatParam(int index) {
+		float value = JSImports::get_float(index);
+		LOGV(PROJECT_NAME _T(" param index: %d, type: float, value: %f.\n"), index, value);
+		return value;
+	}
 
-    virtual const TCHAR* GetString(int index) {
-        size_t buffer_size = JSImports::get_string(nullptr, 0, index);
-        char* string = new char[buffer_size];
+	virtual const TCHAR* GetStringParam(int index) {
+		size_t buffer_size = JSImports::get_string(nullptr, 0, index);
+		char* string = new char[buffer_size];
 
-        if(JSImports::get_string(string, buffer_size, index) >= buffer_size) {
-            LOGE("get_string from js land returned more bytes than the buffer size, expect problems.");
-        }
-        strings_to_free.push_back(string);
+		if(JSImports::get_string(string, buffer_size, index) >= buffer_size) {
+			LOGE("get_string from js land returned more bytes than the buffer size, expect problems.");
+		}
+		strings_to_free.push_back(string);
 
-        LOGV(PROJECT_NAME _T(" param index: %d, type: string, value: %s.\n"), index, string);
-        return string;
-    }
+		LOGV(PROJECT_NAME _T(" param index: %d, type: string, value: %s.\n"), index, string);
+		return string;
+	}
 
-    virtual long GetObject(int index) {
-        // FIXME: STUB
-        DarkEdif::Log(DARKEDIF_LOG_ERROR, "Object action/condition parameter is not supported in webassembly!");
-        return 0;
-    }
+	virtual long GetObjectParam(int index) {
+		// FIXME(wasm): STUB
+		DarkEdif::Log(DARKEDIF_LOG_ERROR, "Object action/condition parameter is not supported in webassembly!");
+		return 0;
+	}
 
-    ~ConditionOrActionManager_Html() {
-        // clean up memory after strings.
-        for (auto str : strings_to_free) {
-            delete str;
-        }
-    };
+	~ConditionOrActionManager_Html() {
+		// clean up memory after strings.
+		for (auto str : strings_to_free) {
+			delete str;
+		}
+	};
 
 protected:
-    std::vector<const char*> strings_to_free;
+	std::vector<const char*> strings_to_free;
 };
 #else
-    #error Unsupported platform.
+	#error Unsupported platform.
 #endif
 
 #ifdef _WIN32
@@ -1283,10 +1424,11 @@ ProjectFunc long PROJ_FUNC_GEN(PROJECT_TARGET_NAME_UNDERSCORES_RAW, _conditionJu
 	ConditionOrActionManager_iOS params(true, ext, cndExt);
 	ext->Runtime.curCEvent = cndExt;
 #elif defined(__wasi__)
-ProjectFunc int32_t WASM_FUNC_EXPORT(condition_jump)(Extension* ext, int32_t ID) {
-    ConditionOrActionManager_Html params;
+ProjectFunc int32_t WASM_FUNC_EXPORT(condition_jump)(Extension* ext, int32_t ID)
+{
+	ConditionOrActionManager_Html params;
 #else
-    #error Unsupported platform.
+	#error Unsupported platform.
 #endif
 	LOGV(PROJECT_NAME _T(" Condition ID %i start.\n"), ID);
 
@@ -1330,7 +1472,6 @@ short FusionAPI Edif::ActionJump(RUNDATA * rdPtr, long param1, long param2)
 	Extension * const ext = ((RunObject*)rdPtr)->GetExtension();
 	const int ID = ForbiddenInternals::GetEventNumber((RunObject*)rdPtr);
 	ConditionOrActionManager_Windows params(false, (RunObject*)rdPtr, param1, param2);
-	EventParam* curParam = ForbiddenInternals::GetCurrentParam((RunObject*)rdPtr);
 #define actreturn 0
 #elif defined (__ANDROID__)
 ProjectFunc void actionJump(JNIEnv *, jobject, jlong extPtr, jint ID, CActExtension act)
@@ -1352,11 +1493,12 @@ ProjectFunc void PROJ_FUNC_GEN(PROJECT_TARGET_NAME_UNDERSCORES_RAW, _actionJump(
 	ext->Runtime.curCEvent = act;
 #define actreturn /* void */
 #elif defined(__wasi__)
-ProjectFunc void WASM_FUNC_EXPORT(action_jump)(Extension* ext, int32_t ID) {
-    ConditionOrActionManager_Html params;
+ProjectFunc void WASM_FUNC_EXPORT(action_jump)(Extension* ext, int32_t ID)
+{
+	ConditionOrActionManager_Html params;
 #define actreturn /* void */
 #else
-    #error Unsupported platform.
+	#error Unsupported platform.
 #endif
 	LOGV(PROJECT_NAME _T(" Action ID %i start.\n"), ID);
 
@@ -1408,59 +1550,58 @@ struct ExpressionManager_Android : ACEParamReader {
 		ourAceIndex = aceIndex++;
 		if (expClass.invalid())
 		{
-			expClass = global<jclass>(mainThreadJNIEnv->GetObjectClass(expJavaObj), "static global<> expClass, from ExpressionManager ctor");
+			expClass = global<jclass>(threadEnv->GetObjectClass(expJavaObj), "static global<> expClass, from ExpressionManager ctor");
 			// these aren't memory, just ID numbers, which don't change during app lifetime
-			getParamInt = mainThreadJNIEnv->GetMethodID(expClass, "getParamInt", "()I");
-			getParamFloat = mainThreadJNIEnv->GetMethodID(expClass, "getParamFloat", "()F");
-			getParamString = mainThreadJNIEnv->GetMethodID(expClass, "getParamString", "()Ljava/lang/String;");
-			setRetInt = mainThreadJNIEnv->GetMethodID(expClass, "setReturnInt", "(I)V");
-			setRetFloat = mainThreadJNIEnv->GetMethodID(expClass, "setReturnFloat", "(F)V");
-			setRetString = mainThreadJNIEnv->GetMethodID(expClass, "setReturnString", "(Ljava/lang/String;)V");
+			getParamInt = threadEnv->GetMethodID(expClass, "getParamInt", "()I");
+			getParamFloat = threadEnv->GetMethodID(expClass, "getParamFloat", "()F");
+			getParamString = threadEnv->GetMethodID(expClass, "getParamString", "()Ljava/lang/String;");
+			setRetInt = threadEnv->GetMethodID(expClass, "setReturnInt", "(I)V");
+			setRetFloat = threadEnv->GetMethodID(expClass, "setReturnFloat", "(F)V");
+			setRetString = threadEnv->GetMethodID(expClass, "setReturnString", "(Ljava/lang/String;)V");
 		}
 	}
 	void SetValue(int a) {
-		mainThreadJNIEnv->CallVoidMethod(expJavaObj, setRetInt, a);
+		threadEnv->CallVoidMethod(expJavaObj, setRetInt, a);
 	}
 	void SetValue(float a) {
-		mainThreadJNIEnv->CallVoidMethod(expJavaObj, setRetFloat, a);
+		threadEnv->CallVoidMethod(expJavaObj, setRetFloat, a);
 	}
 	void SetValue(const char * a) {
 		LOGV("Setting expression return as text...\n");
 		// Convert into Java memory
 		jstring jStr = CStrToJStr(a);
-		mainThreadJNIEnv->CallVoidMethod(expJavaObj,  setRetString, jStr);
+		threadEnv->CallVoidMethod(expJavaObj,  setRetString, jStr);
 		JNIExceptionCheck();
-		mainThreadJNIEnv->DeleteLocalRef(jStr); // not strictly needed, it should auto-free when expressionJump ends, but can't hurt
+		threadEnv->DeleteLocalRef(jStr); // not strictly needed, it should auto-free when expressionJump ends, but can't hurt
 		JNIExceptionCheck();
 		LOGV("Setting expression return as text \"%s\" OK.\n", a);
 	}
 
 	// Inherited via ACEParamReader
-	virtual float GetFloat(int index)
+	virtual float GetFloatParam(int index)
 	{
 		LOGV("Getting float param, expr, index %d OK.\n", index);
-		const float f = mainThreadJNIEnv->CallFloatMethod(expJavaObj, getParamFloat);
+		const float f = threadEnv->CallFloatMethod(expJavaObj, getParamFloat);
 		LOGV("Got float param, expr, index %d OK: %f.\n", index, (double)f);
 		return f;
 	}
 
-	virtual const TCHAR * GetString(int index)
+	virtual const TCHAR * GetStringParam(int index)
 	{
 		LOGV("Getting string param, expr, index %d.\n", index);
-		strings[stringIndex].ctx = (jstring)mainThreadJNIEnv->CallObjectMethod(expJavaObj, getParamString);
-		strings[stringIndex].ptr = mainThreadJNIEnv->GetStringUTFChars(strings[stringIndex].ctx, NULL);
-		LOGV("Got string param, expr, index %d OK: %s.\n", index, strings[stringIndex].ptr);
-		return strings[stringIndex++].ptr;
+		strings[stringIndex].init((jstring)threadEnv->CallObjectMethod(expJavaObj, getParamString));
+		LOGV("Got string param, expr, index %d OK: %s.\n", index, strings[stringIndex].str().data());
+		return strings[stringIndex++].str().data();
 	}
 
-	virtual std::int32_t GetInteger(int index, Params)
+	virtual std::int32_t GetIntegerParam(int index, Params)
 	{
 		LOGV("Getting integer param, expr, index %d OK.\n", index);
-		const std::int32_t i = mainThreadJNIEnv->CallIntMethod(expJavaObj, getParamInt);
+		const std::int32_t i = threadEnv->CallIntMethod(expJavaObj, getParamInt);
 		LOGV("Got integer param, expr, index %d OK: %i.\n", index, i);
 		return i;
 	}
-	virtual long GetObject(int)
+	virtual long GetObjectParam(int)
 	{
 		// Expressions can't use object parameters
 		return 0;
@@ -1496,7 +1637,7 @@ struct ExpressionManager_Windows : ACEParamReader {
 	}
 
 	// Inherited via ACEParamReader
-	virtual float GetFloat(int index) override
+	virtual float GetFloatParam(int index) override
 	{
 		if (isOneOrLess && index == 0)
 			return *(float*)&param;
@@ -1504,7 +1645,7 @@ struct ExpressionManager_Windows : ACEParamReader {
 		return *(float*)&i;
 	}
 
-	virtual const TCHAR * GetString(int index) override
+	virtual const TCHAR * GetStringParam(int index) override
 	{
 		if (isOneOrLess && index == 0)
 			return (const TCHAR*)param;
@@ -1512,13 +1653,13 @@ struct ExpressionManager_Windows : ACEParamReader {
 		return (const TCHAR *)CallRunTimeFunction(rdPtr, RFUNCTION::GET_PARAM_1 + (index > 0), TYPE_STRING, index);
 	}
 
-	virtual std::int32_t GetInteger(int index, Params) override
+	virtual std::int32_t GetIntegerParam(int index, Params) override
 	{
 		if (isOneOrLess && index == 0)
 			return param;
 		return (std::int32_t)CallRunTimeFunction(rdPtr, RFUNCTION::GET_PARAM_1 + (index > 0), TYPE_INT, index);
 	}
-	virtual long GetObject(int)
+	virtual long GetObjectParam(int)
 	{
 		// Expressions can't use object parameters
 		return 0;
@@ -1527,9 +1668,9 @@ struct ExpressionManager_Windows : ACEParamReader {
 	void SetReturnType(ExpReturnType rt)
 	{
 		if (rt == ExpReturnType::Float)
-			rdPtr->rHo.Flags |= HeaderObjectFlags::Float;
+			rdPtr->rHo.hoFlags |= HeaderObjectFlags::Float;
 		else if (rt == ExpReturnType::String)
-			rdPtr->rHo.Flags |= HeaderObjectFlags::String;
+			rdPtr->rHo.hoFlags |= HeaderObjectFlags::String;
 	}
 	long SetValue(int a) {
 		return (long)a;
@@ -1564,7 +1705,7 @@ struct ExpressionManager_iOS : ACEParamReader {
 	}
 
 	// Inherited via ACEParamReader
-	virtual float GetFloat(int index)
+	virtual float GetFloatParam(int index)
 	{
 		LOGV("Getting float param, expr, index %d OK.\n", index);
 		float f = DarkEdifObjCFunc(PROJECT_TARGET_NAME_UNDERSCORES_RAW, expGetParamFloat)(ext->objCExtPtr);
@@ -1572,7 +1713,7 @@ struct ExpressionManager_iOS : ACEParamReader {
 		return f;
 	}
 
-	virtual const TCHAR* GetString(int index)
+	virtual const TCHAR* GetStringParam(int index)
 	{
 		LOGV("Getting string param, expr, index %d.\n", index);
 		const TCHAR* str = DarkEdifObjCFunc(PROJECT_TARGET_NAME_UNDERSCORES_RAW, expGetParamString)(ext->objCExtPtr);
@@ -1580,14 +1721,14 @@ struct ExpressionManager_iOS : ACEParamReader {
 		return str;
 	}
 
-	virtual std::int32_t GetInteger(int index, Params)
+	virtual std::int32_t GetIntegerParam(int index, Params)
 	{
 		LOGV("Getting integer param, expr, index %d OK.\n", index);
 		std::int32_t i = DarkEdifObjCFunc(PROJECT_TARGET_NAME_UNDERSCORES_RAW, expGetParamInt)(ext->objCExtPtr);
 		LOGV("Got integer param, expr, index %d OK: %d.\n", index, i);
 		return i;
 	}
-	virtual long GetObject(int)
+	virtual long GetObjectParam(int)
 	{
 		// Expressions can't use object parameters
 		return 0;
@@ -1607,48 +1748,48 @@ struct ExpressionManager_Html : ACEParamReader {
 	ExpressionManager_Html() = default;
 
 	void SetValue(int value) {
-        LOGV(PROJECT_NAME _T(" expression return, type: integer, value: %d.\n"), value);
-        JSImports::set_integer(value);
+		LOGV(PROJECT_NAME _T(" expression return, type: integer, value: %d.\n"), value);
+		JSImports::set_integer(value);
 	}
 
 	void SetValue(float value) {
-        LOGV(PROJECT_NAME _T(" expression return, type: float, value: %f.\n"), value);
-        JSImports::set_float(value);
+		LOGV(PROJECT_NAME _T(" expression return, type: float, value: %f.\n"), value);
+		JSImports::set_float(value);
 	}
 
 	void SetValue(const char* string) {
-        LOGV(PROJECT_NAME _T(" expression return, type: string, value: %s.\n"), string);
-        JSImports::set_string(string, strlen(string));
+		LOGV(PROJECT_NAME _T(" expression return, type: string, value: %s.\n"), string);
+		JSImports::set_string(string, strlen(string));
 	}
 
-    // Inherited via ACEParamReader
-    virtual std::int32_t GetInteger(int index, Params type) {
-        std::int32_t value = JSImports::get_integer(index);
-        LOGV(PROJECT_NAME _T(" param index: %d, type: integer, value: %d.\n"), index, value);
-        return value;
-    }
+	// Inherited via ACEParamReader
+	virtual std::int32_t GetIntegerParam(int index, Params type) {
+		std::int32_t value = JSImports::get_integer(index);
+		LOGV(PROJECT_NAME _T(" param index: %d, type: integer, value: %d.\n"), index, value);
+		return value;
+	}
 
-    virtual float GetFloat(int index) {
-        float value = JSImports::get_float(index);
-        LOGV(PROJECT_NAME _T(" param index: %d, type: float, value: %f.\n"), index, value);
-        return value;
-    }
+	virtual float GetFloatParam(int index) {
+		float value = JSImports::get_float(index);
+		LOGV(PROJECT_NAME _T(" param index: %d, type: float, value: %f.\n"), index, value);
+		return value;
+	}
 
-    virtual const TCHAR* GetString(int index) {
-        size_t buffer_size = JSImports::get_string(nullptr, 0, index);
-        char* string = new char[buffer_size];
+	virtual const TCHAR* GetStringParam(int index) {
+		size_t buffer_size = JSImports::get_string(nullptr, 0, index);
+		char* string = new char[buffer_size];
 
-        if(JSImports::get_string(string, buffer_size, index) >= buffer_size) {
-            LOGE("get_string from js land returned more bytes than the buffer size, expect problems.");
-        }
-        strings_to_free.push_back(string);
+		if(JSImports::get_string(string, buffer_size, index) >= buffer_size) {
+			LOGE("get_string from js land returned more bytes than the buffer size, expect problems.");
+		}
+		strings_to_free.push_back(string);
 
-        LOGV(PROJECT_NAME _T(" param index: %d, type: string, value: %s.\n"), index, string);
-        return string;
-    }
+		LOGV(PROJECT_NAME _T(" param index: %d, type: string, value: %s.\n"), index, string);
+		return string;
+	}
 
-	virtual long GetObject(int) {
-        // Expressions can't use object parameters
+	virtual long GetObjectParam(int) {
+		// Expressions can't use object parameters
 		return 0;
 	}
 
@@ -1657,17 +1798,17 @@ struct ExpressionManager_Html : ACEParamReader {
 	}
 
 	~ExpressionManager_Html() {
-        // clean up memory after strings.
-        for (auto str : strings_to_free) {
-            delete str;
-        }
-    };
+		// clean up memory after strings.
+		for (auto str : strings_to_free) {
+			delete str;
+		}
+	};
 
 protected:
-    std::vector<const char*> strings_to_free;
+	std::vector<const char*> strings_to_free;
 };
 #else
-    #error Unsupported platform.
+	#error Unsupported platform.
 #endif
 
 #ifdef _WIN32
@@ -1693,10 +1834,11 @@ ProjectFunc void PROJ_FUNC_GEN(PROJECT_TARGET_NAME_UNDERSCORES_RAW, _expressionJ
 	Extension* ext = (Extension*)cppExtPtr;
 	ExpressionManager_iOS params(ext);
 #elif defined(__wasi__)
-ProjectFunc void WASM_FUNC_EXPORT(expression_jump)(Extension* ext, int32_t ID) {
-    ExpressionManager_Html params;
+ProjectFunc void WASM_FUNC_EXPORT(expression_jump)(Extension* ext, int32_t ID)
+{
+	ExpressionManager_Html params;
 #else
-    #error Unsupported platform.
+	#error Unsupported platform.
 #endif
 
 	if (Edif::SDK->ExpressionFunctions.size() < (unsigned int)ID)
@@ -1728,7 +1870,7 @@ ProjectFunc void WASM_FUNC_EXPORT(expression_jump)(Extension* ext, int32_t ID) {
 	// it in the ASM, we can't pass it to the function.
 	// Worth noting that if all non-auto parameters are not interpreted, a crash will occur.
 	// Also, don't set NumAutoProps to negative.
-	const json_value & numAutoProps = CurLang["Expressions"][ID]["NumAutoProps"];
+	const json_value & numAutoProps = CurLang["Expressions"sv][ID]["NumAutoProps"sv];
 	if (numAutoProps.type == json_integer)
 		ParameterCount = (int)numAutoProps.u.integer;
 
@@ -1752,7 +1894,7 @@ ProjectFunc void WASM_FUNC_EXPORT(expression_jump)(Extension* ext, int32_t ID) {
 		switch (info->Parameter[i].ep)
 		{
 		case ExpParams::String:
-			Parameters[i] = (long)params.GetString(i);
+			Parameters[i] = (long)params.GetStringParam(i);
 
 			// Catch null string parameters and return "" or 0 as appropriate
 			if (!Parameters[i])
@@ -1760,7 +1902,7 @@ ProjectFunc void WASM_FUNC_EXPORT(expression_jump)(Extension* ext, int32_t ID) {
 				DarkEdif::MsgBox::Error(_T("Edif::Expression() error"),
 					_T("Error calling expression \"%s\" (ID %i); parameter index %i was given a null string pointer.\n"
 					"Was the parameter type different when the expression was created in the MFA?"),
-					DarkEdif::UTF8ToTString((const char *)CurLang["Expressions"][ID]["Title"]).c_str(), ID, i);
+					DarkEdif::UTF8ToTString(CurLang["Expressions"sv][ID]["Title"sv]).c_str(), ID, i);
 
 				if (ExpressionRet == ExpReturnType::String)
 					Result = (long)ext->Runtime.CopyString(_T(""));
@@ -1771,16 +1913,16 @@ ProjectFunc void WASM_FUNC_EXPORT(expression_jump)(Extension* ext, int32_t ID) {
 		case ExpParams::Integer: // Handles float as well
 			if ((info->FloatFlags & (1 << i)) != 0)
 			{
-				float f = params.GetFloat(i);
+				float f = params.GetFloatParam(i);
 				Parameters[i] = *(int*)&f;
 			}
 			else
-				Parameters[i] = params.GetInteger(i, (Params)0);
+				Parameters[i] = params.GetIntegerParam(i, (Params)0);
 			break;
 		default:
 		{
 			DarkEdif::MsgBox::Error(_T("Edif::Expression() error"), _T("Error calling expression \"%s\" (ID %i); parameter index %i has unrecognised ExpParams %hi."),
-				DarkEdif::UTF8ToTString((const char *)CurLang["Expressions"][ID]["Title"]).c_str(), ID, i, (short)info->Parameter[i].ep);
+				DarkEdif::UTF8ToTString(CurLang["Expressions"sv][ID]["Title"sv]).c_str(), ID, i, (short)info->Parameter[i].ep);
 			if (ExpressionRet == ExpReturnType::String)
 				Result = (long)ext->Runtime.CopyString(_T(""));
 			goto endFunc;
@@ -1798,7 +1940,9 @@ ProjectFunc void WASM_FUNC_EXPORT(expression_jump)(Extension* ext, int32_t ID) {
 	{
 		// Ignore undefined memory warning, we know Parameters[0] is inited,
 		// if VariableFunction is our expression function
+#ifdef _WIN32
 #pragma warning(suppress: 6001)
+#endif
 		Result = ext->VariableFunction((const TCHAR *)Parameters[0], *info, Parameters);
 		_CrtCheckMemory();
 		goto endFunc;
@@ -1884,13 +2028,14 @@ endFunc:
 // DarkExt.json
 #include "DarkExt.json.h"
 
-int Edif::GetDependency (char *& Buffer, size_t &Size, const TCHAR * FileExtension, int Resource) {
-    // PLatform independent, file bytes are stored inside a generated c header
+int Edif::GetDependency (char *& Buffer, size_t &Size, const TCHAR * FileExtension, int Resource)
+{
+	// PLatform independent, file bytes are stored inside a generated c header
 	if (_tcsicmp(FileExtension, _T("json")) == 0) {
-        Buffer = (char*)DarkExtJSON;
-        Size = DarkExtJSON_len;
-        return DependencyWasResource;
-    }
+		Buffer = (char*)DarkExtJSON;
+		Size = DarkExtJSON_len;
+		return DependencyWasResource;
+	}
 
 #ifdef _WIN32
 	TCHAR Filename [MAX_PATH];
@@ -1942,9 +2087,38 @@ int Edif::GetDependency (char *& Buffer, size_t &Size, const TCHAR * FileExtensi
 	return DependencyWasResource;
 #elif defined(__ANDROID__) || defined(__APPLE__) || defined(__wasi__)
 	return DependencyNotFound;
+
+	// A start at reading JSON from file.
+#if 0
+	// https://stackoverflow.com/questions/25559996/using-resource-files-in-ndk/25560443#25560443
+	// https://developer.android.com/ndk/reference/asset__manager_8h.html
+	// https://stackoverflow.com/questions/13317387/how-to-get-file-in-assets-from-android-ndk
+	// --> https://stackoverflow.com/a/40935331
+
+
+	// https://en.wikibooks.org/wiki/OpenGL_Programming/Android_GLUT_Wrapper#Accessing_assets
+	JavaVM* vm = state_param->activity->vm;
+	AAssetManager_fromJava(threadEnv, assetManager);
+	// https://stackoverflow.com/a/40935331
+	AssetManager * mgr = app->activity->assetManager;
+	AAssetDir* assetDir = AAssetManager_openDir(mgr, "");
+	const char* filename = (const char*)NULL;
+	while ((filename = AAssetDir_getNextFileName(assetDir)) != NULL) {
+		AAsset* asset = AAssetManager_open(mgr, filename, AASSET_MODE_STREAMING);
+		char buf[BUFSIZ];
+		int nb_read = 0;
+		FILE* out = fopen(filename, "w");
+		while ((nb_read = AAsset_read(asset, buf, BUFSIZ)) > 0)
+			fwrite(buf, nb_read, 1, out);
+		fclose(out);
+		AAsset_close(asset);
+	}
+	AAssetDir_close(assetDir);
+	return DependencyWasFile;
+#endif // File reading
 #else
-    #error Unsupported platform.
-#endif
+	#error Unsupported platform.
+#endif // _WIN32
 }
 
 #ifdef _WIN32
@@ -2020,7 +2194,7 @@ void Edif::GetSiblingPath (TCHAR * Buffer, const TCHAR * FileExtension)
 #endif
 
 #ifdef _UNICODE
-wchar_t * Edif::ConvertString(const char* utf8String)
+wchar_t * Edif::ConvertString(const std::string_view & utf8String)
 {
 #ifndef _WIN32
 	std::string s(utf8String);
@@ -2028,16 +2202,15 @@ wchar_t * Edif::ConvertString(const char* utf8String)
 	ws.resize(std::mbstowcs(&ws[0], s.c_str(), s.size())); // Shrink to fit.
 	return wcsdup(ws.c_str());
 #else
-	size_t Length = MultiByteToWideChar(CP_UTF8, 0, utf8String, -1, 0, 0);
-	if ( Length == 0 )
-		Length = 1;
-	wchar_t * tstr = (wchar_t *)calloc(Length, sizeof(wchar_t));
-	MultiByteToWideChar(CP_UTF8, 0, utf8String, -1, tstr, Length);
+	size_t Length = MultiByteToWideChar(CP_UTF8, 0, utf8String.data(), utf8String.size(), 0, 0);
+	assert(Length >= 0);
+	wchar_t * tstr = (wchar_t *)calloc(++Length, sizeof(wchar_t));
+	MultiByteToWideChar(CP_UTF8, 0, utf8String.data(), utf8String.size(), tstr, Length);
 	return tstr;
 #endif
 }
 
-wchar_t * Edif::ConvertAndCopyString(wchar_t * tstr, const char* utf8String, int maxLength)
+wchar_t * Edif::ConvertAndCopyString(wchar_t * tstr, const std::string_view & utf8String, int maxLength)
 {
 #ifndef _WIN32
 	size_t sSize = strlen(utf8String);
@@ -2059,29 +2232,30 @@ wchar_t * Edif::ConvertAndCopyString(wchar_t * tstr, const char* utf8String, int
 	}
 
 #else
-	MultiByteToWideChar(CP_UTF8, 0, utf8String, -1, tstr, maxLength);
+	size_t Length = MultiByteToWideChar(CP_UTF8, 0, utf8String.data(), utf8String.size() + 1, tstr, maxLength);
+	if (Length >= 0)
+		tstr[Length] = _T('\0');
 #endif
 	return tstr;
 }
 #else
-char* Edif::ConvertString(const char* utf8String)
+char* Edif::ConvertString(const std::string_view & utf8String)
 {
 #ifndef _WIN32
-	char* str = strdup(utf8String);
+	char* str = strdup(utf8String.data());
 
 	return str;
 #else
 	// Convert string to Unicode
-	size_t Length = MultiByteToWideChar(CP_UTF8, 0, utf8String, -1, 0, 0);
-	if ( Length == 0 )
-		Length = 1;
-	wchar_t * wstr = (wchar_t *)calloc(Length, sizeof(WCHAR));
-	MultiByteToWideChar(CP_UTF8, 0, utf8String, -1, wstr, Length);
+	size_t Length = MultiByteToWideChar(CP_UTF8, 0, utf8String.data(), utf8String.size(), 0, 0);
+	wchar_t * wstr = (wchar_t *)calloc(++Length, sizeof(WCHAR));
+	MultiByteToWideChar(CP_UTF8, 0, utf8String.data(), utf8String.size(), wstr, Length);
+	assert(wstr >= 0);
 
 	// Convert Unicode string using current user code page
 	int len2 = WideCharToMultiByte(CP_ACP, 0, wstr, -1, 0, 0, nullptr, nullptr);
-	if ( len2 == 0 )
-		len2 = 1;
+	assert(len2 >= 0);
+	++len2;
 	char* str = (char*)calloc(len2, sizeof(char));
 	WideCharToMultiByte(CP_ACP, 0, wstr, -1, str, len2, nullptr, nullptr);
 	free(wstr);
@@ -2090,22 +2264,26 @@ char* Edif::ConvertString(const char* utf8String)
 #endif
 }
 
-char* Edif::ConvertAndCopyString(char* str, const char* utf8String, int maxLength)
+char* Edif::ConvertAndCopyString(char* str, const std::string_view & utf8String, int maxLength)
 {
 #ifndef _WIN32
-	return _strdup(utf8String);
+	std::size_t siz = std::min<std::size_t>(maxLength - 1, utf8String.size());
+	memcpy(str, utf8String.data(), siz);
+	str[siz] = '\0';
+	return _strdup(str);
 #else
 	// MultiByteToWideChar(CP_UTF8, 0, utf8String, -1, tstr, maxLength);
 
 	// Convert string to Unicode
-	size_t Length = MultiByteToWideChar(CP_UTF8, 0, utf8String, -1, 0, 0);
-	if ( Length == 0 )
-		Length = 1;
-	WCHAR* wstr = (WCHAR*)calloc(Length, sizeof(WCHAR));
-	MultiByteToWideChar(CP_UTF8, 0, utf8String, -1, wstr, Length);
+	size_t Length = MultiByteToWideChar(CP_UTF8, 0, utf8String.data(), utf8String.size(), 0, 0);
+	assert(Length >= 0);
+	WCHAR* wstr = (WCHAR*)calloc(++Length, sizeof(WCHAR));
+	Length = MultiByteToWideChar(CP_UTF8, 0, utf8String.data(), utf8String.size(), wstr, Length);
+	assert(Length >= 0);
 
 	// Convert Unicode string using current user code page
-	WideCharToMultiByte(CP_ACP, 0, wstr, -1, str, maxLength, nullptr, nullptr);
+	Length = WideCharToMultiByte(CP_ACP, 0, wstr, -1, str, maxLength, nullptr, nullptr);
+	assert(Length >= 0);
 	free(wstr);
 
 	return str;
@@ -2176,7 +2354,7 @@ bool Edif::recursive_mutex::try_lock(edif_lock_debugParams)
 		sprintf_s(exc_addr, std::size(exc_addr), "crashlog%p.txt", this);
 		FILE* f = fopen(exc_addr, "wb");
 		if (f == NULL) {
-			LOGF(_T("Failed to write log file, error %d."), errno);
+			LOGF(_T("Failed to write log file, error %d.\n"), errno);
 		}
 		else
 		{

@@ -6,7 +6,7 @@
     },
     "dependencies": {
         "@bjorn3/browser_wasi_shim": "0.4.2",
-        "esbuild": "0.27.0"
+        "esbuild": "0.27.3"
     },
     "devDependencies": {
         "typescript": "5.9.3"

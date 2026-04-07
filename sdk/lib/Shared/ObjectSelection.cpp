@@ -52,16 +52,16 @@ ObjectSelection::ObjectSelection(RunHeader * rhPtr)
 
 	// Only add the sizes to the runtime structures if they weren't compiled directly for those runtimes
 	#ifndef _UNICODE
-		if ( rhPtr->rh4.rh4Mv->CallFunction(NULL, CallFunctionIDs::ISUNICODE, 0, 0, 0) )
+		if ( Edif::SDK->mV->CallFunction(NULL, CallFunctionIDs::ISUNICODE, 0, 0, 0) )
 			ObjectSelection::oiListItemSize += 24; // objInfoList::name is built in ext as char[24], but app is using wchar_t[24]
 	#endif
 	// SDK is set up to support HWA, but runtime is not using HWA, so oi structs are smaller than expected
 	#ifdef HWABETA
-		if (! rhPtr->rh4.rh4Mv->CallFunction(NULL, CallFunctionIDs::ISHWA, 0, 0, 0) )
+		if (!Edif::SDK->mV->CallFunction(NULL, CallFunctionIDs::ISHWA, 0, 0, 0) )
 			ObjectSelection::oiListItemSize -= sizeof(LPVOID);
 	#else
 		// SDK is not set up to support HWA, but runtime is using HWA, so oi structs are bigger than expected
-		if (rhPtr->rh4.rh4Mv->CallFunction(NULL, CallFunctionIDs::ISHWA, 0, 0, 0))
+		if (Edif::SDK->mV->CallFunction(NULL, CallFunctionIDs::ISHWA, 0, 0, 0))
 			ObjectSelection::oiListItemSize += sizeof(LPVOID);
 	#endif
 #endif
@@ -106,7 +106,7 @@ void ObjectSelection::SelectNone(RunObject& object) const
 
 	// Go to first object instance of this type, and make sure its next selected is invalid too
 	// There must be at least one obj instance, because we're passing it
-	
+
 	const RunObjectMultiPlatPtr firstObj = rhPtr->GetObjectListOblOffsetByIndex(ho->get_Number());
 	HeaderObject * const firstObjHo = firstObj->get_rHo();
 	firstObjHo->set_NextSelected(-1);
@@ -124,7 +124,7 @@ void ObjectSelection::SelectOneObject(RunObject& object) const
 	objInfo->set_NumOfSelected(1);
 	objInfo->set_ListSelected(ho->get_Number());
 	objInfo->set_EventCount(rhPtr->GetRH2EventCount());
-	
+
 	// Set next object in selection chain to none
 	ho->set_NextSelected(-1);
 }

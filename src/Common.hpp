@@ -1,9 +1,7 @@
 #pragma once
 
-#define MMFEXT
-
-// TODO: Use the new cross platform functions if possible.
-#define FUSION_INTERNAL_ACCESS
+// Do not move XXXEXT after #include of DarkEdif.h!
+#define MMFEXT		// Fusion 2.x, Fusion 2.x Dev
 
 #include "DarkEdif.hpp"
 
@@ -13,25 +11,21 @@
 #define JSON_COMMENT_MACRO ""
 #endif
 
-
-
-// EDITDATA with smart properties
-struct EDITDATA {
-	NO_DEFAULT_CTORS_OR_DTORS(EDITDATA)
-
-	// Header - required
+#pragma pack (push, 1)
+// Binary block used in Fusion editor and saved in the MFA/CCN/EXE files
+struct EDITDATA final
+{
+	NO_DEFAULT_CTORS_OR_DTORS(EDITDATA);
+	// Header - required, must be first variable in EDITDATA
 	extHeader eHeader;
 
     #if EditorBuild
     static DarkEdif::Properties::PropertyReader* UserConverter();
     #endif
 
-	// Keep DarkEdif variables as last. Undefined behaviour otherwise.
+	// Keep Properties variable last; its size varies.
 	DarkEdif::Properties Props;
 };
+#pragma pack (pop)
 
-class Extension;
-
-#include "FastNoiseLite.h"
-#include "SurfaceObject.hpp"
 #include "Extension.hpp"

@@ -36,16 +36,17 @@ sdk_source = files(
     'Shared/Edif.Runtime.cpp',
     'Shared/json.cpp',
     'Shared/ObjectSelection.cpp',
+    'Shared/SurfaceMultiPlat.cpp',
 )
 
 
 # Includes
 
-sdk_include = include_directories(
+sdk_include = [include_directories(
     'Shared',
     '..' / 'inc',
     '..' / 'inc' / 'Shared',
-)
+)]
 
 
 # Dependencies
@@ -76,13 +77,21 @@ else
 endif
 
 sdk_defines_project = [
-    'PROJECT_NAME=STRIFY(' + meson.project_name() + ')',
-    'PROJECT_NAME_UNDERSCORES=STRIFY(' + meson.project_name().underscorify() + ')',
-    'PROJECT_TARGET_NAME=STRIFY(' + meson.project_name() + ')',
-    'PROJECT_TARGET_NAME_UNDERSCORES=STRIFY(' + meson.project_name().underscorify() + ')',
-    'EXTENSION_FANCY_VERSION=STRIFY(' + meson.project_version() + ')',
-    'AUTHOR_NAME=STRIFY(' + ext_author + ')',
-    'COMPANY_NAME=STRIFY(' + ext_company + ')',
+    'PROJECT_NAME=DE_STRIFY(' + meson.project_name() + ')',
+    'PROJECT_NAME_UNDERSCORES=DE_STRIFY(' + meson.project_name().underscorify() + ')',
+    'PROJECT_TARGET_NAME=DE_STRIFY(' + meson.project_name() + ')',
+    'PROJECT_TARGET_NAME_UNDERSCORES=DE_STRIFY(' + meson.project_name().underscorify() + ')',
+    'EXTENSION_FANCY_VERSION=DE_STRIFY(' + meson.project_version() + ')',
+
+    'AUTHOR_NAME=DE_STRIFY(' + ext_author + ')',
+    'COMPANY_NAME=DE_STRIFY(' + ext_company + ')',
+
+    # FIXME:
+    'TEXT_OEFLAG_EXTENSION=0',
+    'WNDPROC_OEFLAG_EXTENSION=0',
+    'PAUSABLE_EXTENSION=0',
+    'DARKEDIF_DISPLAY_TYPE=0',
+    'MMF2EXTS_COMMIT_SHA=DE_STRIFY(' + import('fs').read('../MMF2ExtsCommit.txt') + ')'
 ]
 
 sdk_defines_editor = [

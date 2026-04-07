@@ -2,11 +2,6 @@
 #include <cctype>
 #include <charconv>
 
-#ifdef PI
-	#undef PI
-#endif
-#define PI 3.141592741f
-
 
 
 int Extension::current_noise_seed() {
@@ -106,11 +101,12 @@ float Extension::get_noise1D(float x) {
 }
 
 float Extension::get_looping_noise1D(float x, float xoffset, float xsize) {
+    constexpr float pi = 3.141592741f;
 	float XPos = x - xoffset;
-	float Radius = xsize / (PI * 2.0f);
+	float Radius = xsize / (pi * 2.0f);
 	float AngleStep = 360.f / xsize;
 	float Angle = XPos * AngleStep;
-	Angle = Angle * PI / 180.f;
+	Angle = Angle * pi / 180.f;
 
     return get_noise2D((Radius * cos(Angle)), (Radius * sin(Angle)));
 }

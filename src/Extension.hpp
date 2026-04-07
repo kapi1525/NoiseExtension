@@ -1,12 +1,19 @@
 #pragma once
 #include "DarkEdif.hpp"
+#include "FastNoiseLite.h"
+#include "SurfaceObject.hpp"
 
-class Extension
+
+
+class Extension final
 {
 public:
-
+	// ======================================
+	// Required variables + functions
+	// Variables here must not be moved or swapped around or it can cause future issues
+	// ======================================
 	RunHeader* rhPtr;
-	RunObjectMultiPlatPtr rdPtr; // you should not need to access this
+	RunObjectMultiPlatPtr rdPtr;
 #ifdef __ANDROID__
 	global<jobject> javaExtPtr;
 #elif defined(__APPLE__)
@@ -18,24 +25,22 @@ public:
 	static const int MinimumBuild = 254;
 	static const int Version = EXTENSION_VERSION;
 
-	static const OEFLAGS OEFLAGS = OEFLAGS::NONE;
-	static const OEPREFS OEPREFS = OEPREFS::NONE;
-
-	static const int WindowProcPriority = 100;
+	// Warning: OEFLAGS/OEPREFS cannot be freely modified when you have used them in MFAs.
+	static constexpr OEFLAGS OEFLAGS = OEFLAGS::NONE;
+	static constexpr OEPREFS OEPREFS = OEPREFS::NONE;
 
 #ifdef _WIN32
 	Extension(RunObject* const rdPtr, const EDITDATA* const edPtr, const CreateObjectInfo* const cobPtr);
 #elif defined(__ANDROID__)
-	Extension(const EDITDATA* const edPtr, const jobject javaExtPtr);
+	Extension(const EDITDATA* const edPtr, const jobject javaExtPtr, const CreateObjectInfo* const cobPtr);
 #elif defined(__APPLE__)
-	Extension(const EDITDATA* const edPtr, void* const objCExtPtr);
+	Extension(const EDITDATA* const edPtr, void* const objCExtPtr, const CreateObjectInfo* const cobPtr);
 #elif defined(__wasi__)
-	Extension(const EDITDATA* const edPtr, const CreateObjectInfo* const cobPtr);
+    Extension(const EDITDATA* const edPtr, const CreateObjectInfo* const cobPtr);
 #else
     #error Unsupported platform.
 #endif
 	~Extension();
-
 
 	FastNoiseLite fnl_noise;        // Main FastNoiseLite instance for generating noise
 	FastNoiseLite fnl_warp;         // Separate FastNoiseLite instance for domain warp
@@ -158,14 +163,11 @@ public:
     float map_noise_value(float value);
 
 
+	// Runs every tick of Fusion's runtime, can be toggled off and back on
+	REFLAG Handle();
+
 	// These are called if there's no function linked to an ID
 	void UnlinkedAction(int ID);
 	long UnlinkedCondition(int ID);
 	long UnlinkedExpression(int ID);
-
-	REFLAG Handle();
-	REFLAG Display();
-
-	short FusionRuntimePaused();
-	short FusionRuntimeContinued();
 };

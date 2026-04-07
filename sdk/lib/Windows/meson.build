@@ -25,6 +25,13 @@ if editor_build
 endif
 
 
+# Includes
+
+sdk_include += include_directories(
+    '..' / '..' / 'inc' / 'Windows',
+)
+
+
 # Dependencies
 
 sdk_deps += meson.get_compiler('cpp').find_library(
@@ -76,6 +83,7 @@ endif
 if meson.get_compiler('cpp').get_id() == 'msvc'
     sdk_cpp_args += [
         '/Zc:__cplusplus',
+        '/permissive',      # FIXME: Make this not needed
     ]
 endif
 

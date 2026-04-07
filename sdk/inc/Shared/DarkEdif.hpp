@@ -10,7 +10,8 @@
 #include "Edif.hpp"
 
 // Struct contains information about a/c/e
-struct ACEInfo {
+struct ACEInfo final
+{
 	// We can't copy this consistently because of the zero-sized array. Prevent creating copy/move constructors.
 	NO_DEFAULT_CTORS_OR_DTORS(ACEInfo);
 
@@ -54,21 +55,24 @@ struct ACEInfo {
 };
 
 namespace Edif {
-	Params ReadActionOrConditionParameterType(const char*, bool&);
-	ExpParams ReadExpressionParameterType(const char*, bool&);
-	ExpReturnType ReadExpressionReturnType(const char* text);
+	Params ReadActionOrConditionParameterType(const std::string_view&, bool&);
+	ExpParams ReadExpressionParameterType(const std::string_view&, bool&);
+	ExpReturnType ReadExpressionReturnType(const std::string_view&);
 	ACEInfo* ACEInfoAlloc(unsigned int NumParams);
 
 	bool CreateNewActionInfo();
 	bool CreateNewConditionInfo();
 	bool CreateNewExpressionInfo();
+#if EditorBuild
+	// Checks current Fusion is compatible with your extension's intended version (e.g. Dev, Std). Editor-only.
 	bool IS_COMPATIBLE(mv* mV);
+#endif
 }
 
 namespace DarkEdif {
 
 	// SDK version and changes are documented in repo/DarkEdif/#MFAs and documentation/DarkEdif changelog.md
-	static const int SDKVersion = 19;
+	static const int SDKVersion = 20;
 #if EditorBuild
 
 	// Gets DarkEdif.ini setting. Returns empty if file missing or key not in file.
@@ -122,45 +126,58 @@ namespace DarkEdif {
 				return userSuppliedName &&
 					(userSuppliedName == testAgainst || !strcmp(userSuppliedName, testAgainst));
 			}
+			// Used for both int and text based types; prefix is inserted in display before the value
 			const bool isInt;
-			int cachedInt;
+			const std::tstring prefix;
+			// Backing data
+			int cachedInt = -1;
 			std::tstring cachedText;
+
+			// If false, when Fusion requests an edit, Runtime.EditText/Int is called,
+			// then if OK is pressed, writer function is passed new variable to inspect.
+			// If true, the dialog is skipped and writer function is called directly.
+			bool writerFuncHasOwnDialog = false;
 
 			std::uint64_t refreshMS;
 			std::uint64_t nextRefreshTime;
-			const char *userSuppliedName;
+			const char * const userSuppliedName;
 
-			int (*intReadFromExt)(Extension *const ext);
-			bool (*intStoreDataToExt)(Extension *const ext, int newValue);
-			void (*textReadFromExt)(Extension *const ext, std::tstring &writeTo);
-			bool (*textStoreDataToExt)(Extension *const ext, std::tstring &newValue);
+			int (*intReadFromExt)(Extension *const ext) = nullptr;
+			bool (*intStoreDataToExt)(Extension *const ext, int &newValue) = nullptr;
+			void (*textReadFromExt)(Extension *const ext, std::tstring &writeTo) = nullptr;
+			bool (*textStoreDataToExt)(Extension *const ext, std::tstring &newValue) = nullptr;
 
-			DebugItem(decltype(intReadFromExt) reader, decltype(intStoreDataToExt) editor,
-				size_t refreshMS, const char *userSuppliedName) :
-				isInt(true), refreshMS(refreshMS), userSuppliedName(userSuppliedName),
-				cachedInt(-1), intReadFromExt(reader), intStoreDataToExt(editor),
-				textReadFromExt(NULL), textStoreDataToExt(NULL)
+			// Ctors are inline as they are only used by one func
+			inline DebugItem(const std::tstring_view prefix, const int initialInt,
+				decltype(intReadFromExt) reader, decltype(intStoreDataToExt) editor,
+				std::size_t refreshMS, const char *userSuppliedName) :
+				isInt(true), prefix(prefix),
+				cachedInt(initialInt), refreshMS(refreshMS), userSuppliedName(userSuppliedName),
+				intReadFromExt(reader), intStoreDataToExt(editor)
 			{
-				cachedText.resize(30);
-				_itot_s(cachedInt, cachedText.data(), cachedText.size(), 10);
+				cachedText.reserve(DB_BUFFERSIZE);
+				cachedText = this->prefix + std::to_tstring(initialInt);
 				nextRefreshTime = refreshMS ? GetTickCount64() + refreshMS : -1;
 			}
-			DebugItem(decltype(textReadFromExt) reader, decltype(textStoreDataToExt) editor,
-				size_t refreshMS, const char *userSuppliedName) :
-				isInt(false), refreshMS(refreshMS), userSuppliedName(userSuppliedName),
-				cachedInt(-1), intReadFromExt(NULL), intStoreDataToExt(NULL),
+			inline DebugItem(const std::tstring_view prefix, const TCHAR * initialText,
+				decltype(textReadFromExt) reader, decltype(textStoreDataToExt) editor,
+				std::size_t refreshMS, const char *userSuppliedName) :
+				isInt(false), prefix(prefix), refreshMS(refreshMS), userSuppliedName(userSuppliedName),
 				textReadFromExt(reader), textStoreDataToExt(editor)
 			{
-				cachedText.reserve(256);
 				nextRefreshTime = refreshMS ? GetTickCount64() + refreshMS : -1;
+				cachedText = prefix;
+				if (initialText && initialText[0])
+					ClipText(*this, initialText, false);
+				cachedText.reserve(prefix.size() + DB_BUFFERSIZE);
 			}
-
-			// Run when user has finished editing.
-			void EditDone(Extension *ext, const TCHAR *newText, size_t newTextSize) {
-				if (isInt ? (bool)intStoreDataToExt : (bool)textStoreDataToExt)
-					throw std::exception("Not an editable property.");
-				cachedText = std::tstring_view(newText, newTextSize);
-			}
+		public:
+			// Explicitly not copiable
+			DebugItem(DebugItem&) = delete;
+			DebugItem(const DebugItem&) = delete;
+			// Explicitly moveable - moves are done by std::vector adding
+			DebugItem(DebugItem&&) = default;
+			//DebugItem(const DebugItem&&) = delete;
 		};
 
 	protected:
@@ -168,76 +185,199 @@ namespace DarkEdif {
 		Extension *const ext;
 		std::vector<DebugItem> debugItems;
 		std::vector<std::uint16_t> debugItemIDs;
+
+		// CF2.5+ text box used by debugger
+		static HWND CF25PlusEditBoxHandle;
+		static bool CF25PlusEditBoxHandleSearched;
+
+		// For internal use, not ext devs
 		void StartEditForItemID(int debugItemID);
+		// For internal use, not ext devs
 		std::uint16_t * GetDebugTree();
+		// For internal use, not ext devs
 		void GetDebugItemFromCacheOrExt(TCHAR *writeTo, int debugItemID);
+		// Clips text and inserts ellipsis, for internal use
+		static void ClipText(DebugItem& di, std::tstring newText, bool fromUserInput = true);
 #endif // EditorBuild
 
 	public:
 
 		/** Adds textual property to Fusion debugger display.
+		 * @param prefix			 The text to prefix the int value with; for example, _T("Value: "sv)
+		 * @param initialText		 Initial text of this item. If NULL, reader func will be called.
 		 * @param getLatestFromExt	 Pointer to function to read the current text from your code. Null if it never changes.
 		 * @param saveUserInputToExt Pointer to function to run if user submits a new value via Fusion debugger.
 		 *							 Null if you want it uneditable. Return true if edit was accepted by your ext.
 		 * @param refreshMS			 Milliseconds before getLatestFromExt() should be called again to update the cached text.
-		 * @param userSuppliedName	 The property name, case-sensitive. Null is allowed if property is not removable.
+		 *							 If 0, will call every time Fusion requests the value (slow).
+		 * @param userSuppliedName	 The property name, case-sensitive. Null is allowed if your code will not manually edit.
 		*/
 		void AddItemToDebugger(
-			// Supply NULL if it will not ever change.
+			const std::tstring_view prefix,
+			const TCHAR * initialText,
 			void (*getLatestFromExt)(Extension *const ext, std::tstring &writeTo),
-			// Supply NULL if not editable. In function, return true if cache should be updated, false if edit attempt was not accepted.
 			bool (*saveUserInputToExt)(Extension *const ext, std::tstring &newValue),
-			// Supply 0 if no caching should be used, otherwise will re-call reader().
-			size_t refreshMS,
-			// Supply NULL if not removable. Case-sensitive name, used for removing from Fusion debugger if needed.
-			const char *userSuppliedName
+			std::size_t refreshMS,
+			const char *userSuppliedName = nullptr
 		);
 
 		/** Adds integer property to Fusion debugger display.
+		 * @param prefix			 The text to prefix the int value with; for example, _T("Value: "sv)
+		 * @param initialInt		 The initial value of this item.
 		 * @param getLatestFromExt	 Pointer to function to read the current text from your code. Null if it never changes.
 		 * @param saveUserInputToExt Pointer to function to run if user submits a new value via Fusion debugger.
 		 *							 Null if you want it uneditable. Return true if edit was accepted by your ext.
-		 * @param refreshMS			 Milliseconds before getLatestFromExt() should be called again to update the cached text.
+		 * @param refreshMS			 Milliseconds before getLatestFromExt() should be called again to update the cached int.
+		 *							 If 0, will call every time Fusion requests the value (slow).
 		 * @param userSuppliedName	 The property name, case-sensitive. Null is allowed if property is not removable.
 		*/
 		void AddItemToDebugger(
-			// Supply NULL if it will not ever change.
+			const std::tstring_view prefix,
+			const int initialInt,
 			int (*getLatestFromExt)(Extension *const ext),
-			// Supply NULL if not editable. In function, return true if cache should be updated, false if edit attempt was not
-			bool (*saveUserInputToExt)(Extension *const ext, int newValue),
-			// Supply 0 if no caching should be used, otherwise will re-call reader() every time Fusion requests.
-			size_t refreshMS,
-			// Supply NULL if not removable. Case-sensitive name, used for removing from Fusion debugger if needed.
-			const char *userSuppliedName
+			bool (*saveUserInputToExt)(Extension *const ext, int &newValue),
+			std::size_t refreshMS,
+			const char *userSuppliedName = nullptr
 		);
 
 		// Updates the debug item with the given name from the Fusion debugger.
-		void UpdateItemInDebugger(const char *userSuppliedName, const TCHAR *newText);
+		// If name is not found, no error is made.
+		void UpdateItemInDebugger(const char *userSuppliedName, const std::tstring_view & newText);
+		// Updates the debug item with the given name from the Fusion debugger.
+		// If name is not found, no error is made.
 		void UpdateItemInDebugger(const char *userSuppliedName, int newValue);
+
+		// Disables the automatic dialog popup for editing for the given Fusion debugger item.
+		// This means the extension is responsible for creating any edit dialog when the debug
+		// item writer function is called, instead of receiving a new written value.
+		// If item name is not found, no error is made.
+		// If writer function is not set for item, hard fails.
+		void DisableAutoDialogForItem(const char* userSuppliedName);
+
+		// Appends the given text to the CF2.5+ debugger's second pane.
+		// In other Fusion 2.x variants, this func does nothing.
+		void CF25PlusLog(PrintFHintInside const TCHAR* text, ...);
 
 		FusionDebugger(Extension *const ext);
 		//~FusionDebugger() = delete;
 		FusionDebugger(FusionDebugger &&) = delete;
 	};
 
+	// True if Fusion 2.5+. False if Fusion 2.5 or 2.0.
+	extern bool IsFusion25Plus;
 #ifdef _WIN32
 	extern bool IsFusion25;
 	extern bool IsHWAFloatAngles;
-	extern bool IsRunningUnderWine;
 #else
-	// True if Fusion 2.5. False if Fusion 2.0. Always true for non-Windows builds.
+	// True if Fusion 2.5 or 2.5+. False if Fusion 2.0. Always true for non-Windows builds.
 	constexpr bool IsFusion25 = true;
 	// True if angle variables are degrees as floats. Always true for non-Windows builds.
 	constexpr bool IsHWAFloatAngles = true;
-	// True if running under Wine. Always false for non-Windows builds, as Wine will be using Windows app + exts.
-	constexpr bool IsRunningUnderWine = false;
 #endif
+	namespace Windows {
+		// True if running under Wine, false otherwise.
+		extern bool IsRunningUnderWine;
+
+		// True if running in ReactOS, false otherwise.
+		extern bool IsRunningInReactOS;
+
+		// You can also use NTDDI_XX enum for finer tuned comparison.
+		enum WinOSVersion : std::uint32_t {
+			// Windows version system was changed from Windows Me; copying it 1:1 will leave 95 "later" than WinNT.
+			// So the ones from Windows ME and earlier are faux.
+
+			// Windows 95, actual version 4.0.950
+			Win95 = 95,
+			// Windows 98 (first edition), actual version 4.10.1998
+			Win98 = 98,
+			// Windows 98 (second edition), actual version 4.10.2222
+			Win98SE = 982,
+			// Windows Millenium Edition, actual version 4.90.3000
+			// @remarks Released around the same time as Win2000, but NT is a different kernel design
+			WinME = 1000,
+
+			// After this, defines were moved to WinNT line: see _WIN32_WINNT_XX and NTDDI_XX enums
+			WinNT4 = 0x04000000,
+			Win2000 = 0x05000000,
+			WinXP = 0x05010000,
+			WinServer3 = 0x05020000,
+			WinVista = 0x06000000,
+			Win7 = 0x06010000,
+			Win8 = 0x06020000,
+			Win8_1 = 0x06030000,
+			Win10 = 0x0A000000,
+			// Win 11 is major ver 10, like Win10, but starts at build number 22000+
+			Win11 = 0x0A0055F0
+		};
+
+		// OS version; compare with WinOSVersion enum, use NTDDI_XX defines
+		// or use OSVER(OSVersion), SPVER() for service pack, SUBVER() for sub-version like 22H2.
+		// https://learn.microsoft.com/en-gb/windows/win32/winprog/using-the-windows-headers?#:~:text=describe%20other%20macros
+		extern WinOSVersion OSVersion;
+
+		// DarkEdif probably won't work on earlier Windows than 2K, due to pulling in C Runtime Library
+		// that internally uses OS features that early OSes lack.
+		// At any rate, MSDN Compatibility mostly seems to show 2000 and later functions.
+		// DarkEdif itself is only intended to target XP SP3 and later.
+
+		// Supports WinAPI functions added in Windows 2000
+		inline bool Has2KPlus() { return OSVersion > Win2000; }
+		// Supports WinAPI functions added in Windows XP
+		inline bool HasXPPlus() { return OSVersion > WinXP; }
+		// Supports WinAPI functions added in Windows Vista
+		inline bool HasVistaPlus() { return OSVersion > WinVista; }
+		// Supports WinAPI functions added in Windows 7
+		inline bool Has7Plus() { return OSVersion > Win7; }
+		// Supports WinAPI functions added in Windows 8
+		inline bool Has8Plus() { return OSVersion > Win8; }
+		// Supports WinAPI functions added in Windows 8.1
+		inline bool Has8_1Plus() { return OSVersion > Win8; }
+		// Supports WinAPI functions added in Windows 10
+		inline bool Has10Plus() { return OSVersion > Win10; }
+		// Supports WinAPI functions added in Windows 11
+		inline bool Has11Plus() { return OSVersion > Win11; }
+	}
+
+	// CPU type: relates to the true processor CPU arch, not the current project config.
+	enum class CPUArchType
+	{
+		// x86 aka i386 aka IA-32, used in Windows 32-bit and by Fusion's sole Windows runtime.
+		// @remarks x64 Windows can run x86 runtime by emulation, with a performance hit.
+		// i686 to i386 all support i386's IA-32 instruction sets.
+		x86 = 1,
+		// x64 aka x86_64, x86-64, AMD64, CPU, used in Windows, Android, iOS, Mac
+		// @remarks Fusion and thus DarkEdif does not build for x64 Windows,
+		// but x64 Windows can run x86 runtime by emulation
+		x86_64 = 2,
+		// arm64 aka AArch64, ARMv8-a, used in Windows, Android, iOS, Mac
+		// @remarks Fusion and thus DarkEdif does not build for arm64 Windows.
+		// Note arm64 Windows can run x86/x64 Windows runtime by emulation,
+		// with a performance hit.
+		// Android and iOS arm64 can also run armv7-a by emulation, but
+		// Fusion builds for arm64.
+		arm64 = 4,
+		// ARM 32-bit, used for Android armv5, armv7-a, iOS armv5-armv7, armv7s, etc.
+		// @remarks ARMv7s is in iPhone 5, but iPhone 5S has ARM64 support.
+		// What few ARM32 devices are around are likely ARMv7 and likely have 4GB RAM
+		// or less.
+		arm32 = 8,
+	};
+
+	// The true CPU arch, not the running-as arch.
+	// For example, Windows x64 running x86, this will be x64.
+	// For what CPU is running this project as, that's the current VS CPU config,
+	// so use preprocessor defines, like #ifdef __arm__, __aarch64__, __x86_64__.
+	extern DarkEdif::CPUArchType CPUArch;
+
 	// Returns the Fusion event number for this group. Works in CF2.5 and MMF2.0
 	std::uint16_t GetEventNumber(EventGroupMP *);
 	// Returns the Fusion event number the ext is executing. Works in CF2.5 and MMF2.0
 	int GetCurrentFusionEventNum(const Extension * const ext);
 	// Returns path as is if valid, an extracted binary file's path, or an error; error indicated by returning '>' at start of text
 	std::tstring MakePathUnembeddedIfNeeded(const Extension* ext, const std::tstring_view filePath);
+
+	// If not running under main thread, creates a fatal error
+	void DieIfCallerIsNotMainThread(const char* mod);
 
 	// =====
 	// This region does message boxes
@@ -297,6 +437,10 @@ namespace DarkEdif {
 	// Returns a path relative to this MFX, with an appended slash.
 	std::tstring_view GetMFXRelativeFolder(GetFusionFolderType type);
 
+	// Used for things that are only initializable once a Fusion frame has fully loaded;
+	// for example, access to the app's image bank.
+	void LateInit(Extension* ext);
+
 	// Removes the ending text if it exists, and returns true. If it doesn't exist, changes nothing and returns false.
 	bool RemoveSuffixIfExists(std::tstring_view &tstr, const std::tstring_view suffix, bool caseInsensitive = true);
 
@@ -306,22 +450,82 @@ namespace DarkEdif {
 	// Checks if path exists, and is a file
 	bool FileExists(const std::tstring_view filePath);
 
+	// =====
+	// This region does logging and debugging
+	// =====
 
+	// Returns true if a debugger is attached.
+	bool IsDebuggerAttached();
+
+	// Breaks if debugger is attached, otherwise continues.
 	void BreakIfDebuggerAttached();
+
+	// For use with SetDataBreakpoint()
+	enum class DataBreakpointType
+	{
+		// Breaks when this address is executed as code
+		ExecuteCode = 0,
+		// Breaks on any data write to this address
+		Write = 1,
+		// Breaks on any data read from this address
+		Read = 2,
+		// Breaks on any data reading from or writing to this address
+		ReadWrite = 3,
+	};
+
+	// Windows, Debug only! Sets an area of memory to debugger-pause if modified. Assumes current thread will be modifying it.
+	// Will hard-fail if it cannot set. Only 4 data breakpoints can be active at once.
+	void SetDataBreakpoint(const void * memory, std::size_t size, DataBreakpointType dbt = DataBreakpointType::Write);
+
+	// Logs with fatal level severity to debugger's output window or Android logcat,
+	// then aborts the app. Does not return to caller.
+	// On Windows, creates a modal message box between logging and app quit.
+	[[noreturn]]
 	void LOGFInternal(PrintFHintInside const TCHAR* fmt, ...) PrintFHintAfter(1, 2);
+
+	// For calling LOGX variants with va_list, the vprintf to printf
+	void LogV(int logLevel, PrintFHintInside const TCHAR* msgFormat, va_list) PrintFHintAfter(2, 0);
+
+	// =====
+	// This region does message boxes
+	// =====
 
 	namespace MsgBox
 	{
+		/** Creates a warning message box with OK button. No return value. On Windows, is modal.
+		 * @param titlePrefix The prefix to put in the message box title. TCHAR. Extension name is appended.
+		 * @param msgFormat The message box contents. TCHAR. Printf-like.
+		*/
 		void WarningOK(const TCHAR * titlePrefix, PrintFHintInside const TCHAR * msgFormat, ...) PrintFHintAfter(2, 3);
+		/** Creates a warning message box with Yes, No buttons. Returns IDYES or IDNO (default).
+		 * On Windows, blocks until button is pressed; on non-Windows, always returns IDNO immediately.
+		 * @param titlePrefix The prefix to put in the message box title. TCHAR. Extension name is appended.
+		 * @param msgFormat The message box contents. TCHAR. Printf-like.
+		 * @return IDYES, IDNO (default). */
 		int WarningYesNo(const TCHAR * titlePrefix, PrintFHintInside const TCHAR * msgFormat, ...) PrintFHintAfter(2, 3);
+		/** Creates a warning message box with Yes, No, Cancel buttons. Returns IDYES, IDNO, IDCANCEL (default).
+		 * On Windows, blocks until button is pressed; on non-Windows, always returns IDCANCEL immediately.
+		 * @param titlePrefix The prefix to put in the message box title. TCHAR. Extension name is appended.
+		 * @param msgFormat The message box contents. TCHAR. Printf-like.
+		 * @return IDYES, IDNO, IDCANCEL (default). */
 		int WarningYesNoCancel(const TCHAR * titlePrefix, PrintFHintInside const TCHAR * msgFormat, ...) PrintFHintAfter(2, 3);
+		/** Creates an error message box with OK buttons.
+		 * On Windows, blocks until button is pressed; on non-Windows, always returns immediately.
+		 * @param titlePrefix The prefix to put in the message box title. TCHAR. Extension name is appended.
+		 * @param msgFormat The message box contents. TCHAR. Printf-like. */
 		void Error(const TCHAR * titlePrefix, PrintFHintInside const TCHAR * msgFormat, ...) PrintFHintAfter(2, 3);
+		/** Creates an info message box with OK buttons.
+		 * On Windows, blocks until button is pressed; on non-Windows, always returns IDOK immediately.
+		 * @param titlePrefix The prefix to put in the message box title. TCHAR. Extension name is appended.
+		 * @param msgFormat The message box contents. TCHAR. Printf-like. */
 		void Info(const TCHAR * titlePrefix, PrintFHintInside const TCHAR * msgFormat, ...) PrintFHintAfter(2, 3);
+		/** Creates a message box with custom icon, buttons and settings. See MessageBoxA().
+		 * On Windows, blocks until button is pressed. On non-Windows, always returns IDOK immediately.
+		 * @param titlePrefix The prefix to put in the message box title. TCHAR. Extension name is appended.
+		 * @param msgFormat The message box contents. TCHAR. Printf-like.
+		 * @return IDOK, IDCANCEL, IDYES, IDNO, IDABORT etc. */
 		int Custom(const int flags, const TCHAR * titlePrefix, PrintFHintInside const TCHAR * msgFormat, ...) PrintFHintAfter(3, 4);
 	}
-
-	void Log(int logLevel, PrintFHintInside const TCHAR * msgFormat, ...) PrintFHintAfter(2, 3);
-	void LogV(int logLevel, PrintFHintInside const TCHAR* msgFormat, va_list) PrintFHintAfter(2, 0);
 
 	// =====
 	// This region does looking up correct languages from INI.
@@ -348,19 +552,224 @@ namespace DarkEdif {
 	std::string TStringToUTF8(const std::tstring_view);
 	std::wstring TStringToWide(const std::tstring_view);
 
+#if TEXT_OEFLAG_EXTENSION
+	// Cross-platform safe, Fusion-editor friendly font struct. At runtime, load into a FontInfoMultiPlat.
+	// @remarks This is roughly based on LOGFONT, but uses UTF-8, not ANSI.
+	struct EditDataFont
+	{
+		// This struct's intended use is in EDITDATA's C memory, so it
+		// should not be getting created C++ style.
+		NO_DEFAULT_CTORS_OR_DTORS(EditDataFont);
+
+		// Can be 0 for default height, negative for character height, positive for cell height
+		std::int32_t height;
+		// Width in logical units, can be 0 for default
+		std::int32_t width;
+		// Angle in tenth of degrees
+		std::int32_t escapement;
+		// Angle in tenths of degrees
+		std::int32_t orientation;
+		// Font weight, default FW_DONTCARE (0), with range FW_THIN (100) to FW_HEAVY (900)
+		std::int32_t weight;
+		// Italic, underline, strikeout
+		bool italic, underline, strikeOut;
+		// See Windows define ANSI_CHARSET
+		std::uint8_t charSet;
+		// See Windows define OUT_DEFAULT_PRECIS
+		std::uint8_t outPrecision;
+		// See Windows define CLIP_EMBEDDED
+		std::uint8_t clipPrecision;
+		// See Windows define ANTIALIASED_QUALITY
+		std::uint8_t quality;
+		// See Windows defines DEFAULT_PITCH, FF_DECORATIVE
+		std::uint8_t pitchAndFamily;
+		// Font name in UTF-8. For TCHAR, see GetFontName().
+		// @remarks LF_FACESIZE (32) is max font name size in LOGFONTW's UTF-16.
+		//			In UTF-8, it can be expanded to 1.5x storage, see https://stackoverflow.com/a/58581109
+		char fontNameU8[(32 / 2) * 3];
+		// Font color - a COLORREF
+		std::uint32_t fontColor;
+		// DrawText DT flags, including text alignment and RTL settings.
+		std::uint32_t dtFlags;
+
+	public:
+#ifdef _WIN32
+		// Gets a LOGFONT from the internal font.
+		std::unique_ptr<LOGFONT> GetWindowsLogFont() const;
+		std::unique_ptr<LOGFONTA> GetWindowsLogFontA() const;
+		std::unique_ptr<LOGFONTW> GetWindowsLogFontW() const;
+
+		void SetWindowsLogFont(const LOGFONT* const);
+		void SetWindowsLogFontA(const LOGFONTA* const);
+		void SetWindowsLogFontW(const LOGFONTW* const);
+
+		// Initializes from frame editor e.g. for CreateObject. Uses the frame default font,
+		// falls back on Arial, default size.
+		void Initialize(mv* mV);
+
+		/* Gets the internal DT_XX text align flags converted to TEXT_ALIGN_XX flags.
+		   @return TEXT_ALIGN_XX align flags, suitable for Fusion's GetTextAlignment */
+		std::uint32_t GetFusionTextAlignment() const;
+
+		/* Sets part of the DT_XX align flags based on TEXT_ALIGN_XX flags read from Extension::TextCapacity.
+		 * @param textAlignFlags TEXT_ALIGN_XX flags from Fusion SetTextAlignment
+		 * @param setSingleLine  If true (default), will set and clear DT_SINGLELINE based on vertical align */
+		void SetFusionTextAlignment(TextCapacity textAlignFlags, bool setSingleLine = true);
+#endif // _WIN32
+		// Gets font name
+		std::tstring GetFontName() const;
+		void SetFontName(std::tstring_view);
+	};
+#endif // TEXT_OEFLAG_EXTENSION
+
+#define MULTIPLAT_FONT
+	// Native Fusion type for runtime fonts
+	struct FontInfoMultiPlat
+	{
+		// Can be 0 for default height, negative for character height, positive for cell height
+		// Always positive on non-Windows
+		std::int32_t height = 0;
+		// Width in logical units, can be 0 for default
+		// Not usable on non-Windows
+		std::int32_t width = 0;
+		// Angle in tenth of degrees
+		// Not usable on non-Windows
+		std::int32_t escapement = 0;
+		// Angle in tenths of degrees
+		// Not usable on non-Windows
+		std::int32_t orientation = 0;
+		// Font weight, default FW_DONTCARE (0), with range FW_THIN (100) to FW_HEAVY (900)
+		// Weight 500+ on Android, 600+ on iOS/Mac, is bold
+		// Bold, italic is ignored on iOS/Mac if font name is specified
+		std::int32_t weight = 0;
+		// Italic, underline, strikeout
+		bool italic = false, underline = false, strikeOut = false;
+		// See Windows define ANSI_CHARSET
+		// Not usable on non-Windows
+		std::uint8_t charSet = 0;
+		// See Windows define OUT_DEFAULT_PRECIS
+		std::uint8_t outPrecision = 0;
+		// See Windows define CLIP_EMBEDDED
+		// Not usable on non-Windows
+		std::uint8_t clipPrecision = 0;
+		// See Windows define ANTIALIASED_QUALITY
+		// Not usable on non-Windows
+		std::uint8_t quality = 0;
+		// See Windows defines DEFAULT_PITCH, FF_DECORATIVE
+		// Not usable on non-Windows
+		std::uint8_t pitchAndFamily = 0;
+		// Font name desired - may be swapped or modified
+		std::tstring fontNameDesired;
+		// Font color - a COLORREF
+		std::uint32_t fontColor = 0;
+		// DT_XX flags, including text alignment and Windows stuff
+		// Text alignment - Fusion alignment and RTL settings.
+		// To convert to DrawText DT_XX flags, use GetDrawTextFlags().
+		std::uint32_t drawTextFlags = 0;
+#ifdef _WIN32
+		HFONT fontHandle = NULL;
+		std::unique_ptr<LOGFONT> logFont;
+		// Creates a font info pointing to a native font
+		FontInfoMultiPlat(HFONT nativeFont);
+		// Creates a copy of font settings of this native font
+		void SetFont(HFONT nativeFont);
+		// Creates a copy of font settings of this native font
+		void SetFont(const LOGFONT* nativeFont);
+	private:
+		std::tstring fontName;
+	public:
+#elif defined(__ANDROID__)
+		global<jobject> cfontinfo;
+		global<jclass> cfontinfoClass;
+		static jfieldID lfHeight, lfWeight, lfItalic, lfUnderline, lfStrikeOut, lfFaceName;
+		// Creates a font info pointing to a native font
+		FontInfoMultiPlat(jobject nativeFont);
+		// Creates a copy of font settings of this native font
+		void SetFont(const jobject nativeFont);
+#elif defined(__APPLE__)
+		CFontInfo* cfontinfo = nullptr;
+		// Creates a font info pointing to a native font
+		FontInfoMultiPlat(CFontInfo* nativeFont);
+		// Creates a copy of font settings of this native font
+		void SetFont(const void* const nativeFont);
+#elif defined(__wasi__)
+	// FIXME(wasm): stub
+#else
+	#error Platform unsupported.
+#endif
+#if TEXT_OEFLAG_EXTENSION
+		// Creates a runtime-usable font from a EDITDATA font, tying it to an ext
+		void CopyFromEditFont(Extension* const ext, const DarkEdif::EditDataFont&);
+#endif
+		// Creates a font info pointing to no specific font. See SetFont
+		FontInfoMultiPlat();
+		~FontInfoMultiPlat();
+		void SetFont(const std::tstring_view fontName, int fontSize);
+		std::tstring GetActualFontName();
+		void UpdateNativeSide();
+	};
+
+#ifdef __ANDROID__
+	// =====
+	// This region does Android-specific functionality
+	// =====
+	namespace Android
+	{
+		// Holds a weak global refernce to MMFRuntime.inst, the app Activity or AppCompatActivity. This is not expected to be null.
+		extern jweak MMFRuntimeInst;
+		extern global<jclass> MMFRuntimeInstClass;
+
+		// Holds a weak global reference to the Activity AppContext. This is not expected to be null.
+		extern jweak AppContext;
+		extern global<jclass> AppContextClass;
+
+		// Gets Android app target API version, usable for runtime checks for Java API presence.
+		// An Android app targeting Android API 30 running on a Android 34 API device will report 30 here.
+		// @remarks Java functions are limited by this app's target SDK.
+		//			NDK functions are limited by true device API only.
+		//			If using JNI, use GetAppTargetAPI() or check the JNI class/method finding works.
+		//			If using NDK, use GetCurrentDeviceAPI(), and possibly dlsym().
+		extern int AppTargetAPI;
+
+		// Gets Android device API version, usable for runtime checks for C/C++ NDK.
+		// An Android app targeting Android API 30 running on a Android 34 API device will report 34 here.
+		// @remarks NDK functions are limited by true device API only.
+		//			Java functions are limited by the app's target SDK.
+		//			If using JNI, use GetAppTargetAPI() or check the JNI class/method finding works.
+		//			If using NDK, use GetCurrentDeviceAPI(), and possibly dlsym();
+		//			you can also limit with __ANDROID__API__ at compile time to change min SDK support.
+		extern int CurrentDeviceAPI;
+
+		/** Returns true if Android has a permission granted. False if not.
+		 * @param perm			Permission. If it has no periods, will prepend "android.permission."
+		*/
+		bool HasPermissionGranted(std::string_view perm);
+	}
+#endif // __ANDROID__
+}
+
+// Included here so the font struct above can be used inside
+#ifndef SURFACE_MULTI_PLAT_DEFINED
+#include "SurfaceMultiPlat.hpp"
+#endif
+
+namespace DarkEdif
+{
 	// =====
 	// This region does JSON-based properties.
 	// =====
-
 
 	// Functions redirected from Fusion DLL calls.
 	// The DLL_XX prefixes are necessary due to DEF files getting confused despite the namespaces.
 	namespace DLL
 	{
+		// TODO: Is this meant to be defined in EditorBuild, or runtime too? Is GetRunObjectInfos called at runtime?
 		// Returns size of EDITDATA and all properties if they were using their default values from JSON
 		std::uint16_t Internal_GetEDITDATASizeFromJSON();
 
+#if EditorBuild
 		void GeneratePropDataFromJSON();
+#endif
 	}
 
 #ifndef NOPROPS
@@ -391,13 +800,10 @@ namespace DarkEdif {
 
 		int DLL_CreateObject(mv* mV, LevelObject* loPtr, EDITDATA* edPtr);
 	}
+	struct RuntimePropSet;
 
-	struct Size
-	{
-		int width, height;
-	};
-
-	struct Properties
+#pragma pack (push, 1)
+	struct Properties final
 	{
 		NO_DEFAULT_CTORS_OR_DTORS(Properties);
 
@@ -407,30 +813,82 @@ namespace DarkEdif {
 
 		// Returns property checked or unchecked from property name.
 		bool IsPropChecked(std::string_view propName) const;
-		// Returns property checked or unchecked from property ID.
-		bool IsPropChecked(int propID) const;
+		// Returns property checked or unchecked from JSON property index.
+		bool IsPropChecked(int jsonPropID) const;
 		// Returns std::tstring property setting from property name.
 		std::tstring GetPropertyStr(std::string_view propName) const;
-		// Returns std::tstring property string from property ID.
-		std::tstring GetPropertyStr(int propID) const;
+		// Returns std::tstring property string from a JSON property index.
+		std::tstring GetPropertyStr(int jsonPropID) const;
 		// Returns a float/int property setting from property name.
 		float GetPropertyNum(std::string_view propName) const;
-		// Returns float/int property setting from a property ID.
-		float GetPropertyNum(int propID) const;
-		// Returns Fusion image bank ID from a image list property ID,
+		// Returns float/int property setting from JSON property index.
+		float GetPropertyNum(int jsonPropID) const;
+		// Returns Fusion image bank ID from a image list JSON property ID,
 		// suitable for DarkEdif::Surface::CreateFromImageBankID()
-		std::uint16_t GetPropertyImageID(int propID, std::size_t index) const;
+		std::uint16_t GetPropertyImageID(int jsonPropID, std::uint16_t imgIndex) const;
 		// Returns Fusion image bank ID from a image list property name,
 		// suitable for DarkEdif::Surface::CreateFromImageBankID()
-		std::uint16_t GetPropertyImageID(std::string_view propName, std::size_t index) const;
-		// Returns number of images in a image list property by property ID
-		std::uint16_t GetPropertyNumImages(int propID, std::size_t index) const;
+		std::uint16_t GetPropertyImageID(std::string_view propName, std::uint16_t imgIndex) const;
+		// Returns number of images in a image list property by JSON property ID
+		std::uint16_t GetPropertyNumImages(int jsonPropID) const;
 		// Returns number of images in a image list property by property name
-		std::uint16_t GetPropertyNumImages(std::string_view propName, std::size_t index) const;
+		std::uint16_t GetPropertyNumImages(std::string_view propName) const;
 		// Returns a Size property value by property name
-		DarkEdif::Size GetSizeProperty(std::string_view propName, std::size_t index) const;
-		// Returns a Size property value by property ID
-		DarkEdif::Size GetSizeProperty(int propID, std::size_t index) const;
+		DarkEdif::Size GetSizeProperty(std::string_view propName) const;
+		// Returns a Size property value by JSON property ID
+		DarkEdif::Size GetSizeProperty(int jsonPropID) const;
+
+		struct Data;
+		// Iterates all the OI List in entire frame
+		struct PropSetIterator
+		{
+			using iterator_category = std::forward_iterator_tag;
+			using value_type = void*;
+			using difference_type = std::ptrdiff_t;
+			using pointer = void*;
+			using reference = void*;
+
+		public:
+			// Iterator for all the OI List in entire frame
+			PropSetIterator& operator++();
+			// x++, instead of ++x
+			PropSetIterator operator++(int);
+			bool operator==(PropSetIterator other) const;
+			bool operator!=(PropSetIterator other) const;
+			reference operator*() const;
+
+			PropSetIterator begin() const;
+			PropSetIterator end() const;
+
+			void SetCurrentIndex(std::uint16_t idx);
+			std::uint16_t GetNumSetRepeats() const;
+		private:
+			const std::size_t nameListJSONIdx;
+			const std::size_t numSkippedSetsBefore;
+			Properties* const props;
+
+			std::uint16_t curEntryIdx = 0;
+			Properties::Data* runSetEntry = nullptr;
+			RuntimePropSet* runPropSet = nullptr;
+
+			explicit PropSetIterator(const std::size_t nameListJSONIdx, const std::size_t setIdx, Data* runSetEntry, Properties* const props, bool);
+
+		protected:
+			friend Properties;
+			PropSetIterator(const std::size_t nameListJSONIdx, const std::size_t setIdx, Data* runSetEntry, Properties* const props);
+		};
+
+		// Obscures the dummy iterator of LoopPropSet(). Usage:
+		// for (DarkEdif_IteratePropSet(edPtr->Props, "Set Name"sv)) { ... }
+		#define DarkEdif_IteratePropSet(props, ...) \
+			[[maybe_unused]] const auto DE_CONCAT(_anonit_,__LINE__) : props.LoopPropSet(__VA_ARGS__)
+
+		/** Gets a property set dummy iterator, suitable for switching current property set index.
+		 *  Use with DarkEdif_ForEachPropSet(edPtr->Props, "setname"sv)
+		 *  The range-for loop is used only to advance internal property-set index; the iterator is not readable.
+		 * @param setName  Set name, as specified in JSON.
+		 * @param numSkips Keep as 0, unless using subsets. For subsets, n to skip n parent/grandparent sets. */
+		PropSetIterator LoopPropSet(std::string_view setName, std::size_t numSkips = 0) const;
 
 #if EditorBuild
 		// =====
@@ -490,7 +948,7 @@ namespace DarkEdif {
 
 			// Was okay to return it, but had a third-party error
 			// Report this error to user
-			void Return_Error(PrintFHintInside const TCHAR * error, ...) PrintFHintAfter(2,3);
+			void Return_Error(PrintFHintInside const TCHAR* error, ...) PrintFHintAfter(2, 3);
 
 			// The source data doesn't have this, and clearly the source is unreliable
 			// This converter should no longer be used
@@ -503,7 +961,7 @@ namespace DarkEdif {
 		struct PropertyReader
 		{
 			// Start the property reader/converter. Return ConverterUnsuitable if the converter isn't usable.
-			virtual void Initialise(ConverterState& convState, ConverterReturn* const convRet) = 0;
+			virtual void Initialize(ConverterState& convState, ConverterReturn* const convRet) = 0;
 
 			// Get property by ID.
 			// Note that IDs will always be increasing, but you should program GetProperty() as if IDs can be skipped (non-monotonic).
@@ -522,32 +980,53 @@ namespace DarkEdif {
 		struct PreSmartPropertyReader;
 		struct SmartPropertyReader;
 		struct JSONPropertyReader;
-
 #endif // EditorBuild
 
 		// Turn on for lots of logging.
+#if EditorBuild && defined(_DEBUG) && defined (IS_DARKEDIF_TEMPLATE)
+		static constexpr bool DebugProperties = true;
+#else
 		static constexpr bool DebugProperties = false;
+#endif
 
-		struct Data;
+		// Smart properties can change the version Fusion is told, so a migration from v1 -> v2 smart props
+		// triggers the migration procedure even if Extension::Version is not modified by ext dev
+		// Smart props v1: 0x0000
+		// Smart props v2: 0x0100
+		// Smart props v3: 0x0200?
+		static constexpr std::uint16_t VersionFlags = 0x0100;
+		// All flags, for removing the version increment; this will be 0x0100 | 0x0200 if props v3 is necessary
+		static constexpr std::uint16_t AllVersionFlags = 0x0100;
 
 		// We hide some stuff so newbie ext devs don't mistakenly use it
 		friend DarkEdif::DLL::PropAccesser;
 
 	protected:
-		// Version of this DarkEdif::Properties struct. If smart properties' layouts ever need updating, voila.
-		std::uint32_t propVersion = 'DAR1';
+		struct V1Data;
+		// Version of this DarkEdif::Properties struct.
+		// Currently DAR2. DAR1 had no visibleEditorProps, and no Data::jsonPropIndex.
+		std::uint32_t propVersion;
 		// fnv1a hashes, used to read JSON properties to see if a property layout change has been made.
 		std::uint32_t hash; // property titles and types
 		std::uint32_t hashTypes; // property types only
 		// Number of properties
 		std::uint16_t numProps;
 
-		// VS decided to pad this struct, so let's continue the idiocy officially
+		// VS decided to pad this struct
 		std::uint16_t pad;
 		// Size of DataForProps - including EDITDATA (and thus EDITDATA::Properties)
 		// Note that this is uint32, because initial EDITDATA is capped to uint16 by GetRunObjectInfos()'s EDITDATASize,
 		// but the size after initial setup is in EDITDATA::eHeader::extSize, which is uint32.
 		std::uint32_t sizeBytes;
+
+		union {
+			// If properties are visible. Included but invalid in non-Editor builds.
+			// @remarks This could be optimized to a bitfield but honestly, not worth.
+			bool* visibleEditorProps;
+			// Padding if Fusion editor is 32-bit
+			std::uint64_t ptrPad;
+		};
+
 		// The actual data for properties, merged together
 		// Starts with checkboxes, then data, which is Data struct: type ID followed by binary.
 		std::uint8_t dataForProps[];
@@ -555,16 +1034,77 @@ namespace DarkEdif {
 		// Use numProps / 8 for num of bytes used by checkboxes.
 
 		const Data* Internal_FirstData() const;
-		const Data* Internal_DataAt(int ID) const;
+		// Gets entry by its prop index in JSON, using current set selection,
+		// or by num of Next calls
+		const Data* Internal_DataAt(int ID, bool idIsJSON = true) const;
+		// Gets index of prop in Next() calls from its JSON index, interpreting from RuntimePropSets.
+		// Optionally returns the data directly, with the RuntimePropSet that contains it.
+		std::size_t PropIdxFromJSONIdx(std::size_t ID, const Data** dataPtr = nullptr, const Data** rsContainer = nullptr) const;
+		// Gets prop index from name or returns max
+		std::uint16_t PropJSONIdxFromName(const TCHAR * const func, const std::string_view&) const;
+
+		std::tstring Internal_GetPropStr(const Properties::Data* data) const;
+		float Internal_GetPropNum(const Properties::Data* data) const;
+		DarkEdif::Size Internal_GetSizeProperty(const Properties::Data* data) const;
+		std::uint16_t Internal_GetPropertyImageID(const Properties::Data* data, std::uint16_t imgIndex) const;
+		std::uint16_t Internal_GetPropertyNumImages(const Properties::Data* data) const;
 #if EditorBuild
 		Data* Internal_FirstData();
-		Data* Internal_DataAt(int ID);
-		Prop* GetProperty(size_t);
+		// Gets entry by its prop index in JSON, using current set selection,
+		// or by Next index in Prop
+		Data* Internal_DataAt(int ID, bool idIsJSON = true);
+		std::size_t PropIdxFromJSONIdx(std::size_t ID, Data** dataPtr = nullptr, Data** rsContainer = nullptr);
+		Prop* GetProperty(std::size_t);
 
 		static void Internal_PropChange(mv* mV, EDITDATA*& edPtr, unsigned int PropID, const void* newData, size_t newSize);
 #endif
 	};
 
+	struct RuntimePropSet
+	{
+		// Always 'S', compared with 'L' for non-set list.
+		std::uint8_t setIndicator;
+		// Number of repeats of this set, 1 is minimum and means one of this set
+		std::uint16_t numRepeats;
+		// Property that ends this set's data, as a JSON index, inclusive
+		std::uint16_t lastSetJSONPropIndex;
+		// First property that begins this set's data, as a JSON index, inclusive
+		std::uint16_t firstSetJSONPropIndex;
+		// Name property JSON index that will appear in list when switching set entry
+		std::uint16_t setNameJSONPropIndex;
+		// Current set index selected (0+), present at runtime too, but not used there
+		std::uint16_t setIndexSelected;
+		// Set name, as specified in JSON. Don't confuse with user-specified set name.
+		char setName[];
+
+		// Number of properties from firstSetJSONPropIndex that are this set's data
+		// Expecting at least one: the setName
+		std::uint16_t GetNumPropsInThisEntry(DarkEdif::Properties::Data* const propHoldingThisRS) const;
+		// Gets the set name
+		std::string GetPropSetName(const Properties::Data* const propHoldingThisRS) const;
+	};
+#pragma pack (pop)
+
+	struct EdittimePropSet
+	{
+		std::string setName;
+		// JSON indexes
+		std::uint16_t addButtonIdx = UINT16_MAX, deleteButtonIdx = UINT16_MAX,
+			nameEditboxIdx = UINT16_MAX, nameListIdx = UINT16_MAX,
+			startSetIdx = UINT16_MAX, endSetIdx = UINT16_MAX;
+	};
+#else // NOPROPS
+
+	// Dummy variables to allow building in NOPROPS mode
+	struct Properties
+	{
+		NO_DEFAULT_CTORS_OR_DTORS(Properties);
+		static constexpr std::uint16_t VersionFlags = 0;
+		static constexpr std::uint16_t AllVersionFlags = 0;
+		static constexpr bool DebugProperties = false;
+		struct Data;
+		struct V1Data;
+	};
 #endif // NOPROPS
 }
 
@@ -657,20 +1197,21 @@ forLoopAC(unsigned int ID, const _json_value &json, std::stringstream &str, Ret(
 	do
 	{
 		bool isFloat = false;
-		Params p = Edif::ReadActionOrConditionParameterType(json["Parameters"][acParamIndex][0], isFloat);
+		Params p = Edif::ReadActionOrConditionParameterType(json["Parameters"sv][acParamIndex][0], isFloat);
 
 		// Note that the function signature loses the top-level const-ness of parameters,
 		// so we only need to check for the non-const parameter type.
 		using cppType = typename std::tuple_element<acParamIndex, std::tuple<Args...>>::type;
 		const std::string cppTypeAsString(typestr(cppType));
 		std::string expCppType = "?"s;
+		const std::string_view title = json["Title"sv];
 
 		// Handles comparisons by adding error and storing in condRetType as applicable
 		const auto ComparisonHandler = [&]() {
 			// Actions can't use comparison types
 			if (condRetType == nullptr)
 			{
-				str << "Action "sv << (const char *)json["Title"] << " uses a comparison JSON parameter, but comparison "sv
+				str << "Action "sv << title << " uses a comparison JSON parameter, but comparison "sv
 					<< "parameters can only be used in conditions.\r\n"sv;
 				return;
 			}
@@ -680,7 +1221,7 @@ forLoopAC(unsigned int ID, const _json_value &json, std::stringstream &str, Ret(
 				*condRetType = p;
 			else // Multiple comparison parameter types, error out
 			{
-				str << "Condition "sv << (const char *)json["Title"] << " has two comparison JSON parameters. Only one "sv
+				str << "Condition "sv << title << " has two comparison JSON parameters. Only one "sv
 					<< "comparison parameter can be used.\r\n"sv;
 			}
 		};
@@ -709,13 +1250,13 @@ forLoopAC(unsigned int ID, const _json_value &json, std::stringstream &str, Ret(
 			expCppType = "const TCHAR *"sv;
 		}
 		else if (p == Params::Integer || p == Params::Expression || p == Params::Comparison || p == Params::Compare_Time || p == Params::Time ||
-			p == Params::Colour || p == Params::Joystick_Direction || p == Params::_8Dirs || p == Params::New_Direction)
+			p == Params::Color || p == Params::Joystick_Direction || p == Params::_8Dirs || p == Params::New_Direction)
 		{
 			if (p == Params::Comparison || p == Params::Compare_Time)
 				ComparisonHandler();
 
 			// Several params expect unsigned int, e.g. COLORREF is unsigned, New Direction is a mask
-			if (!_stricmp(json["Parameters"][acParamIndex][0], "Unsigned Integer") || p == Params::Colour || p == Params::Joystick_Direction ||
+			if (DarkEdif::SVICompare(json["Parameters"sv][acParamIndex][0], "Unsigned Integer"sv) || p == Params::Color || p == Params::Joystick_Direction ||
 				p == Params::_8Dirs || p == Params::New_Direction)
 			{
 				if (std::is_same<cppType, unsigned int>())
@@ -748,12 +1289,12 @@ forLoopAC(unsigned int ID, const _json_value &json, std::stringstream &str, Ret(
 		}
 		else // unimplemented param type test
 		{
-			str << "Has JSON parameter "sv << (const char*)json["Parameters"][acParamIndex][1] << ", JSON type "sv << (const char*)json["Parameters"][acParamIndex][0]
+			str << "Has JSON parameter "sv << (std::string_view)json["Parameters"sv][acParamIndex][1] << ", JSON type "sv << (std::string_view)json["Parameters"sv][acParamIndex][0]
 				<< "; C++ type is "sv << cppTypeAsString << ", but DarkEdif SDK does not test that type yet. Please report it to Phi.\r\n"sv;
 			break;
 		}
 
-		str << "Has JSON parameter "sv << (const char *)json["Parameters"][acParamIndex][1] << ", JSON type "sv << (const char *)json["Parameters"][acParamIndex][0]
+		str << "Has JSON parameter "sv << (std::string_view)json["Parameters"sv][acParamIndex][1] << ", JSON type "sv << (std::string_view)json["Parameters"sv][acParamIndex][0]
 			<< "; expected C++ type "sv << expCppType << ", but actual C++ type is "sv << cppTypeAsString << ".\r\n"sv;
 	} while (false);
 
@@ -774,7 +1315,7 @@ forLoopE(unsigned int ID, const _json_value &json, std::stringstream &str, Ret(S
 	do
 	{
 		bool isFloat = false;
-		ExpParams p = Edif::ReadExpressionParameterType(json["Parameters"][expParamIndex][0], isFloat);
+		ExpParams p = Edif::ReadExpressionParameterType(json["Parameters"sv][expParamIndex][0], isFloat);
 
 		// Note that the function signature loses the top-level const-ness of parameters,
 		// so we only need to check for the non-const parameter type.
@@ -800,7 +1341,7 @@ forLoopE(unsigned int ID, const _json_value &json, std::stringstream &str, Ret(S
 		}
 		else if (p == ExpParams::Integer)
 		{
-			if (!_stricmp(json["Parameters"][expParamIndex][0], "Unsigned Integer"))
+			if (DarkEdif::SVICompare(json["Parameters"sv][expParamIndex][0], "Unsigned Integer"sv))
 			{
 				if (std::is_same<cppType, unsigned int>())
 					break;
@@ -816,8 +1357,10 @@ forLoopE(unsigned int ID, const _json_value &json, std::stringstream &str, Ret(S
 		else // ?
 			break;
 
-		str << "Has JSON parameter \""sv << (const char *)json["Parameters"][expParamIndex][1] << "\", JSON type \""sv << (const char *)json["Parameters"][expParamIndex][0]
-			<< "\"; expected C++ type "sv << expCppType << ", but actual C++ type is "sv << cppTypeAsString << ".\r\n"sv;
+		str << "Has JSON parameter \""sv << (std::string_view)json["Parameters"sv][expParamIndex][1] <<
+			"\", JSON type \""sv << (std::string_view)json["Parameters"sv][expParamIndex][0]
+			<< "\"; expected C++ type "sv << expCppType << ", but actual C++ type is "sv
+			<< cppTypeAsString << ".\r\n"sv;
 	} while (false);
 
 	// Recurse into next iteration
@@ -840,39 +1383,40 @@ void LinkActionDebug(unsigned int ID, Ret(Struct::*Function)(Args...) const)
 		const char * const curLangName = Edif::SDK->json.u.object.values[curLangIndex].name;
 
 		// JSON item is not a language, so ignore it
-		if (curLang.type != json_object || curLang["About"]["Name"].type != json_string)
+		if (curLang.type != json_object || curLang["About"sv]["Name"sv].type != json_string)
 			continue;
 
-		if (curLang["Actions"].u.array.length <= ID)
+		if (curLang["Actions"sv].u.array.length <= ID)
 		{
 			errorStream << curLangName << ": error in linking action ID "sv << ID << "; it has no Actions JSON item.\r\n"sv;
 			continue;
 		}
-		const json_value &json = curLang["Actions"][ID];
+		const json_value &json = curLang["Actions"sv][ID];
+		const std::string_view title = json["Title"sv];
 
 		// const void is a thing, mainly because writing checks to prevent it makes template interpretation systems a lot harder.
 		if (!std::is_same<std::remove_const_t<Ret>, void>())
 		{
-			errorStream << curLangName << ": error in linking action ID "sv << ID << ", "sv << (const char *)json["Title"] << "; it has return type "sv
+			errorStream << curLangName << ": error in linking action ID "sv << ID << ", "sv << title << "; it has return type "sv
 				<< typestr(Ret) << " instead of void in the C++ function definition."sv;
 			break;
 		}
 
 		const int cppParamCount = sizeof...(Args);// Also, don't set NumAutoProps to negative.
 
-		int jsonParamCount = json["Parameters"].type == json_none ? 0 : json["Parameters"].u.array.length;
+		int jsonParamCount = json["Parameters"sv].type == json_none ? 0 : json["Parameters"sv].u.array.length;
 
 		// If this JSON variable is set, this func doesn't read all the ACE parameters, which allows advanced users to call
 		// CNC_XX Expression macros to get parameters themselves.
 		// This lets users decide at runtime whether a parameter is float or integer, which in practice seems the only use.
 		// These initially-unread parameters are not passed to the C++ function and so won't be in the C++ definition.
-		const json_value &numAutoProps = json["NumAutoProps"];
+		const json_value &numAutoProps = json["NumAutoProps"sv];
 		if (numAutoProps.type == json_integer)
 			jsonParamCount = (int)numAutoProps.u.integer;
 
 		if (cppParamCount != jsonParamCount)
 		{
-			errorStream << curLangName << ": error in linking action ID "sv << ID << ", "sv << (const char *)json["Title"] << "; it has "sv
+			errorStream << curLangName << ": error in linking action ID "sv << ID << ", "sv << title << "; it has "sv
 				<< jsonParamCount << " parameters in the Actions JSON item, but "sv << cppParamCount << " parameters in the C++ function definition."sv;
 		}
 		else if (jsonParamCount > 0)
@@ -883,7 +1427,7 @@ void LinkActionDebug(unsigned int ID, Ret(Struct::*Function)(Args...) const)
 			if (errorStream.str().size() > 0)
 			{
 				std::stringstream str2;
-				str2 << curLangName << ": error in linking action ID "sv << ID << ", "sv << (const char *)json["Title"] << ":\r\n"sv << errorStream.str();
+				str2 << curLangName << ": error in linking action ID "sv << ID << ", "sv << title << ":\r\n"sv << errorStream.str();
 				std::string realError = str2.str();
 				errorStream.str(realError.substr(0U, realError.size() - 2U));
 			}
@@ -894,34 +1438,34 @@ void LinkActionDebug(unsigned int ID, Ret(Struct::*Function)(Args...) const)
 	if (errorStream.str().size() > 0)
 		DarkEdif::MsgBox::Error(_T("Action linking error"), _T("%s"), DarkEdif::UTF8ToTString(errorStream.str()).c_str());
 
-	(Edif::SDK)->ActionFunctions[ID] = Edif::MemberFunctionPointer(Function);
+	Edif::SDK->ActionFunctions[ID] = Edif::MemberFunctionPointer(Function);
 }
 
 template<class Ret, class Struct, class... Args>
 void LinkConditionDebug(unsigned int ID, Ret(Struct::*Function)(Args...) const)
 {
 	std::stringstream errorStream;
-	for (size_t curLangIndex = 0; curLangIndex < Edif::SDK->json.u.object.length; curLangIndex++)
+	for (std::size_t curLangIndex = 0; curLangIndex < Edif::SDK->json.u.object.length; ++curLangIndex)
 	{
 		const json_value &curLang = *Edif::SDK->json.u.object.values[curLangIndex].value;
 		const char * const curLangName = Edif::SDK->json.u.object.values[curLangIndex].name;
 
 		// JSON item is not a language, so ignore it
-		if (curLang.type != json_object || curLang["About"]["Name"].type != json_string)
+		if (curLang.type != json_object || curLang["About"sv]["Name"sv].type != json_string)
 			continue;
 
-		if (curLang["Conditions"].u.array.length <= ID)
+		if (curLang["Conditions"sv].u.array.length <= ID)
 		{
 			errorStream << curLangName << ": error in linking condition ID "sv << ID << "; it has no Conditions JSON item.\r\n"sv;
 			continue;
 		}
-		const json_value &json = curLang["Conditions"][ID];
+		const json_value &json = curLang["Conditions"sv][ID];
 
 		const int cppParamCount = sizeof...(Args);
-		const int jsonParamCount = json["Parameters"].type == json_none ? 0 : json["Parameters"].u.array.length;
+		const int jsonParamCount = json["Parameters"sv].type == json_none ? 0 : json["Parameters"sv].u.array.length;
 		if (cppParamCount != jsonParamCount)
 		{
-			errorStream << curLangName << ": error in linking condition ID "sv << ID << ", "sv << (const char *)json["Title"] << "; it has "sv
+			errorStream << curLangName << ": error in linking condition ID "sv << ID << ", "sv << (std::string_view)json["Title"sv] << "; it has "sv
 				<< jsonParamCount << " parameters in the Conditions JSON item, but "sv << cppParamCount << " parameters in the C++ function definition.\r\n"sv;
 		}
 		else if (jsonParamCount > 0)
@@ -967,7 +1511,7 @@ void LinkConditionDebug(unsigned int ID, Ret(Struct::*Function)(Args...) const)
 			if (errorStream.str().size() > 0)
 			{
 				std::stringstream str2;
-				str2 << curLangName << ": error in linking condition ID "sv << ID << ", "sv << (const char *)json["Title"] << "\r\n"sv << errorStream.str();
+				str2 << curLangName << ": error in linking condition ID "sv << ID << ", "sv << (std::string_view)json["Title"sv] << "\r\n"sv << errorStream.str();
 				std::string realError = str2.str();
 				errorStream.str(realError.substr(0U, realError.size() - 2U));
 				break; // We found an error in this language
@@ -979,23 +1523,23 @@ void LinkConditionDebug(unsigned int ID, Ret(Struct::*Function)(Args...) const)
 	if (errorStream.str().size() > 0)
 		DarkEdif::MsgBox::Error(_T("Condition linking error"), _T("%s"), DarkEdif::UTF8ToTString(errorStream.str()).c_str());
 
-	(Edif::SDK)->ConditionFunctions[ID] = Edif::MemberFunctionPointer(Function);
+	Edif::SDK->ConditionFunctions[ID] = Edif::MemberFunctionPointer(Function);
 }
 
 template<class Ret, class Struct, class... Args>
 void LinkExpressionDebug(unsigned int ID, Ret(Struct::*Function)(Args...) const)
 {
 	std::stringstream errorStream;
-	for (size_t curLangIndex = 0; curLangIndex < Edif::SDK->json.u.object.length; curLangIndex++)
+	for (std::size_t curLangIndex = 0; curLangIndex < Edif::SDK->json.u.object.length; ++curLangIndex)
 	{
 		const json_value &curLang = *Edif::SDK->json.u.object.values[curLangIndex].value;
 		const char * const curLangName = Edif::SDK->json.u.object.values[curLangIndex].name;
 
 		// JSON item is not a language, so ignore it
-		if (curLang.type != json_object || curLang["About"]["Name"].type != json_string)
+		if (curLang.type != json_object || curLang["About"sv]["Name"sv].type != json_string)
 			continue;
 
-		if (curLang["Expressions"].u.array.length <= ID)
+		if (curLang["Expressions"sv].u.array.length <= ID)
 		{
 			errorStream << curLangName << ": error in linking expression ID "sv << ID << "; it has no Expressions JSON item.\r\n"sv;
 			continue;
@@ -1004,12 +1548,12 @@ void LinkExpressionDebug(unsigned int ID, Ret(Struct::*Function)(Args...) const)
 		std::string expCppRetType = "<unknown>"s;
 		std::string cppRetType = typestr(Ret);
 		bool retTypeOK = false;
-		const json_value &json = curLang["Expressions"][ID];
-		ExpReturnType jsonRetType = Edif::ReadExpressionReturnType(json["Returns"]);
+		const json_value &json = curLang["Expressions"sv][ID];
+		ExpReturnType jsonRetType = Edif::ReadExpressionReturnType(json["Returns"sv]);
 
 		if (jsonRetType == ExpReturnType::Integer)
 		{
-			if (!_stricmp(json["Returns"], "Unsigned Integer"))
+			if (DarkEdif::SVICompare(json["Returns"sv], "Unsigned Integer"sv))
 			{
 				retTypeOK = std::is_same<std::remove_const_t<Ret>, unsigned int>();
 				expCppRetType = "unsigned int"sv;
@@ -1032,25 +1576,25 @@ void LinkExpressionDebug(unsigned int ID, Ret(Struct::*Function)(Args...) const)
 		}
 		// else failure by default
 
-		std::string exprName = (const char *)json["Title"];
+		std::string_view exprName = json["Title"sv];
 		if (exprName[exprName.size() - 1U] == '(')
-			exprName.resize(exprName.size() - 1U);
+			exprName.remove_suffix(1);
 
 		if (!retTypeOK)
 		{
 			errorStream << curLangName << ": error in linking expression ID "sv << ID << ", "sv << exprName << "; it has return type "sv
-				<< (const char *)json["Returns"] << " in the JSON (C++ type "sv << expCppRetType << "), but "sv << typestr(Ret) << " in the C++ function definition."sv;
+				<< (std::string_view)json["Returns"sv] << " in the JSON (C++ type "sv << expCppRetType << "), but "sv << typestr(Ret) << " in the C++ function definition."sv;
 			break;
 		}
 
 		constexpr int cppParamCount = sizeof...(Args);
-		int jsonParamCount = json["Parameters"].type == json_none ? 0 : json["Parameters"].u.array.length;
+		int jsonParamCount = json["Parameters"sv].type == json_none ? 0 : json["Parameters"sv].u.array.length;
 
 		// If this JSON variable is set, this func doesn't read all the ACE parameters, which allows advanced users to call
 		// CNC_XX Expression macros to get parameters themselves.
 		// This lets users decide at runtime whether a parameter is float or integer, which in practice seems the only use.
 		// These initially-unread parameters are not passed to the C++ function and so won't be in the C++ definition.
-		const json_value &numAutoProps = json["NumAutoProps"];
+		const json_value &numAutoProps = json["NumAutoProps"sv];
 		if (numAutoProps.type == json_integer)
 			jsonParamCount = (int)numAutoProps.u.integer;
 
@@ -1078,7 +1622,7 @@ void LinkExpressionDebug(unsigned int ID, Ret(Struct::*Function)(Args...) const)
 	if (errorStream.str().size() > 0)
 		DarkEdif::MsgBox::Error(_T("Expression linking error"), _T("%s"), DarkEdif::UTF8ToTString(errorStream.str()).c_str());
 
-	(Edif::SDK)->ExpressionFunctions[ID] = Edif::MemberFunctionPointer(Function);
+	Edif::SDK->ExpressionFunctions[ID] = Edif::MemberFunctionPointer(Function);
 }
 
 // Restore analysis warning C6287

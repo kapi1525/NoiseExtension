@@ -1,6 +1,5 @@
-#include <map>
 #include "Common.hpp"
-
+#include <map>
 
 ///
 /// EXTENSION CONSTRUCTOR/DESTRUCTOR
@@ -10,11 +9,11 @@
 Extension::Extension(RunObject* const _rdPtr, const EDITDATA* const edPtr, const CreateObjectInfo* const cobPtr) :
 	rdPtr(_rdPtr), rhPtr(_rdPtr->get_rHo()->get_AdRunHeader()), Runtime(this)
 #elif defined(__ANDROID__)
-Extension::Extension(const EDITDATA* const edPtr, const jobject javaExtPtr) :
+Extension::Extension(const EDITDATA* const edPtr, const jobject javaExtPtr, const CreateObjectInfo* const cobPtr) :
 	javaExtPtr(javaExtPtr, "Extension::javaExtPtr from Extension ctor"),
 	Runtime(this, this->javaExtPtr)
 #elif defined(__APPLE__)
-Extension::Extension(const EDITDATA* const edPtr, void* const objCExtPtr) :
+Extension::Extension(const EDITDATA* const edPtr, void* const objCExtPtr, const CreateObjectInfo* const cobPtr) :
 	objCExtPtr(objCExtPtr), Runtime(this, objCExtPtr)
 #elif defined(__wasi__)
 Extension::Extension(const EDITDATA* const edPtr, const CreateObjectInfo* const cobPtr) :
@@ -310,19 +309,6 @@ REFLAG Extension::Handle() {
 	return REFLAG::ONE_SHOT;
 }
 
-REFLAG Extension::Display() {
-	return REFLAG::DISPLAY;
-}
-
-
-short Extension::FusionRuntimePaused() {
-	return 0;
-}
-
-short Extension::FusionRuntimeContinued() {
-	return 0;
-}
-
 
 // These are called if there's no function linked to an ID
 void Extension::UnlinkedAction(int ID) {
@@ -337,7 +323,7 @@ long Extension::UnlinkedCondition(int ID) {
 long Extension::UnlinkedExpression(int ID) {
 	DarkEdif::MsgBox::Error(_T("Extension::UnlinkedExpression() called"), _T("Running a fallback for expression ID %d. Make sure you ran LinkExpression()."), ID);
 	// Unlinked A/C/E is fatal error, but try not to return null string and definitely crash it
-	if ((size_t)ID < Edif::SDK->ExpressionInfos.size() && Edif::SDK->ExpressionInfos[ID]->Flags.ef == ExpReturnType::String)
+	if ((std::size_t)ID < Edif::SDK->ExpressionInfos.size() && Edif::SDK->ExpressionInfos[ID]->Flags.ef == ExpReturnType::String)
 		return (long)Runtime.CopyString(_T(""));
 	return 0;
 }

@@ -1,34 +1,18 @@
 #pragma once
 
 #ifndef __wasi__
-#error Included the wrong header for this platform.
+#error Included the wrong header for this OS
 #endif
-
-// Cover up clang warnings about unused features we make available
-// #pragma clang diagnostic push
-// #pragma clang diagnostic ignored "-Wignored-attributes"
-// #pragma clang diagnostic ignored "-Wunknown-pragmas"
-// #pragma clang diagnostic ignored "-Wcomment"
-// #pragma clang diagnostic ignored "-Wunused-function"
-// #pragma clang diagnostic ignored "-Wunused-variable"
 
 #include "../Shared/AllPlatformDefines.hpp"
 #include "../Shared/NonWindowsDefines.hpp"
 
-// #include <asm-generic\posix_types.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <iomanip>
 #include <stddef.h>
 
-#define SUBSTRIFY(X) #X
-#define STRIFY(X) #X
-
-void Sleep(unsigned int milliseconds);
 #define _CrtCheckMemory() /* no op */
-
-// #include <signal.h>
-#include <map>
 
 // Used to make the DLL function be visible externally, and in C function signature, not C++
 // FIXME: Due to a bug in llvm --export-dynamic exports not only functions marked with visibility(default) but other internal functions as well creating bloat.
@@ -40,8 +24,6 @@ void Sleep(unsigned int milliseconds);
 #include <unistd.h>
 #include <math.h>
 #include <optional>
-
-// Note: doesn't use underlying_type due to incompatibility with one of the Android C++ STL libraries (stlport_static).
 
 typedef unsigned short ushort;
 typedef unsigned int uint;
@@ -102,6 +84,9 @@ struct sMask;
 
 struct EDITDATA;
 struct LevelObject;
+struct COIInternals;
+struct ForbiddenInternals;
+struct CEventProgram;
 
 typedef short OINUM;
 typedef short HFII;
@@ -174,9 +159,6 @@ enum_class_is_a_bitmask(EventGroupFlags);
 std::string ThreadIDToStr(std::thread::id);
 
 
-namespace Edif { class Runtime; }
-// FIXME
-struct EventGroupMP;
 struct event2 {
     short get_evtNum();
     OINUM get_evtOi();
@@ -242,6 +224,7 @@ struct objInfoList {
     short get_ListSelected();
     int get_NumOfSelected();
     short get_Oi();
+    short GetOiListIndex(RunHeader*);
     int get_NObjects();
     short get_Object();
     const TCHAR* get_name();
@@ -297,19 +280,33 @@ private:
     void set_EventCountOR(int);
 };
 
-// Object creation structure
 struct CreateObjectInfo {
-    NO_DEFAULT_CTORS_OR_DTORS(CreateObjectInfo);
-DarkEdifInternalAccessProtected:
-    void* cobLevObj;        // Leave first!
-    unsigned short cobLevObjSeg;
-    unsigned short cobFlags;
-    int cobX;
-    int cobY;
-    int cobDir;
-    int cobLayer;
-    int cobZOrder;
+    enum class Flags : std::uint16_t {
+        None,
+        NoMovement = 0x1,
+        Hidden = 0x2,
+        FirstText = 0x4,
+        CreatedAtStart = 0x8
+    };
+    Flags get_flags() const;
+    std::int32_t get_X() const;
+    std::int32_t get_Y() const;
+    std::int32_t GetDir(RunObjectMultiPlatPtr) const;
+    std::int32_t get_layer() const;
+    std::int32_t get_ZOrder() const;
+protected:
+    friend Edif::Runtime;
+    friend RunHeader;
+    friend HeaderObject;
+    friend COIInternals;
+    // CreateObjectInfo(jobject o);
+private:
+    // static jfieldID flagsFieldID, xFieldID, yFieldID, dirFieldID, layerFieldID, zOrderFieldID;
+    // CCreateObjectInfo
+    // Note this Java class also has Frame/CLO cobLevObj, and short cobLevObjSeg
+    // global<jobject> me;
 };
+enum_class_is_a_bitmask(CreateObjectInfo::Flags);
 
 struct qualToOi {
     // returns the object in this qualifier
@@ -338,7 +335,6 @@ protected:
 private:
     std::vector<short> HalfVector(std::size_t first);
 };
-struct CEventProgram;
 struct EventGroupMP {
     NO_DEFAULT_CTORS(EventGroupMP);
 
@@ -418,6 +414,9 @@ protected:
     // Can be NULL if runtime is not patched to include this;
     // to check if NULL should be allowed, check if RunHeader has its fieldID set
     // static jfieldID rh4ActStartFieldID;
+    // static jfieldID rh2ActionOnFieldID;
+
+    // static jfieldID rh2ActionOn;
 
     // void SetEventGroup(jobject grp);
 
@@ -449,13 +448,14 @@ struct CRunAppMultiPlat {
 protected:
     friend class Edif::Runtime;
     friend struct RunHeader;
+    friend DarkEdif::Surface;
     std::unique_ptr<CRunFrame> frame;
     std::optional<int> nCurrentFrame;
     std::size_t numTotalFrames = 0; // 0 if unset
     std::unique_ptr<CRunAppMultiPlat> parentApp;
     bool parentAppIsNull = false;
-    // jobject me;
-    // jclass meClass;
+    // global<jobject> me;
+    // global<jclass> meClass;
     Edif::Runtime* runtime;
 };
 typedef CRunAppMultiPlat CRunApp;
@@ -480,6 +480,8 @@ struct RunHeader {
     // Reads the current expression token array, used in the middle of expression evaluation. Relevant in Android only.
     // Local JNI reference, can be null, e.g. during Handle().
     // jobjectArray GetRH4Tokens();
+    // Reads the rh2.rh2ActionOn variable, used to indicate actions are being run (as opposed to conditions, or Handle, etc).
+    bool GetRH2ActionOn();
 
     // Sets the rh2.rh2ActionCount variable, used in an action with multiple instances selected, to repeat one action.
     void SetRH2ActionCount(int newActionCount);
@@ -489,13 +491,18 @@ struct RunHeader {
     void SetRH4CurToken(int newCurToken);
     // Sets the current expression token array, used in the middle of expression evaluation. Relevant in Android only.
     // void SetRH4Tokens(jobjectArray newTokensArray);
+    // Sets the rh2.rh2ActionOn variable, used in an action to affect selection
+    void SetRH2ActionOn(bool newActOn);
 
-    EventGroupMP * get_EventGroup();
+    EventGroupMP* get_EventGroup();
     std::size_t GetNumberOi();
     //objectsList* get_ObjectList();
     // Returns max number of objects in the Fusion frame, set in frame properties
     std::size_t get_MaxObjects();
     std::size_t get_NObjects();
+
+    int get_WindowX() const;
+    int get_WindowY() const;
 
     objInfoList * GetOIListByIndex(std::size_t index);
     short GetOIListIndexFromOi(const short oi);
@@ -512,6 +519,7 @@ protected:
     friend struct ConditionOrActionManager_Android;
     friend CEventProgram;
     friend Edif::Runtime;
+    friend DarkEdif::Surface; // for access to java obj
     // global<jobject> crun; // CRun seems to have majority of these variables
     // global<jclass> crunClass;
 
@@ -520,7 +528,7 @@ protected:
     Edif::Runtime* runtime;
     std::unique_ptr<event2> rh4ActStart;
     std::unique_ptr<CRunAppMultiPlat> App;
-    std::optional<EventGroupMP *> EventGroup; // should be a part of eventProgram, so we don't own it ourselves
+    std::optional<EventGroupMP *> evntGroup; // should be a part of eventProgram, so we don't own it ourselves
     std::unique_ptr<objectsList> ObjectList;
     // global<jobjectArray> OiList;
     // global<jobjectArray> QualToOiList;
@@ -541,9 +549,9 @@ protected:
     // static jfieldID rh4TokensFieldID, rh4CurTokenFieldID, eventProgramFieldID, oiListFieldID;
 };
 
-// typedef jobject CCndExtension;
-// typedef jobject CActExtension;
-// typedef jobject CNativeExpInstance;
+typedef void* CCndExtension;
+typedef void* CActExtension;
+typedef void* CNativeExpInstance;
 struct HeaderObject {
     short get_NextSelected();
     unsigned short get_CreationId();
@@ -553,16 +561,30 @@ struct HeaderObject {
     bool get_SelectedInOR();
     HeaderObjectFlags get_Flags();
     objInfoList * get_OiList();
-    EventGroupFlags GetEVGFlags();
     RunHeader* get_AdRunHeader();
+    int	get_X() const;
+    int get_Y() const;
+    int get_ImgWidth() const;
+    int get_ImgHeight() const;
+    int get_ImgXSpot() const;
+    int get_ImgYSpot() const;
+    int get_Identifier() const;
+    OEFLAGS get_OEFLAGS() const;
 
     void set_NextSelected(short);
     void set_SelectedInOR(bool);
+    void SetX(int x);
+    void SetY(int y);
+    void SetPosition(int x, int y);
+    void SetImgWidth(int width);
+    void SetImgHeight(int height);
+    void SetSize(int width, int height);
     // HeaderObject(RunObject * ro, jobject me, jclass meClass, Edif::Runtime* runtime);
 
     void InvalidatedByNewGeneratedEvent();
     int GetFixedValue();
 protected:
+    friend RunObject;
 
     // invalidated by event change: eventnumber, nextselected, numprev, numnext, selectedinor, Flags
 
@@ -586,25 +608,135 @@ protected:
     // jclass meClass;
     Edif::Runtime* runtime;
     RunObject* runObj;
+    OEFLAGS oeFlags;
 
-    // static jfieldID numberFieldID;
+    // static jfieldID numberFieldID, xFieldID, yFieldID,
+        // imgWidthFieldID, imgHeightFieldID, imgXSpotFieldID, imgYSpotFieldID,
+        // identifierFieldID, oeFlagsFieldID;
+    // may be overridden and differ per HeaderObject
+    // jmethodID setXMethodID = NULL, setYMethodID = NULL, setPosMethodID = NULL,
+        // imgWidthMethodID = NULL, imgHeightMethodID = NULL, setSizeMethodID = NULL;
 
     friend struct ConditionOrActionManager_Android;
     // Short way to get number field from a jobject, used by ConditionOrActionManager::GetParamObject
     // static short GetObjectParamNumber(jobject);
 };
 
-// Java memory pointer and a C memory pointer, for text held in Java memory
-struct JavaAndCString
+struct rCom {
+    enum class MovementID : int {
+        // When launching, CreateRunObject will have -1 as movement
+        // Later, it will have 13 (Bullet).
+        // Other movements will have correct type in CreateRunObject,
+        // and objects without movement will have...
+        Launching = -1,
+        Static = 0,
+        MouseControlled = 1,
+        RaceCar = 2,
+        EightDirection = 3, // named Generic
+        BouncingBall = 4,
+        Path = 5, // named Taped
+        Platform = 9,
+        // Disappear movement - not same as Disappearing animation.
+        // Only applied for OEFLAG ANIMATIONS or SPRITES.
+        Disappear = 11,
+        Appear = 12,
+        // Launched movement (see Launching)
+        Launched = 13, // named Bullet
+
+        // Circular, Drag n Drop, Invaders, Presentation, Regular Polygon,
+        // Simple Ellipse, Sinewave, Vector, InAndOut, Pinball, Space Ship;
+        // and includes all Physics movements
+        ExtensionMvt = 14,
+    };
+    MovementID get_nMovement() const;
+    int get_dir() const;
+    int get_anim() const;
+    int get_image() const;
+    float get_scaleX() const;
+    float get_scaleY() const;
+    float GetAngle() const;
+    int get_speed() const;
+    int get_minSpeed() const;
+    int get_maxSpeed() const;
+    bool get_changed() const;
+    bool get_checkCollides() const;
+
+    void set_dir(int);
+    void set_anim(int);
+    void set_image(int);
+    void set_scaleX(float);
+    void set_scaleY(float);
+    void SetAngle(float);
+    void set_speed(int);
+    void set_minSpeed(int);
+    void set_maxSpeed(int);
+    void set_changed(bool);
+    void set_checkCollides(bool);
+    NO_DEFAULT_CTORS(rCom);
+
+    // Do not create this: internal use only
+    rCom(RunObject * ro);
+protected:
+    friend RunObject;
+    friend Edif::Runtime;
+    // global<jobject> me;
+    // global<jclass> meClass;
+    RunObject * ro; // rCom should be held within RunObject
+
+    // static jfieldID nMovementFieldID, dirFieldID, animFieldID, imageFieldID,
+        // scaleXFieldID, scaleYFieldID, angleFieldID, speedFieldID, minSpeedFieldID,
+        // maxSpeedFieldID, changedFieldID, checkCollidesFieldID;
+};
+struct rAni {
+    NO_DEFAULT_CTORS(rAni);
+    // Do not create this: internal use only
+    rAni(RunObject* ro);
+protected:
+    friend RunObject;
+    friend Edif::Runtime;
+    // global<jobject> me;
+    // global<jclass> meClass;
+    RunObject* ro; // rAni should be held within RunObject
+};
+struct rMvt {
+    NO_DEFAULT_CTORS(rMvt);
+    // Do not create this: internal use only
+    rMvt(RunObject* ro);
+protected:
+    friend RunObject;
+    friend Edif::Runtime;
+    // global<jobject> me;
+    // global<jclass> meClass;
+    RunObject* ro; // rMvt should be held within RunObject
+};
+struct RunSprite
 {
-    // jstring ctx;
-    const char* ptr;
+    NO_DEFAULT_CTORS(RunSprite);
+    RunSpriteFlag get_Flags() const;
+    // Returns a bitmask of what effects are active on this sprite
+    BlitOperation get_Effect() const;
+    // Gets alpha blend coefficient as it appears in Fusion editor
+    std::uint8_t GetAlphaBlendCoefficient() const;
+    // Gets RGB coefficient as a color (without alpha)
+    std::uint32_t GetRGBCoefficient() const;
+    // Gets the layer of the object, 0+ (Layer 1 in Fusion is 0 here)
+    std::uint32_t get_layer() const;
+    // Returns a mix of alpha + color blend coefficient
+    int get_EffectParam() const;
+    // CF2.5 296+: Gets effect shader index
+    int get_EffectShader() const;
+
+    // Do not create this: internal use only
+    RunSprite(RunObject * ro);
+protected:
+    friend RunObject;
+    friend Edif::Runtime;
+    // global<jobject> me;
+    // global<jclass> meClass;
+    RunObject * ro; // RunSprite should be held within RunObject
+    // static jfieldID flagsFieldID, effectFieldID, effectShaderFieldID, effectParamFieldID, layerFieldID;
 };
 
-struct rCom;
-struct rMvt;
-struct rAni;
-struct Sprite;
 struct AltVals;
 
 struct CValueMultiPlat {
@@ -618,11 +750,13 @@ struct CValueMultiPlat {
     };
 protected:
     friend AltVals;
-    JavaAndCString str;
+    // JavaAndCString str;
     CValueMultiPlat(unsigned int type, long value);
 };
+
+
 struct AltVals {
-    NO_DEFAULT_CTORS_OR_DTORS(AltVals);
+    NO_DEFAULT_CTORS(AltVals);
     std::size_t GetAltValueCount() const;
     std::size_t GetAltStringCount() const;
     const TCHAR* GetAltStringAtIndex(const std::size_t) const;
@@ -632,19 +766,46 @@ struct AltVals {
     void SetAltValueAtIndex(const std::size_t, const int);
     std::uint32_t GetInternalFlags() const;
     void SetInternalFlags(std::uint32_t);
+    // Do not create this: internal use only
+    AltVals(RunObject* ro);
+protected:
+    friend RunObject;
+    friend Edif::Runtime;
+    // global<jobject> me;
+    // global<jclass> meClass;
+    RunObject * ro; // AltVals should be held within RunObject
+    // static jfieldID valueFlagsFieldID, valuesFieldID, stringsFieldID, numValuesFieldID, numStringsFieldID;
 };
 struct RunObject {
     HeaderObject* get_rHo();
     rCom* get_roc();
     rMvt* get_rom();
     rAni* get_roa();
-    Sprite* get_ros();
+    RunSprite* get_ros();
     AltVals* get_rov();
-    // RunObject(jobject, jclass, Edif::Runtime *);
+    Extension* GetExtension();
+    // RunObject(jobject, jclass, Edif::Runtime*);
 protected:
+    void Init(std::shared_ptr<RunObject>& self);
+    friend rCom;
+    friend rMvt;
+    friend rAni;
+    friend RunSprite;
+    friend AltVals;
+    friend Edif::Runtime;
     std::unique_ptr<HeaderObject> rHo;
+    std::unique_ptr<rCom> roc;
+    std::unique_ptr<rAni> roa;
+    std::unique_ptr<rMvt> rom;
+    std::unique_ptr<RunSprite> ros;
+    std::unique_ptr<AltVals> rov;
     // global<jobject> me;
-    // global<jclass> meClass;
+    // global<jclass> meClass; // CExtension, not CRunExtension
+    // For the roc, roa etc to hold self
+    std::weak_ptr<RunObject> selfHolder;
+    // May be null except after GetExtension() call.
+    // global<jobject> runExt; // ext variable; CRunXXX variant of CRunExtension
+    // global<jclass> runExtClass;
 };
 // Versions
 #define MMFVERSION_MASK     0xFFFF0000
@@ -658,17 +819,11 @@ protected:
 #define MMFVERSION_20       0x02000000      // MMF 2.0
 #define MMF_CURRENTVERSION  MMFVERSION_20
 
-// WARNING: Android has a complete mismatch with actual SDK mV.
-struct mv {
-    //void * ReAllocEditData(EDITDATA * edPTr, unsigned int dwNewSize);
-    //void InvalidateObject();
-};
-
-static int globalCount;
+struct mv; // never used in Android, but we make an empty define to keep func signatures
 
 // Some macro abuse, imports a function implemented in javascript.
-#define WASM_FUNC_IMPORT(module, name) __attribute__((import_module(STRIFY(module)))) __attribute__((import_name(STRIFY(name)))) name
-#define WASM_FUNC_EXPORT(name) __attribute__((export_name(STRIFY(name)))) name
+#define WASM_FUNC_IMPORT(module, name) __attribute__((import_module(DE_STRIFY(module)))) __attribute__((import_name(DE_STRIFY(name)))) name
+#define WASM_FUNC_EXPORT(name) __attribute__((export_name(DE_STRIFY(name)))) name
 
 struct ConditionOrActionManager_Html;
 struct ExpressionManager_Html;
