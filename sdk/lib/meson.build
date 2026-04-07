@@ -91,7 +91,7 @@ sdk_defines_project = [
     'WNDPROC_OEFLAG_EXTENSION=0',
     'PAUSABLE_EXTENSION=0',
     'DARKEDIF_DISPLAY_TYPE=0',
-    'MMF2EXTS_COMMIT_SHA=DE_STRIFY(d1504452b06e0e4bd04fbe7cb55c69ed092c1086)'
+    'MMF2EXTS_COMMIT_SHA=DE_STRIFY(' + import('fs').read('../MMF2ExtsCommit.txt') + ')'
 ]
 
 sdk_defines_editor = [

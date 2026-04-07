@@ -109,7 +109,7 @@ class __single_inheritance Extension;
 // Lore:
 // https://www.reddit.com/r/directx/comments/gjk2w9/comment/fqmjmol/
 // https://stackoverflow.com/a/7212562
-// 
+//
 // For XP+ compatibility, install v14.27 ATL (or MFC) variant specifically:
 //   C++ v14.27 ATL for v142 build tools (x86 & x64), or
 //   C++ v14.27 MFC for v142 build tools (x86 & x64) - bigger and slower.
@@ -117,11 +117,11 @@ class __single_inheritance Extension;
 //   C++ ATL for latest vXX build tools (x86 & x64), or
 //   C++ MFC for latest vXX build tools (x86 & x64) - bigger and slower.
 // Or you can use even newer tech like WGL, ymmv.
-// 
+//
 // For Direct3D 11, you can enable the debug runtime using DxCpl.exe.
 // For Direct3D 9, the runtime cannot be set to debug mode in Windows 10+.
 // If you were to use earlier windows, there is a directx.cpl to enable it.
-// 
+//
 // DirectX display, used by MMF2 only, is even less tested in DarkEdif,
 // although it's noted that crashes on exit in Run App in last MMF2 HWA beta v258.2.
 #ifdef FUSION_INTERNAL_ACCESS
@@ -176,4 +176,18 @@ extern "C"
 // These have not been fleshed out in DarkEdif.
 #include <d3d8.h>
 #endif
+#ifdef FUSION_DDRAW_INTERNALS
+// The IIDs aren't correctly defined for some reason
+#if defined(FUSION_INCLUDE_ATL) && !defined(INITGUID)
+#include <initguid.h>
+#endif // GUID defines
+
+// Fusion invokes DirectDraw (DirectX) v1-2. The backend can be v7, but Fusion doesn't directly use the advanced features.
+// In theory, there's not much performance hit as what Fusion requests doesn't implicitly require slower methods.
+// You should consider DirectDraw only partially implemented on Fusion's part.
+// Note that no created surface will have DDraw features from tests. Only the frame surface itself.
+// DirectX / DirectX + VRAM modes were later removed in CF2.5.
+#include <ddraw.h>
+#endif // FUSION_DDRAW_INTERNALS
+
 #endif

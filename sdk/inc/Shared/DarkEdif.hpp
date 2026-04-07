@@ -63,7 +63,10 @@ namespace Edif {
 	bool CreateNewActionInfo();
 	bool CreateNewConditionInfo();
 	bool CreateNewExpressionInfo();
+#if EditorBuild
+	// Checks current Fusion is compatible with your extension's intended version (e.g. Dev, Std). Editor-only.
 	bool IS_COMPATIBLE(mv* mV);
+#endif
 }
 
 namespace DarkEdif {
@@ -274,6 +277,9 @@ namespace DarkEdif {
 	namespace Windows {
 		// True if running under Wine, false otherwise.
 		extern bool IsRunningUnderWine;
+
+		// True if running in ReactOS, false otherwise.
+		extern bool IsRunningInReactOS;
 
 		// You can also use NTDDI_XX enum for finer tuned comparison.
 		enum WinOSVersion : std::uint32_t {

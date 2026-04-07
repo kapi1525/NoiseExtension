@@ -2853,16 +2853,19 @@ HGLOBAL DarkEdif::DLL::DLL_UpdateEditStructure(mv* mV, EDITDATA* oldEdPtr)
 	long oldOffset = oldEdPtr ? (long)oldEdPtr->eHeader.extPrivateData : 0L;
 	const long newOffset = offsetof(EDITDATA, Props);
 
-	const static int PROPID_ITEM_NAME = 21; // user-defined object taken from a Props.h file
-	Prop_Str* ps = (Prop_Str*)(oldEdPtr ? mvGetPropValue(mV, oldEdPtr, PROPID_ITEM_NAME) : NULL);
+	// Read user-defined object name
+	const static int PROPID_EXTITEM_NAME = 403; // taken from a Props.h file
+	Prop_Str* ps = (Prop_Str*)(oldEdPtr ? mvGetPropValue(mV, oldEdPtr, PROPID_EXTITEM_NAME) : NULL);
 	std::tstring objName = ExtensionName;
 	if (ps != nullptr)
 	{
-		objName = ps->String;
-		if (objName != ExtensionName && objName[0] != _T('\0'))
-			objName += _T(" (") + ExtensionName + _T(")");
+		if (ps->String && ps->String[0] && ps->String != ExtensionName)
+			objName = std::tstring(ps->String) + _T(" (") + ExtensionName + _T(")");
 		ps->Delete();
 	}
+	// For use in later popup messages, instead of doing "SDL Object object properties", makes it "SDL Object properties", or "DarkScript object properties"
+	if (!EndsWith(objName, _T("object"sv)))
+		objName += _T(" object"sv);
 
 	// Reading pre-smart failed. Only feasible option is to reset.
 	// MsgBox::Info("Resetting properties", "Warning: Forced to reset properties for object \"%s\" (%s), "
@@ -3206,8 +3209,9 @@ HGLOBAL DarkEdif::DLL::DLL_UpdateEditStructure(mv* mV, EDITDATA* oldEdPtr)
 			}
 
 			// mv->EditApp contents is opaque, but the pointer changes when a new MFA is loaded
-			// We run a popup only if this is the first time we're seeing this CEditApp address
-			bool isDiffApp = lastCEditApp != mV->EditApp;
+			// We run a popup only if this is the first time we're seeing this CEditApp address,
+			// to prevent a popup for every Fusion frame that has the object inside
+			const bool isDiffApp = lastCEditApp != mV->EditApp;
 			lastCEditApp = mV->EditApp;
 
 			// Set to do popup, and if once only, this is a new app and eligible for its one popup
@@ -3218,18 +3222,20 @@ HGLOBAL DarkEdif::DLL::DLL_UpdateEditStructure(mv* mV, EDITDATA* oldEdPtr)
 				{
 					if (upgradeBoxNoOnce != "for reset only"sv)
 					{
-						MsgBox::Info(_T("Upgraded properties"), _T("Successfully upgraded all %u of %s object properties from ext version %lu to version %i."),
+						MsgBox::Info(_T("Upgraded properties"), _T("Successfully upgraded all %u of %s %s from ext version %lu to version %i."),
 							convState.jsonProps.u.array.length, objName.c_str(), oldExtVersion, Extension::Version);
 					}
 				}
 				else
 				{
 					resetPropStr.resize(resetPropStr.size() - 1U); // remove last line's ending newline
-					MsgBox::Info(_T("Upgraded properties"), _T("Successfully copied %u of %s object properties from ext version %lu to %i.%s\n\nAlso set %zu %s to their default settings, namely:\n%s"),
+					const bool isOne = convState.numPropsReset == 1;
+					MsgBox::Info(_T("Upgraded properties"), _T("Successfully copied %u of %s properties from ext version %lu to %i.%s\n\nAlso set %zu %s to their default setting%s:\n%s"),
 						convState.jsonProps.u.array.length - convState.numPropsReset, objName.c_str(),
 						oldExtVersion, Extension::Version,
 						propVersionUpgrade.c_str(),
-						convState.numPropsReset, convState.numPropsReset == 1 ? _T("property") : _T("properties"), UTF8ToTString(resetPropStr).c_str());
+						convState.numPropsReset, isOne == 1 ? _T("property") : _T("properties"), isOne ? _T("s") : _T(""),
+						UTF8ToTString(resetPropStr).c_str());
 				}
 			}
 		}
@@ -3308,7 +3314,13 @@ ReadyToOutput:
 			expSize -= sizeof(EDITDATA::font);
 #endif
 
-		// No custom dev data between eHeader and Props, just font/objSize, and layout is what we expect
+		// No custom dev data between eHeader and Props, just font/objSize, and layout is what we expect considering OEFLAGS.
+		// expSize 0 here means we can auto-migrate stuff between eHeader and Props of old edptr to new edptr.
+		// Note an exact old-new offset match means all data between could be memcpy'd, but that's reckless;
+		// build 1 could have had 4 ints, build 2 have 8 shorts, etc; best to let ext dev migrate with MigrateMiddle.
+		// Note offsets will be 0 here if non-smart prop oldEdPtr, and 20 (sizeof eheader) if there is no in-between data at all,
+		// old or new props. OEFLAGS should not change between ext versions, as Fusion does not expect it,
+		// and won't have the reserved space that the properties need. I'm unsure if that will corrupt MFAs.
 		if (oldOffset == newOffset && expSize == 0)
 		{
 			(void)0;
@@ -3319,6 +3331,11 @@ ReadyToOutput:
 			memcpy(&newEdPtr->font, &oldEdPtr->font, sizeof(EDITDATA::font));
 #endif
 		}
+		// oldEdPtr non-null + oldOffset 0 means old edptr is non-smart props, and new offset has nothing between eHeader/Props,
+		// no migrate needed. Note MigrateMiddle is called when non-smart old edptr, even when it's just auto-migrateable
+		// size and/or font, so the user can init those to their own preferences.
+		else if (oldOffset == 0 && newOffset == sizeof(EDITDATA::eHeader))
+			DebugProp_OutputString(_T("Migration unnecessary between non-smart props edPtr and new edPtr."));
 		else
 		{
 			// If any custom data is present, then we must migrate it by calling MigrateMiddle
@@ -5602,6 +5619,7 @@ bool DarkEdif::IsFusion25;
 // Ints are used in MMF2 non-Direct3D display modes.
 bool DarkEdif::IsHWAFloatAngles;
 bool DarkEdif::Windows::IsRunningUnderWine;
+bool DarkEdif::Windows::IsRunningInReactOS;
 DarkEdif::Windows::WinOSVersion DarkEdif::Windows::OSVersion;
 #endif
 // Set during SDK startup, relates to current CPU emulation.
@@ -7771,7 +7789,8 @@ DWORD WINAPI DarkEdifUpdateThread(void * pIsUniVer)
 			return 1;
 		}
 
-		// If this returns true, updateLock is still held.
+		// If this returns true, updateLock is still held; the error should be reported.
+		// If it returns false, updateLock is released and error should be ignored.
 		const auto handleWSAError = [&](int lastWSAError) {
 			// Get lock; caller will release it at end of update check
 			while (updateLock.exchange(true))
@@ -7843,12 +7862,21 @@ DWORD WINAPI DarkEdifUpdateThread(void * pIsUniVer)
 		struct hostent * host = gethostbyname(domain);
 #pragma warning (pop)
 
-		if (host == NULL)
+		// Port 80, default of Darkwire hardcode IP: 80.229.219.2, network byte order
+		// We'll look it up on DNS in case Darkwire migrates, although we'll make every effort not to!
+		SOCKADDR_IN SockAddr = { AF_INET, htons(80), { (UCHAR)80, (UCHAR)229, (UCHAR)219, (UCHAR)2 } };
+		assert(SockAddr.sin_family == AF_INET && SockAddr.sin_port == htons(80) && SockAddr.sin_addr.s_addr == inet_addr("80.229.219.2"));
+
+		// DNS found, switch over; guaranteed IPv4 as we specified AF_INET
+		if (host != NULL)
+			SockAddr.sin_addr.s_addr = *((unsigned long*)host->h_addr);
+		// If host not found, then use the preset hardcoded IPv4 address from above init.
+		// Darkwire IP is always the same, so DNS should only fail to find if offline and it wasn't already in local DNS cache
+		else if (WSAGetLastError() != WSAHOST_NOT_FOUND)
 		{
 			if (handleWSAError(WSAGetLastError()))
 			{
 				updateLog << "DNS lookup of \""sv << domain << "\" failed, error "sv << WSAGetLastError() << '.';
-				pendingUpdateType = DarkEdif::SDKUpdater::ExtUpdateType::ConnectionError;
 				updateLock = false;
 			}
 
@@ -7856,10 +7884,7 @@ DWORD WINAPI DarkEdifUpdateThread(void * pIsUniVer)
 			WSACleanup();
 			return 1;
 		}
-		SOCKADDR_IN SockAddr = {};
-		SockAddr.sin_port = htons(80);
-		SockAddr.sin_family = AF_INET;
-		SockAddr.sin_addr.s_addr = *((unsigned long *)host->h_addr);
+
 		GetLockAnd(
 			updateLog << "Connecting...\n"sv);
 		if (connect(Socket, (SOCKADDR *)(&SockAddr), sizeof(SockAddr)) != 0) {

@@ -31,15 +31,13 @@ JavaVM * global_vm;
 namespace DarkEdif::Android { void Init_Internals(); }
 #endif
 
-// Checks Fusion runtime is compatible with your extension.
-// In Runtime, this expression should not be called and always returns false.
+#if EditorBuild
+// Checks Fusion runtime is compatible with your extension. Editor-only.
 bool Edif::IS_COMPATIBLE(mv * v)
 {
-#if RuntimeBuild
 	// mV is not valid at runtime; so someone's trying to use a Runtime MFX as Editor,
 	// which won't work anyway because Runtime MFX lacks A/C/E menus and such.
-	return false;
-#else
+
 	// No GetVersion function provided, abort
 	if (!v->GetVersion)
 		return false;
@@ -70,8 +68,8 @@ bool Edif::IS_COMPATIBLE(mv * v)
 	#else // TGFEXT
 		return true;
 	#endif
-#endif
 }
+#endif // EditorBuild
 
 std::string Edif::CurrentFolder()
 {
@@ -574,6 +572,14 @@ int Edif::Init(mv * mV, bool fusionStartupScreen)
 			return DarkEdif::MsgBox::Error(_T("DarkEdif OS detection error"), _T("Couldn't detect OS version: Version function returned failure (%u)."), GetLastError()), -1;
 
 		DarkEdif::Windows::OSVersion = (DarkEdif::Windows::WinOSVersion)((info.dwMajorVersion << 24) | (info.dwMinorVersion << 16) | (info.dwBuildNumber & 0xFFFF));
+
+		// ReactOS appends extra text after the null terminator, like "Service Pack 6", NULL, "ReactOS 0.2.5-RC1 (Build 20041227)"
+		// Due to zero-init of info var, it's safe to read past the null if not React, should just be blank string
+		if (DarkEdif::Windows::OSVersion >= DarkEdif::Windows::WinOSVersion::WinXP &&
+			SVIComparePrefix(info.szCSDVersion + strlen(info.szCSDVersion), "ReactOS"sv))
+		{
+			DarkEdif::Windows::IsRunningInReactOS = true;
+		}
 	}
 #elif defined (__ANDROID__)
 	// Init several useful runtime classes
