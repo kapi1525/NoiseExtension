@@ -1,14 +1,12 @@
 project(
     'Noise',
-    'cpp', 'c',
+    'cpp',
     version: '1.2.0',
     license: 'MIT',
     default_options: {
         'cpp_std':       'c++17',
-        'c_std':         'c11',
         # Workaround for: https://github.com/mesonbuild/meson/issues/5590
         'build.cpp_std': 'c++17',
-        'build.c_std':   'c11',
         'warning_level': '1',
         'b_lto':         'true',                                # Enable lto
         'b_lto_mode':    'thin',                                # thin lto apparently is better

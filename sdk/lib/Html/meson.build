@@ -7,7 +7,7 @@ sdk_ext_target_type = 'executable'
 # Additional linker arguments
 
 sdk_link_args += [
-    '-Wl,--no-entry',
+    '-mexec-model=reactor',
     '-Wl,--stack-first',    # Simplifies finding potential stack overflow errors, https://github.com/WebAssembly/wasi-sdk/issues/551
 ]
 
