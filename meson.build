@@ -46,7 +46,13 @@ ext = build_target(
 )
 
 if host_machine.system() == 'wasi'
-    ext_js_out = meson.project_name() + '.js'
+    ext = custom_target(
+        'custom link',
+        input: ext.extract_all_objects(recursive: true),
+        output: meson.project_name() + '.wasm',
+        depends: ext,
+        command: [find_program('cpp'), '-o', '@OUTPUT@', '@INPUT@', '-fuse-ld='+find_program('cpp_ld').full_path(), sdk_link_args]
+    )
 
     wasm_opt = find_program('wasm-opt', required: false)
     if wasm_opt.found() and get_option('optimization') == '3'
@@ -61,6 +67,8 @@ if host_machine.system() == 'wasi'
 
 
     # javascript wrapper that loads the webassembly
+    ext_js_out = meson.project_name() + '.js'
+
     ext_js = custom_target('js ext wrapper',
         depends: ext,
         output: ext_js_out,

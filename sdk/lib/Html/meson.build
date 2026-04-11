@@ -1,7 +1,7 @@
 # Only html/wasm/wasi
 
-sdk_ext_name_suffix = 'wasm'
-sdk_ext_target_type = 'executable'
+sdk_ext_name_suffix = 'a'
+sdk_ext_target_type = 'static_library'
 
 
 # Additional linker arguments
