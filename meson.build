@@ -1,15 +1,13 @@
 project(
     'Noise',
     'cpp',
-    version: '1.2.0',
+    version: '1.2.1',
     license: 'MIT',
     default_options: {
         'cpp_std':       'c++17',
         # Workaround for: https://github.com/mesonbuild/meson/issues/5590
         'build.cpp_std': 'c++17',
         'warning_level': '1',
-        'b_lto':         'true',                                # Enable lto
-        'b_lto_mode':    'thin',                                # thin lto apparently is better
         'prefix':        meson.project_source_root() / 'MFX',   # Install prefix
     },
     meson_version: '>=1.2',
@@ -18,7 +16,7 @@ project(
 # Used by SDK meson.build file
 ext_author = 'Kacper Bugla (kapi1525)'
 ext_company = ext_author
-ext_build = 26
+ext_build = 27
 
 ext_examples_path = meson.current_source_dir() / 'Examples'
 ext_help_path = meson.current_source_dir() / 'Help'
@@ -28,7 +26,7 @@ ext_help_path = meson.current_source_dir() / 'Help'
 subdir('sdk')
 
 source = []
-include = []
+include = [include_directories('inc')]
 subdir('src')
 subdir('res')
 
