@@ -100,9 +100,11 @@ if host_machine.system() == 'wasi'
             '--alias:Extension.wasm=' + ext.full_path(),
             '--global-name=CRun' + meson.project_name(),
             '--footer:js="CRun' + meson.project_name() + ' = CRun' + meson.project_name() + '.default;"',
-            '--outfile=@OUTPUT@'
+            '--outfile=@OUTPUT@',
+            '--analyze',
         ],
         build_by_default: true,
+        build_always_stale: true,
         depends: ext,
         install: true,
         install_dir: install_prefix / ext_install_path,
