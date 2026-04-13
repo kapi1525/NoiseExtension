@@ -69,14 +69,22 @@ if host_machine.system() == 'wasi'
     # javascript wrapper that loads the webassembly
     ext_js_out = meson.project_name() + '.js'
 
-    # custom_target(
-    #     'ts validate',
-    #     input: meson.current_source_dir() / 'src/html/Noise.ts',
-    #     output: meson.current_build_dir() / ext_js_out,
-    #     command: [npm, 'tsc $ENTRY $TOTYPECHECK -t esnext --strict --module preserve --moduleResolution bundler --esModuleInterop --isolatedModules --noEmit'],
-    #     install: true,
-    #     install_dir: install_prefix / ext_install_path,
-    # )
+    run_target(
+        'ts validate',
+        command: [
+            npm, 'exec',  '--',
+            'tsc',
+            meson.current_source_dir() / 'src/html/Noise.ts',
+            '-t',
+            'esnext',
+            '--strict',
+            '--module', 'preserve',
+            '--moduleResolution', 'bundler',
+            '--esModuleInterop',
+            '--isolatedModules',
+            '--noEmit',
+        ],
+    )
 
     custom_target(
         'create js bundle',
