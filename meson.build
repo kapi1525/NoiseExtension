@@ -47,17 +47,17 @@ ext = build_target(
 
 if host_machine.system() == 'wasi'
     ext = custom_target(
-        'custom link',
+        'wasm link',
         input: ext.extract_all_objects(recursive: true),
-        output: meson.project_name() + '.wasm',
+        output: meson.project_name() + '.raw.wasm',   # Added '.raw' to filename to stop meson from installing it without asking.
         depends: ext,
-        command: [find_program('cpp'), '-o', '@OUTPUT@', '@INPUT@', '-fuse-ld='+find_program('cpp_ld').full_path(), sdk_link_args]
+        command: [find_program('cpp'), '-o', '@OUTPUT@', '@INPUT@', '-fuse-ld='+find_program('cpp_ld').full_path(), sdk_link_args],
     )
 
     wasm_opt = find_program('wasm-opt', required: false)
     if wasm_opt.found() and get_option('optimization') == '3'
         ext = custom_target(
-            'optimize',
+            'wasm optimize',
             input: ext,
             output: meson.project_name() + '.post_opt.wasm',
             depends: ext,
@@ -69,30 +69,36 @@ if host_machine.system() == 'wasi'
     # javascript wrapper that loads the webassembly
     ext_js_out = meson.project_name() + '.js'
 
-    ext_js = custom_target('js ext wrapper',
-        depends: ext,
+    # custom_target(
+    #     'ts validate',
+    #     input: meson.current_source_dir() / 'src/html/Noise.ts',
+    #     output: meson.current_build_dir() / ext_js_out,
+    #     command: [npm, 'tsc $ENTRY $TOTYPECHECK -t esnext --strict --module preserve --moduleResolution bundler --esModuleInterop --isolatedModules --noEmit'],
+    #     install: true,
+    #     install_dir: install_prefix / ext_install_path,
+    # )
+
+    custom_target(
+        'create js bundle',
+        input: [meson.current_source_dir() / 'src/html/Noise.ts'],
         output: ext_js_out,
-        env: sdk_js_ext_wrapper_env + {
-            'ENTRY': meson.current_source_dir() / 'src/html/Noise.ts',
-            'EXTWASMPATH': ext.full_path(),
-            'OUTPUTPATH': meson.current_build_dir() / ext_js_out,
-        },
-        kwargs: sdk_js_ext_wrapper_kwargs,
+        command: [
+            npm, 'exec', '--prefix', meson.current_source_dir()/'sdk'/'lib'/'Html', '--',
+            'esbuild',
+            '@INPUT@',
+            '--bundle',
+            '--target=es6',
+            '--loader:.wasm=binary',
+            '--alias:Extension.wasm=' + ext.full_path(),
+            '--global-name=CRun' + meson.project_name(),
+            '--footer:js="CRun' + meson.project_name() + ' = CRun' + meson.project_name() + '.default;"',
+            '--outfile=@OUTPUT@'
+        ],
+        build_by_default: true,
+        depends: ext,
+        install: true,
+        install_dir: install_prefix / ext_install_path,
     )
-
-
-    rm = find_program('rm', required: false)
-    if rm.found()
-        # Dumb hack: .wasm file gets installed even though it has install: false
-        # Probably a meson bug or intended "feature". just remove that file for now
-        meson.add_install_script(rm, '-f', install_prefix / ext_install_path / 'Noise.wasm')
-    elif build_machine.system() == 'windows'
-        cmd = find_program('cmd', required: false)
-        if cmd.found()
-            # On windows del command is not a program so start a cmd.
-            meson.add_install_script(cmd, '/c', '"del /q ' + (install_prefix / ext_install_path / 'Noise.wasm') + '.txt"')
-        endif
-    endif
 endif
 
 
