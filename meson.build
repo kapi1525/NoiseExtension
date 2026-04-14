@@ -5,25 +5,30 @@ project(
     license: 'MIT',
     default_options: {
         'cpp_std':       'c++17',
-        # Workaround for: https://github.com/mesonbuild/meson/issues/5590
-        'build.cpp_std': 'c++17',
         'warning_level': '1',
         'prefix':        meson.project_source_root() / 'MFX',   # Install prefix
     },
     meson_version: '>=1.2',
 )
 
-# Used by SDK meson.build file
-ext_author = 'Kacper Bugla (kapi1525)'
-ext_company = ext_author
-ext_build = 27
+fs = import('fs')
 
+ext_build = 27
 ext_examples_path = meson.current_source_dir() / 'Examples'
 ext_help_path = meson.current_source_dir() / 'Help'
 
 
+sdk = subproject('darkedif-sdk', default_options: {
+    'ext_name': meson.project_name(),
+    'ext_author': 'Kacper Bugla (kapi1525)',
+    'ext_company': 'Kacper Bugla (kapi1525)',
+    'ext_version': ext_build,
+    'ext_fancy_version': meson.project_version(),
 
-subdir('sdk')
+    'extension_cpp_path': meson.current_source_dir() / 'src' / 'Extension.cpp',
+    'extension_hpp_path': meson.current_source_dir() / 'src' / 'Extension.hpp',
+    'edittime_cpp_path': meson.current_source_dir() / 'src' / 'Edittime.cpp',
+})
 
 source = []
 include = [include_directories('inc')]
@@ -35,12 +40,12 @@ subdir('res')
 ext = build_target(
     meson.project_name(),
     source,
-    target_type: sdk_ext_target_type,
-    dependencies: darkedif_sdk,
+    target_type: sdk.get_variable('sdk_ext_target_type'),
+    dependencies: sdk.get_variable('darkedif_sdk_dep'),
     include_directories: include,
-    name_suffix: sdk_ext_name_suffix,
-    install: sdk_can_simply_install,
-    install_dir: install_prefix / ext_install_path,
+    name_suffix: sdk.get_variable('sdk_ext_name_suffix'),
+    install: sdk.get_variable('sdk_can_simply_install'),
+    install_dir: get_option('prefix') / sdk.get_variable('ext_install_path'),
 )
 
 if host_machine.system() == 'wasi'
@@ -49,7 +54,7 @@ if host_machine.system() == 'wasi'
         input: ext.extract_all_objects(recursive: true),
         output: meson.project_name() + '.raw.wasm',   # Added '.raw' to filename to stop meson from installing it without asking.
         depends: ext,
-        command: [find_program('cpp'), '-o', '@OUTPUT@', '@INPUT@', '-fuse-ld='+find_program('cpp_ld').full_path(), sdk_link_args],
+        command: [find_program('cpp'), '-o', '@OUTPUT@', '@INPUT@', '-fuse-ld='+find_program('cpp_ld').full_path(), sdk.get_variable('sdk_link_args')],
     )
 
     wasm_opt = find_program('wasm-opt', required: false)
@@ -70,7 +75,7 @@ if host_machine.system() == 'wasi'
     run_target(
         'ts validate',
         command: [
-            npm, 'exec',  '--',
+            sdk.get_variable('npm'), 'exec',  '--',
             'tsc',
             meson.current_source_dir() / 'src/html/Noise.ts',
             '-t',
@@ -89,7 +94,7 @@ if host_machine.system() == 'wasi'
         input: [meson.current_source_dir() / 'src/html/Noise.ts'],
         output: ext_js_out,
         command: [
-            npm, 'exec', '--prefix', meson.current_source_dir()/'sdk'/'lib'/'Html', '--',
+            sdk.get_variable('npm'), 'exec', '--prefix', sdk.get_variable('npm_prefix'), '--',
             'esbuild',
             '@INPUT@',
             '--bundle',
@@ -105,7 +110,7 @@ if host_machine.system() == 'wasi'
         build_always_stale: true,
         depends: ext,
         install: true,
-        install_dir: install_prefix / ext_install_path,
+        install_dir: get_option('prefix') / sdk.get_variable('ext_install_path'),
     )
 endif
 
@@ -115,25 +120,25 @@ p7zip = find_program('7za', '7z', required: false)        # 7zip, p7zip on linux
 
 # TODO: Simplify?
 if host_machine.system() == 'android' and p7zip.found()
-    install_emptydir(install_prefix / ext_install_path)
+    install_emptydir(get_option('prefix') / sdk.get_variable('ext_install_path'))
 
-    target_zip = install_prefix / ext_install_path / meson.project_name() + '.zip'
-    ext_filename = import('fs').name(ext.full_path())
+    target_zip = get_option('prefix') / sdk.get_variable('ext_install_path') / meson.project_name() + '.zip'
+    ext_filename = fs.name(ext.full_path())
 
     # Before adding a new file, the existing ones need to be deleted, 7zip can create duplicates for some reason
     meson.add_install_script(p7zip, 'd', target_zip, 'app' / 'src' / 'main' / 'java' / 'Extensions' / '*')
-    meson.add_install_script(p7zip, 'd', target_zip, 'app' / 'src' / 'main' / 'jniLibs' / ext_android_arch / '*')
+    meson.add_install_script(p7zip, 'd', target_zip, 'app' / 'src' / 'main' / 'jniLibs' / sdk.get_variable('ext_android_arch') / '*')
 
     # Add java and build native files to archive, then move them into correct paths
-    meson.add_install_script(p7zip, 'a', target_zip, ext_android_java_filepath, ext.full_path())
-    meson.add_install_script(p7zip, 'rn', target_zip, ext_android_java_filename, 'app' / 'src' / 'main' / 'java' / 'Extensions' / ext_android_java_filename)
-    meson.add_install_script(p7zip, 'rn', target_zip, ext_filename, 'app' / 'src' / 'main' / 'jniLibs' / ext_android_arch / ext_filename)
+    meson.add_install_script(p7zip, 'a', target_zip, sdk.get_variable('ext_android_java_filepath'), ext.full_path())
+    meson.add_install_script(p7zip, 'rn', target_zip, sdk.get_variable('ext_android_java_filename'), 'app' / 'src' / 'main' / 'java' / 'Extensions' / sdk.get_variable('ext_android_java_filename'))
+    meson.add_install_script(p7zip, 'rn', target_zip, ext_filename, 'app' / 'src' / 'main' / 'jniLibs' / sdk.get_variable('ext_android_arch') / ext_filename)
 endif
 
 # Install examples and help file
-if install_examples
-    install_subdir(ext_examples_path, install_dir: install_prefix)
+if get_option('examples').enabled() or (get_option('examples').auto() and get_option('editor_build'))
+    install_subdir(ext_examples_path, install_dir: get_option('prefix'))
 endif
-if install_help
-    install_subdir(ext_help_path, install_dir: install_prefix)
+if get_option('help').enabled() or (get_option('help').auto() and get_option('editor_build'))
+    install_subdir(ext_help_path, install_dir: get_option('prefix'))
 endif

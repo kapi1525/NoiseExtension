@@ -26,6 +26,8 @@ run_command(npm, 'i', '--save-dev',
     check: true,
 )
 
+npm_prefix = meson.current_source_dir()
+
 
 # default wasm extension wrapper
 sdk_base_wasm_ext_wrapper = meson.current_source_dir() / 'CRunWasmExtWrapper.ts'

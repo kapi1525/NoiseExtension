@@ -6,3 +6,5 @@ acecalltablegen = executable(
     native: true,
     build_by_default: false,
 )
+
+acecalltablegen_cmd = [acecalltablegen, '@INPUT@', '@OUTPUT@']
