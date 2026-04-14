@@ -58,5 +58,12 @@ elif host_machine.cpu_family() == 'x86_64'
     ext_android_arch = 'x86_64'
 endif
 
-ext_android_java_filename = 'CRun' + meson.project_name() + '.java'
-ext_android_java_filepath = meson.current_source_dir() / ext_android_java_filename
+
+ext_android_java_wrapper = configure_file(
+    input: 'CRunExt.java',
+    output: 'CRun' + ext_target_name + '.java',
+    configuration: {
+        'ext_name': ext_name,
+        'ext_target_name': ext_target_name,
+    }
+)

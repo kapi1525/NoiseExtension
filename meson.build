@@ -8,7 +8,7 @@ project(
         'warning_level': '1',
         'prefix':        meson.project_source_root() / 'MFX',   # Install prefix
     },
-    meson_version: '>=1.2',
+    meson_version: '>=1.4',
 )
 
 fs = import('fs')
@@ -116,7 +116,7 @@ endif
 
 
 # Android extensions are packaged in a zip file, 7zip is needed to do that.
-p7zip = find_program('7za', '7z', required: false)        # 7zip, p7zip on linux/mac
+p7zip = find_program('7z', '7zzs', '7zz', '7za', '7zr', required: false)        # 7zip
 
 # TODO: Simplify?
 if host_machine.system() == 'android' and p7zip.found()
@@ -130,8 +130,8 @@ if host_machine.system() == 'android' and p7zip.found()
     meson.add_install_script(p7zip, 'd', target_zip, 'app' / 'src' / 'main' / 'jniLibs' / sdk.get_variable('ext_android_arch') / '*')
 
     # Add java and build native files to archive, then move them into correct paths
-    meson.add_install_script(p7zip, 'a', target_zip, sdk.get_variable('ext_android_java_filepath'), ext.full_path())
-    meson.add_install_script(p7zip, 'rn', target_zip, sdk.get_variable('ext_android_java_filename'), 'app' / 'src' / 'main' / 'java' / 'Extensions' / sdk.get_variable('ext_android_java_filename'))
+    meson.add_install_script(p7zip, 'a', target_zip, sdk.get_variable('ext_android_java_wrapper').full_path(), ext.full_path())
+    meson.add_install_script(p7zip, 'rn', target_zip, fs.name(sdk.get_variable('ext_android_java_wrapper')), 'app' / 'src' / 'main' / 'java' / 'Extensions' / fs.name(sdk.get_variable('ext_android_java_wrapper')))
     meson.add_install_script(p7zip, 'rn', target_zip, ext_filename, 'app' / 'src' / 'main' / 'jniLibs' / sdk.get_variable('ext_android_arch') / ext_filename)
 endif
 

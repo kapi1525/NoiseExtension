@@ -8,7 +8,7 @@ project(
         'build.cpp_std': 'c++17',
         'warning_level': '1',
     },
-    meson_version: '>=1.2',
+    meson_version: '>=1.4',
 )
 
 fs = import('fs')
