@@ -5,7 +5,7 @@ darkext_json = configure_file(
     output: 'DarkExt.json.in',
     configuration: {
         'version': 'v' + meson.project_version(),
-        'build': ext_build,
+        'build': ext_version,
         'VCS_TAG': '@VCS_TAG@'
     }
 )

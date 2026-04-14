@@ -52,7 +52,7 @@ sdk_defines_unicode = [
 
 sdk_defines_rc = [
     'KPX_MAGICNUMBER=200',
-    'EXTENSION_FANCY_VERSION_RC=' + meson.project_version().replace('.', ',').split('-')[0] + ',' + ext_build.to_string(),
+    'EXTENSION_FANCY_VERSION_RC=' + meson.project_version().replace('.', ',').split('-')[0] + ',' + ext_version.to_string(),
 ]
 sdk_defines_rc += sdk_defines_common
 

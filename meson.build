@@ -13,7 +13,7 @@ project(
 
 fs = import('fs')
 
-ext_build = 27
+ext_version = 27
 ext_examples_path = meson.current_source_dir() / 'Examples'
 ext_help_path = meson.current_source_dir() / 'Help'
 
@@ -22,7 +22,7 @@ sdk = subproject('darkedif-sdk', default_options: {
     'ext_name': meson.project_name(),
     'ext_author': 'Kacper Bugla (kapi1525)',
     'ext_company': 'Kacper Bugla (kapi1525)',
-    'ext_version': ext_build,
+    'ext_version': ext_version,
     'ext_fancy_version': meson.project_version(),
 
     'extension_cpp_path': meson.current_source_dir() / 'src' / 'Extension.cpp',
