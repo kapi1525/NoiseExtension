@@ -35,10 +35,10 @@ sdk_defines_common = [
     'COMPANY_NAME=DE_STRIFY(' + ext_company + ')',
 
     # FIXME:
-    'TEXT_OEFLAG_EXTENSION=0',
-    'WNDPROC_OEFLAG_EXTENSION=0',
-    'PAUSABLE_EXTENSION=0',
-    'DARKEDIF_DISPLAY_TYPE=0',
+    'TEXT_OEFLAG_EXTENSION=' + ext_has_oeflag_text.to_string(),
+    'WNDPROC_OEFLAG_EXTENSION=' + ext_has_oeflag_wndproc.to_string(),
+    'PAUSABLE_EXTENSION=' + ext_pausable.to_int().to_string(),
+    'DARKEDIF_DISPLAY_TYPE=' + ext_de_display_type.to_string(),
 
     'MMF2EXTS_COMMIT_SHA=DE_STRIFY(' + fs.read('../MMF2ExtsCommit.txt') + ')',
 

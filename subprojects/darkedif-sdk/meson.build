@@ -56,6 +56,36 @@ extension_cpp_file = fs.read(get_option('extension_cpp_path'))
 extension_hpp_file = fs.read(get_option('extension_hpp_path'))
 edittime_cpp_file = fs.read(get_option('edittime_cpp_path'))
 
+ext_has_oeflag_text = extension_hpp_file.contains('OEFLAGS::TEXT')
+ext_has_oeflag_wndproc = extension_hpp_file.contains('OEFLAGS::WINDOW_PROC')
+ext_pausable = get_option('ext_pausable').enabled()
+
+ext_de_display_type = 0
+foreach i : [
+                'OEFLAGS::SPRITES',
+                'OEFLAGS::ANIMATIONS',
+                'OEFLAGS::QUICK_DISPLAY',
+                'OEFLAGS::BACKGROUND',
+                'OEFLAGS::MOVEMENTS',
+                'OEFLAGS::SIMPLE_DISPLAY_EXT',
+                'OEFLAGS::MANUAL_DISPLAY_EXT',
+            ]
+    if extension_hpp_file.contains(i)
+        ext_de_display_type = 1
+        break
+    endif
+endforeach
+
+if ext_de_display_type == 1
+    if extension_hpp_file.contains('OEFLAGS::SIMPLE_DISPLAY_EXT')
+        ext_de_display_type = 2
+    elif extension_hpp_file.contains('OEFLAGS::MANUAL_DISPLAY_EXT')
+        ext_de_display_type = 3
+    endif
+    message('Detected DarkEdif display type: ' + ext_de_display_type.to_string())
+endif
+
+
 # Only ever enabled for editor builds, if auto, gets enabled if 'DarkEdif::SDKUpdater::RunUpdateNotifs(' is present in Edititme.cpp
 use_de_update_checker = (get_option('use_de_update_checker').auto() and editor_build and edittime_cpp_file.contains('DarkEdif::SDKUpdater::RunUpdateNotifs(')) or (get_option('use_de_update_checker').enabled() and editor_build)
 use_de_update_checker_tagging = get_option('use_de_update_checker_tagging').enabled()

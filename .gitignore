@@ -19,3 +19,6 @@ Examples/Noise/*.apk
 
 # npm
 node_modules
+
+# meson
+.wraplock

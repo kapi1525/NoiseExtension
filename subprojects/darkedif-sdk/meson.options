@@ -11,6 +11,8 @@ option('ext_company',        type: 'string')
 option('ext_version',        type: 'integer')
 option('ext_fancy_version',  type: 'string')
 
+option('ext_pausable',       type: 'feature', value: 'disabled')
+
 option('extension_cpp_path', type: 'string')
 option('extension_hpp_path', type: 'string')
 option('edittime_cpp_path',  type: 'string')
