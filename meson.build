@@ -102,7 +102,7 @@ if host_machine.system() == 'wasi'
             '--loader:.wasm=binary',
             '--alias:Extension.wasm=' + ext.full_path(),
             '--global-name=CRun' + meson.project_name(),
-            '--footer:js="CRun' + meson.project_name() + ' = CRun' + meson.project_name() + '.default;"',
+            '--footer:js=CRun' + meson.project_name() + ' = CRun' + meson.project_name() + '.default;',
             '--outfile=@OUTPUT@',
             '--analyze',
         ],
