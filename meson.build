@@ -64,7 +64,7 @@ if host_machine.system() == 'wasi'
             input: ext,
             output: meson.project_name() + '.post_opt.wasm',
             depends: ext,
-            command: [wasm_opt, '@INPUT@', '-O4', '-o', '@OUTPUT@'],
+            command: [wasm_opt, '@INPUT@', '-O3', '-o', '@OUTPUT@'],
         )
     endif
 

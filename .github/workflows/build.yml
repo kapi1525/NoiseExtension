@@ -107,7 +107,6 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      WASI_SDK_VERSION: wasi-sdk-32
       BINARYEN_VERSION: version_129
 
     steps:
@@ -127,12 +126,11 @@ jobs:
         run: pip install meson ninja
 
       - name: Download wasi-sdk
-        uses: robinraju/release-downloader@v1
+        id: wasi-sdk
+        uses: bytecodealliance/setup-wasi-sdk-action@b2de090b44eb70013ee96b393727d473b35e1728
         with:
-          repository: 'WebAssembly/wasi-sdk'
-          tag: ${{ env.WASI_SDK_VERSION }}
-          fileName: 'wasi-sdk-*-x86_64-linux.tar.gz'
-          extract: true
+          version: 33
+          add-to-path: false
 
       - name: Download wasm-opt
         run: |
@@ -142,9 +140,8 @@ jobs:
 
       - name: Create a cross file with correct wasi-sdk path
         run: |
-          mv wasi-sdk-*-x86_64-linux wasi-sdk
           echo [constants] > cross/wasi-sdk.ini
-          echo wasi_sdk = \'${{ github.workspace }}/wasi-sdk\' >> cross/wasi-sdk.ini
+          echo wasi_sdk = \'${{ steps.wasi-sdk.outputs.wasi-sdk-path }}\' >> cross/wasi-sdk.ini
           cat cross/wasi-sdk.ini
 
       - name: Configure

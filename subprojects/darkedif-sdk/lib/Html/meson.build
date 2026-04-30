@@ -4,11 +4,20 @@ sdk_ext_name_suffix = 'a'
 sdk_ext_target_type = 'static_library'
 
 
+sdk_cpp_args += [
+    # https://github.com/WebAssembly/wasi-sdk/blob/wasi-sdk-33/CppExceptions.md
+    '-fwasm-exceptions',
+    '-mllvm',
+    '-wasm-use-legacy-eh=false',
+]
+
 # Additional linker arguments
 
 sdk_link_args += [
     '-mexec-model=reactor',
-    '-Wl,--stack-first',    # Simplifies finding potential stack overflow errors, https://github.com/WebAssembly/wasi-sdk/issues/551
+    # Enable wasm exceptions
+    '-fwasm-exceptions',
+    '-lunwind',
 ]
 
 if not get_option('debug')
