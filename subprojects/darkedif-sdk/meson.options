@@ -1,0 +1,22 @@
+option(
+    'editor_build',
+    type:           'boolean',
+    description:    'Only windows, if enabled a editor .mfx will be built',
+    yield: true,
+)
+option('ext_name',           type: 'string')
+option('ext_target_name',    type: 'string', description: 'The actual .mfx file name, can be empty, then ext_name will be used instead')
+option('ext_author',         type: 'string')
+option('ext_company',        type: 'string')
+option('ext_version',        type: 'integer')
+option('ext_fancy_version',  type: 'string')
+
+option('ext_pausable',       type: 'feature', value: 'disabled')
+
+option('extension_cpp_path', type: 'string')
+option('extension_hpp_path', type: 'string')
+option('edittime_cpp_path',  type: 'string')
+
+option('use_de_update_checker', type: 'feature', value: 'auto')
+option('use_de_fusion_debugger', type: 'feature', value: 'auto')
+option('use_de_update_checker_tagging',  type: 'feature', value: 'enabled')

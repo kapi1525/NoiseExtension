@@ -1,6 +1,7 @@
-import CRunWasmExtWrapper from "../../sdk/lib/Html/CRunWasmExtWrapper";
-import { extInstance, cppLand } from "../../sdk/lib/Html/CRunWasmExtWrapper";
-import "../../sdk/lib/Html/Runtime.d.ts"
+// FIXME: Those stupid paths
+import CRunWasmExtWrapper from "../../subprojects/darkedif-sdk/lib/Html/CRunWasmExtWrapper";
+import { extInstance, cppLand } from "../../subprojects/darkedif-sdk/lib/Html/CRunWasmExtWrapper";
+import "../../subprojects/darkedif-sdk/lib/Html/Runtime.d.ts"
 
 
 

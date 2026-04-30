@@ -3,9 +3,6 @@
 sdk_ext_name_suffix = 'mfx'
 
 
-if editor_build and host_machine.system() != 'windows'
-    error('Editor .mfx can only target windows!')
-endif
 
 if not editor_build and host_machine.system() == 'windows' and get_option('debug')
     error('Runtime windows builds cant be debug')
@@ -24,12 +21,6 @@ if editor_build
     )
 endif
 
-
-# Includes
-
-sdk_include += include_directories(
-    '..' / '..' / 'inc' / 'Windows',
-)
 
 
 # Dependencies
@@ -61,21 +52,15 @@ sdk_defines_unicode = [
 
 sdk_defines_rc = [
     'KPX_MAGICNUMBER=200',
-    'EXTENSION_FANCY_VERSION_RC=' + meson.project_version().replace('.', ',').split('-')[0] + ',' + ext_build.to_string(),
+    'EXTENSION_FANCY_VERSION_RC=' + meson.project_version().replace('.', ',').split('-')[0] + ',' + ext_version.to_string(),
 ]
 sdk_defines_rc += sdk_defines_common
-sdk_defines_rc += sdk_defines_project
 
 if unicode_build
     sdk_defines += sdk_defines_unicode
     sdk_defines_rc += sdk_defines_unicode
 endif
 
-if get_option('editor_build')
-    sdk_defines_rc += sdk_defines_editor
-else
-    sdk_defines_rc += sdk_defines_runtime
-endif
 
 
 # Additional build arguments
