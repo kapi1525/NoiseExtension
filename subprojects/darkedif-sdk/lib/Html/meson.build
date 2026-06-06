@@ -31,7 +31,7 @@ endif
 npm = find_program('npm')
 npm = [npm, '--prefix', meson.current_source_dir()]
 
-run_command(npm, 'i', '--save-dev',
+run_command(npm, 'ci',
     check: true,
 )
 
