@@ -71,11 +71,12 @@ if host_machine.system() == 'wasi'
 
     # javascript wrapper that loads the webassembly
     ext_js_out = meson.project_name() + '.js'
+    npx = [sdk.get_variable('npm'), 'exec', '--prefix', sdk.get_variable('npm_prefix'), '--']
 
     run_target(
         'ts validate',
         command: [
-            sdk.get_variable('npm'), 'exec',  '--',
+            npx,
             'tsc',
             meson.current_source_dir() / 'src/html/Noise.ts',
             '-t',
@@ -89,12 +90,12 @@ if host_machine.system() == 'wasi'
         ],
     )
 
-    custom_target(
+    js_bundle = custom_target(
         'create js bundle',
         input: [meson.current_source_dir() / 'src/html/Noise.ts'],
         output: ext_js_out,
         command: [
-            sdk.get_variable('npm'), 'exec', '--prefix', sdk.get_variable('npm_prefix'), '--',
+            npx,
             'esbuild',
             '@INPUT@',
             '--bundle',
@@ -112,6 +113,9 @@ if host_machine.system() == 'wasi'
         install: true,
         install_dir: get_option('prefix') / sdk.get_variable('ext_install_path'),
     )
+
+    # FIXME: This is stupid, like this whole mesonbuild experiment
+    meson.add_install_script(npx, 'cpy', js_bundle, get_option('prefix') / sdk.get_variable('ext_install_path_uwp') / fs.name(js_bundle))
 endif
 
 

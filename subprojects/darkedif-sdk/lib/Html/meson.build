@@ -45,3 +45,4 @@ sdk_base_wasm_ext_wrapper = meson.current_source_dir() / 'CRunWasmExtWrapper.ts'
 # Installing
 sdk_can_simply_install = false
 ext_install_path = 'Data' / 'Runtime' / 'Html5'
+ext_install_path_uwp = 'Data' / 'Runtime' / 'Wua' / 'js' / 'runtime' / 'extensions' / 'source'
