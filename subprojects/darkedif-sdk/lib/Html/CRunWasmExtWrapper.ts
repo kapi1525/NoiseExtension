@@ -167,10 +167,10 @@ export default class CRunWasmExtWrapper extends CRunExtension {
 		// header uint32, hash uint32, hashtypes uint32, numprops uint16, pad uint16, sizeBytes uint32 (includes whole EDITDATA)
         const fileStart = file.getFilePointer();
         file.skipBytes(4 + 4 + 4 + 2 + 2);      // skip to sizeBytes
-        const edSize = file.readUnsignedByte() +
-                      (file.readUnsignedByte() << 8) +
-                      (file.readUnsignedByte() << 16) +
-                      (file.readUnsignedByte() << 24);
+        const edSize = file.readAByte() +
+                      (file.readAByte() << 8) +
+                      (file.readAByte() << 16) +
+                      (file.readAByte() << 24);
         file.seek(fileStart);                   // go back to the begining
 
         // TODO: refactor to not require malloc export
@@ -186,7 +186,7 @@ export default class CRunWasmExtWrapper extends CRunExtension {
         edView.setUint32(16, this.ho!.privateData, true);
 
         for (let i = 20; i < edSize; i++) {
-            edView.setUint8(i, file.readUnsignedByte());
+            edView.setUint8(i, file.readAByte());
         }
 
         this.cppExtPtr = cppLand.createRunObject(edPtr, 0, version);

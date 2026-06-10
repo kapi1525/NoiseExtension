@@ -87,7 +87,6 @@ declare class CFile {
     offset: number;
     bUnicode: boolean;
 
-    readUnsignedByte(): number;
     getChecksum(): number;
     getFile(fileName: string, callback: any, size: number): void;
     openFileASync(fileName: string, parent: any): void;
