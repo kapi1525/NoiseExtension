@@ -251,31 +251,25 @@ void FusionAPI PrepareAndroidBuild(mv* mV, EDITDATA* edPtr, const TCHAR * androi
 */
 
 
-// BUILDTYPE enum from standard sdk
-// enum class BuildType {
-// 	Html5 = 23,         // Not used?
-// 	Html5Devel = 27,
-// 	Html5Final
-// };
+/*
+// Called for every object instance(?) during HTML5 build time
+// could be used to copy extra files
+BOOL WINAPI DLLExport PrepareHtml5Build(EDITDATA* edPtr, mv* mV, int count, int buildType, DWORD flags, LPCTSTR destHtml, LPCTSTR srcFolderPath, LPCTSTR resFolderPath, LPCTSTR htmlPath, LPCTSTR srcFolderName, LPCTSTR resFolderName, LPCTSTR appName, LPCTSTR batchPath, LPCTSTR tempPath, int width, int height) {
+#pragma DllExportHint
+    if(count > 0) {
+        return;
+    }
 
-// // :)
-// // Reverse engineered
-// // times - how many times was this function called during the build process
-// void FusionAPI PrepareHtml5Build(EDITDATA* editdata, mv* mV, int times, BuildType build_type, void* unused/*?*/, LPCTSTR index_page, LPCTSTR src_dir, LPCTSTR media_dir, LPCTSTR runtime_dir, LPCTSTR src_name, LPCTSTR media_name, LPCTSTR project_name) {
-// #pragma DllExportHint
-//     if(times > 0) {
-//         return;
-//     }
+    std::tstring file = htmlPath;
+    file += _T("FastNoiseLite.js");
 
-//     std::tstring file = runtime_dir;
-//     file += _T("FastNoiseLite.js");
+    std::tstring target = srcFolderPath;
+    target += _T("FastNoiseLite.js");
 
-//     std::tstring target = src_dir;
-//     target += _T("FastNoiseLite.js");
-
-//     if(FAILED(CopyFile(file.c_str(), target.c_str(), false))) {
-//         DarkEdif::MsgBox::Error(_T(""), _T("Something went wrong!"));
-//     }
-// }
+    if(FAILED(CopyFile(file.c_str(), target.c_str(), false))) {
+        DarkEdif::MsgBox::Error(_T(""), _T("Something went wrong!"));
+    }
+}
+*/
 
 #endif // EditorBuild
