@@ -906,7 +906,7 @@ ProjectFunc int16_t WASM_FUNC_EXPORT(continue_run_object)(Extension* extPtr) {
 }
 
 #else
-	#error Unsupported platform.
+	#error Unexpected platform
 #endif
 
 

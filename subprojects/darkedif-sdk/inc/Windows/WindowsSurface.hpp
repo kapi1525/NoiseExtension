@@ -326,27 +326,16 @@ struct FusionD3DDummy {};
 #if defined(FUSION_INTERNAL_ACCESS)
 #pragma pack (push, 1)
 
-// Semi-opaque struct used in D3DSURFINFO; only expert Fusion ext devs should use this.
-// D3D11 only?
-struct FusionD3D11Texture final
-{
-	union {
+// Semi-opaque struct used in FusionD3DSurfDriverInfo; only expert Fusion ext devs should use this.
+union FusionD3D11Texture {
 #ifdef __d3d11_h__
-		// Contains a ID3D11Texture2D; if grabbing, note GetResource increments the ref count,
-		// so ideally store in an atlbase.h CComPtr smart pointer, or call Release().
-		// CComPtr<ID3D11Texture2D> resTextD3D11;
-		// d3d11ShaderResourceView->GetResource((ID3D11Resource**)&resourceTextureD3D11);
-		ID3D11ShaderResourceView* D3D11ShaderResourceView;
+	// Contains a ID3D11Texture2D; if grabbing, note GetResource increments the ref count,
+	// so ideally store in an atlbase.h CComPtr smart pointer, or call Release().
+	// CComPtr<ID3D11Texture2D> resTextD3D11;
+	// d3d11ShaderResourceView->GetResource((ID3D11Resource**)&resourceTextureD3D11);
+	ID3D11ShaderResourceView * D3D11ShaderResourceView;
 #endif
-		FusionD3DDummy * D3DGenericTexture;
-	};
-	std::uint32_t unknown1[3];	// set to 1, 0, 0
-	std::uint32_t width, height;
-	std::uint32_t flags;		// Set to 0xF0
-	std::uint32_t unknown2[2];	// set to 0, 0
-	// Struct may continue further, but D3D ended here
-
-	NO_DEFAULT_CTORS_OR_DTORS(FusionD3D11Texture);
+	FusionD3DDummy * D3DGenericTexture;
 };
 union FusionD3DTexture {
 	// D3D11 has a sub-struct
@@ -403,6 +392,44 @@ union FusionD3DDevCtxOrTech {
 typedef FusionD3DDummy FusionD3DTexture, FusionD3DDevice, FusionD3DDevCtxOrTech;
 #endif // Fusion internals
 
+// DirectDraw info returned by cSurface::GetDriverInfo(). MMF2 only.
+// Whatever the OS supports is used, v2 minimum requested by Fusion.
+// DDraw version is same as DirectX/2D/3D version.
+// Use LoadLibrary and GetProcAddress for global scope DirectDraw functions like DirectDrawEnumerate().
+// @remarks Windows 95 shipped with no DX, its last release OSR2 shipped with DX2, but 95 supports up to DX7.
+// Windows 98 shipped with DX5, SE shipped with DDraw v6. It supports DX7.0.
+// Windows NT 4.0 supports DX3-6.
+// Everything from Win 2000+, on latest service pack, will support DX7.0+.
+struct FusionDDrawSurfDriverInfo final
+{
+	// Size of this struct in bytes, must be set before passing to GetDriverInfo() call.
+	int structSize;
+#ifdef __DDRAW_INCLUDED__
+	// Fusion stores as a IDirectDraw2. In DX7+ systems (Win 98+), you can upgrade to IDirectDraw7 by QueryInterface,
+	// which will add a reference. This native type is DX2 layout.
+	LPDIRECTDRAW2 directDraw;
+	// Fusion stores as a IDirectDrawSurface; in DX7+ systems, you can upgrade to IDirectDrawSurface7 by QueryInterface,
+	// which will add a reference. This native type is DX1 layout.
+	LPDIRECTDRAWSURFACE primarySurface, offScreenSurface;
+	// Controls clipping drawing operations to a window or region
+	LPDIRECTDRAWCLIPPER clipper;
+	// Holds a limited drawing palette
+	LPDIRECTDRAWPALETTE palette;
+#else // not defined DDraw
+	// IDirectDraw2, headers not imported by DE
+	FusionD3DDummy* directDraw;
+	// IDirectDrawSurface, headers not imported by DE
+	FusionD3DDummy* primarySurface, * offScreenSurface;
+	// Controls clipping drawing operations to a window or region
+	FusionD3DDummy* clipper;
+	// Holds a limited drawing palette
+	FusionD3DDummy* palette;
+#endif  // not defined DDraw
+
+	// If true, running DirectX + VRAM mode.
+	BOOL VRAM;
+};
+
 // Direct3D 8-11 info returned by cSurface::GetDriverInfo(). Not all variables will be set.
 struct FusionD3DSurfDriverInfo final
 {
@@ -423,17 +450,17 @@ struct FusionD3DSurfDriverInfo final
 	// Device pointer, e.g. LPDIRECT3DDEVICE9, ID3D11Device *.
 	// @remarks Does not report as a live object in D3D11 Debug on end of app, as it's already deleted.
 	FusionD3DDevice D3DDevice;
-
+	
 
 	// @brief A direct pointer to a D3D texture in D3D8-9, but a pointer-to-pointer in D3D11.
 	//		  Only inited with cSurface if HWA_RenderTargetTexture type (which is D3D11 only),
 	//		  otherwise null and set on first blit. Not set for frame surface.
 	// @remarks
 	// For D3D9, it is a IDirect3DTexture9 *.
-	//
+	// 
 	// For D3D11, set to a ID3D11ShaderResourceView **. Get a ID3D11Texture2D * by calling GetResource.
 	// https://learn.microsoft.com/en-us/windows/win32/api/d3d11/ns-d3d11-cd3d11_texture2d_desc
-	//
+	// 
 	// CComPtr<ID3D11Texture2D> texture;
 	// (*((ID3D11ShaderResourceView **)x.m_ppD3DTexture))->GetResource((ID3D11Resource**)&texture);
 	FusionD3DTexture D3DTexture;
@@ -550,11 +577,14 @@ public:
 	int GetType();
 	// Returns SD_XX enum, cast to SurfaceDriver enum
 	int GetDriver();
-	// Set of driver info data. See D3DSURFINFO struct. Call with NULL to get the expected struct size to pass as pInfo.
-	// @remarks This is only going to return content if Driver is not DIB, possibly 3DFX+ only.
-	//			3DFX or DirectDraw does not return D3DSURFINFO struct.
+	// Set of driver info data. See struct FusionD3DSurfDriverInfo (Direct3D 8-11 display),
+	// and FusionDDrawSurfDriverInfo (MMF2 DirectX display).
+	// Note some GPU textures are not allocated on surf create, but on first write/blit operation to them.
+	// @remarks Call with NULL to get the expected struct size to pass as pInfo.
+	//			The structs are not described in public SDK files, but were obtained by request.
+	//			It's better to run this on the frame surface, retrieved from WinGetSurface(mV->mvIdEditWin).
+	//			This is only going to return content if Driver is not DIB, possibly 3DFX+ only.
 	//			3DFX has not been tested, as MMF2 does not expose this display mode.
-	//			DirectDraw (MMF2 DirectX mode) returns an as-yet unknown struct of 28 bytes.
 	ULONG GetDriverInfo(void * pInfo);
 
 	// Clone surface(= create with same size + Blit)

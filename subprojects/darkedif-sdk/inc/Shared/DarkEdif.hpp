@@ -71,7 +71,7 @@ namespace Edif {
 
 namespace DarkEdif {
 
-	// SDK version and changes are documented in repo/DarkEdif/#MFAs and documentation/DarkEdif changelog.md
+	// SDK version and changes are documented in repo/DarkEdif/- MFAs and documentation/DarkEdif changelog.md
 	static const int SDKVersion = 20;
 #if EditorBuild
 
@@ -695,7 +695,7 @@ namespace DarkEdif {
 #elif defined(__wasi__)
 	// FIXME(wasm): stub
 #else
-	#error Platform unsupported.
+	#error Unexpected platform
 #endif
 #if TEXT_OEFLAG_EXTENSION
 		// Creates a runtime-usable font from a EDITDATA font, tying it to an ext

@@ -5389,7 +5389,7 @@ void DarkEdif::FontInfoMultiPlat::SetFont(const void * ptr2) {
 #elif defined(__wasi__)
 	// FIXME(wasm): stub
 #else
-	#error Platform unsupported.
+	#error Unexpected platform
 #endif
 
 DarkEdif::FontInfoMultiPlat::FontInfoMultiPlat() {
@@ -5685,7 +5685,7 @@ int DarkEdif::GetCurrentFusionEventNum(const Extension * const ext)
 	// FIXME(wasm): STUB
 	return 0;
 #else
-	#error Unsupported platform.
+	#error Unexpected platform
 #endif
 }
 
@@ -5729,7 +5729,7 @@ std::tstring DarkEdif::MakePathUnembeddedIfNeeded(const Extension * ext, const s
 	// FIXME: STUB
 	const std::string truePath = "";
 #else
-	#error Unsupported platform.
+	#error Unexpected platform
 #endif
 	if (filePath != truePath)
 		LOGV(_T("File path extracted from \"%s\" to \"%s\".\n"), std::tstring(filePath).c_str(), truePath.c_str());
@@ -6453,7 +6453,7 @@ void DarkEdif::LOGFInternal(PrintFHintInside const TCHAR * x, ...)
 	exit(EXIT_FAILURE);
 }
 #else
-	#error Unsupported platform.
+	#error Unexpected platform
 #endif
 
 
@@ -6494,7 +6494,7 @@ bool DarkEdif::IsDebuggerAttached()
 #elif defined(__wasi__)
 	// FIXME(wasm): stub
 #else
-	#error Platform unsupported.
+	#error Unexpected platform
 #endif
 
 #ifdef _DEBUG
@@ -7000,13 +7000,12 @@ void DarkEdif::LateInit(Extension* ext)
 			}
 
 			// Otherwise, some other error happened and Fusion refused to give us the image. Hard fail.
-			LOGF(_T("Failed to read image bank.\n"));
+			// No actual error info available from what I know.
+			LOGF(_T("Failed to read image bank; unknown error.\n"));
 		}
 
 		// If LZX compression was used, then it's CF2.5+; if not, it's not
 		IsFusion25Plus = (firstImg.imgFlags & Img::Flags::LZX) == Img::Flags::LZX;
-		MsgBox::Info(_T("!!"), _T("Is CF2.5+: %s"), IsFusion25Plus ? _T("YES") : _T("NO"));
-		BreakIfDebuggerAttached();
 	}
 #else
 	// I have not seen any non-Windows runtime code that indicates it checks for CF2.5+ at all.
@@ -8213,10 +8212,9 @@ static int Internal_MessageBox(const TCHAR * titlePrefix, PrintFHintInside const
 {
 	assert(titlePrefix != NULL && msgFormat != NULL);
 
-	// This doesn't work on Windows XP in some scenarios; for an explanation, see the README file.
 #ifdef ThreadSafeStaticInitIsSafe
 	const static std::tstring titleSuffix = _T(" - " PROJECT_NAME ""s);
-#else
+#else // Calling a static constructor doesn't always work on Windows XP, static CRT may use Vista+ thread-safe static init
 	const static TCHAR projNameStatic[] = _T(" - " PROJECT_NAME);
 	const std::tstring titleSuffix = projNameStatic;
 #endif

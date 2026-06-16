@@ -19,7 +19,7 @@ Extension::Extension(const EDITDATA* const edPtr, void* const objCExtPtr, const 
 Extension::Extension(const EDITDATA* const edPtr, const CreateObjectInfo* const cobPtr) :
     Runtime(this)
 #else
-    #error Unsupported platform.
+    #error Unexpected platform
 #endif
 {
 	// Actions

@@ -106,7 +106,7 @@ std::vector<short> qualToOi::HalfVector(std::size_t first)
 #elif defined(__wasi__)
 	// FIXME(wasm): STUB
 #else
-	#error Unsupported platform.
+	#error Unexpected platform
 #endif
 	return list;
 }
@@ -140,7 +140,7 @@ CRunAppMultiPlat* CRunAppMultiPlat::get_ParentApp() {
 	// FIXME: STUB
 	return nullptr;
 #else
-	#error Unsupported platform.
+	#error Unexpected platform
 #endif
 }
 
@@ -163,7 +163,7 @@ std::size_t CRunAppMultiPlat::GetNumFusionFrames() {
 	// FIXME: STUB
 	return 0;
 #else
-	#error Unsupported platform.
+	#error Unexpected platform
 #endif
 }
 
@@ -1594,11 +1594,10 @@ void Edif::Runtime::AttachJVMAccessForThisThread(const char* threadName, bool as
 
 	pthread_setname_np(pthread_self(), threadName);
 
-	JavaVMAttachArgs args = {
-		.name = threadName,
-		.group = NULL,
-		.version = JNI_VERSION_1_6
-	};
+	JavaVMAttachArgs args = {0};
+	args.name = threadName;
+	args.group = NULL;
+	args.version = JNI_VERSION_1_6;
 	// Daemon means the JVM won't keep the app running if this thread is still alive.
 	// Do you want main thread exiting to choose whether the app is running or not?
 	jint error;

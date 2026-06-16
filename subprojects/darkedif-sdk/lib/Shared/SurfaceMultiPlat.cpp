@@ -56,7 +56,7 @@
 	#elif defined(__wasi__)
 		// FIXME(wasm): stub
 	#else
-		#error Platform unsupported.
+		#error Unexpected platform
 	#endif
 #endif // not Windows
 
@@ -1616,7 +1616,7 @@ DarkEdif::Surface::Surface(RunHeader* const rhPtr, bool needBitmapFuncs, bool ne
 		// Note D3D9 enum value is before D3D8
 		if (sd >= SurfaceDriver::Direct3D9)
 			depth = 32;
-		// Standard display mode, DirectDraw, does not do HWA textures
+		// Standard display mode (+ DirectDraw?) does not do HWA textures
 		else if (sd == SurfaceDriver::DIB)
 			st = SurfaceType::Memory;
 
@@ -1746,7 +1746,7 @@ DarkEdif::Surface::Surface(RunHeader* const rhPtr, bool needBitmapFuncs, bool ne
 #elif defined(__wasi__)
 	// FIXME(wasm): stub
 #else
-	#error Unsupported platform.
+	#error Unexpected platform
 #endif
 
 	LOGI(_T("%sCreated a surface, describing as \"%s\".\n"), debugID, Describe().c_str());
@@ -1867,7 +1867,7 @@ std::tstring DarkEdif::Surface::Describe() const {
 #elif defined(__wasi__)
 	// FIXME(wasm): stub
 #else
-	#error Unsupported platform.
+	#error Unexpected platform
 #endif
 	result << _T(". Image ("sv) << GetSize()
 		<< _T("), "sv) << std::dec << sizeBytes << _T(" bytes, "sv);
@@ -1899,7 +1899,7 @@ std::size_t DarkEdif::Surface::GetWidth() const {
 #elif defined(__wasi__)
 	// FIXME(wasm): stub
 #else
-	#error Platform unsupported.
+	#error Unexpected platform
 #endif
 }
 std::size_t DarkEdif::Surface::GetHeight() const {
@@ -1914,7 +1914,7 @@ std::size_t DarkEdif::Surface::GetHeight() const {
 #elif defined(__wasi__)
 	// FIXME(wasm): stub
 #else
-	#error Platform unsupported.
+	#error Unexpected platform
 #endif
 }
 std::size_t DarkEdif::Surface::GetDepth() const {
@@ -2061,7 +2061,7 @@ DarkEdif::Surface::~Surface()
 #elif defined(__wasi__)
 	// FIXME(wasm): stub
 #else
-	#error Platform unsupported.
+	#error Unexpected platform
 #endif
 }
 bool DarkEdif::Surface::CopySection(Rect srcRect, Surface& dest, Rect destRect,
@@ -2331,7 +2331,7 @@ bool DarkEdif::Surface::FillImageWith(const SurfaceFill& sf)
 #elif defined(__wasi__)
 	// FIXME(wasm): stub
 #else
-	#error Platform unsupported.
+	#error Unexpected platform
 #endif
 		WasAltered();
 		return true;

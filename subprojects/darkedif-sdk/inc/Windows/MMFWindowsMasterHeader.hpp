@@ -1632,7 +1632,7 @@ struct RunHeader4
 	friend ExpressionManager_Windows;
 	friend RunHeader;
 	friend HeaderObject;
-    friend void DarkEdif::LateInit(Extension* ext);
+	friend void DarkEdif::LateInit(Extension*);
 DarkEdifInternalAccessProtected:
 	// Jump table offset
 	kpj * rh4KpxJumps;

@@ -1401,7 +1401,7 @@ protected:
 	std::vector<const char*> strings_to_free;
 };
 #else
-	#error Unsupported platform.
+	#error Unexpected platform
 #endif
 
 #ifdef _WIN32
@@ -1428,7 +1428,7 @@ ProjectFunc int32_t WASM_FUNC_EXPORT(condition_jump)(Extension* ext, int32_t ID)
 {
 	ConditionOrActionManager_Html params;
 #else
-	#error Unsupported platform.
+	#error Unexpected platform
 #endif
 	LOGV(PROJECT_NAME _T(" Condition ID %i start.\n"), ID);
 
@@ -1498,7 +1498,7 @@ ProjectFunc void WASM_FUNC_EXPORT(action_jump)(Extension* ext, int32_t ID)
 	ConditionOrActionManager_Html params;
 #define actreturn /* void */
 #else
-	#error Unsupported platform.
+	#error Unexpected platform
 #endif
 	LOGV(PROJECT_NAME _T(" Action ID %i start.\n"), ID);
 
@@ -1808,7 +1808,7 @@ protected:
 	std::vector<const char*> strings_to_free;
 };
 #else
-	#error Unsupported platform.
+	#error Unexpected platform
 #endif
 
 #ifdef _WIN32
@@ -1838,7 +1838,7 @@ ProjectFunc void WASM_FUNC_EXPORT(expression_jump)(Extension* ext, int32_t ID)
 {
 	ExpressionManager_Html params;
 #else
-	#error Unsupported platform.
+	#error Unexpected platform
 #endif
 
 	if (Edif::SDK->ExpressionFunctions.size() < (unsigned int)ID)
@@ -2117,7 +2117,7 @@ int Edif::GetDependency (char *& Buffer, size_t &Size, const TCHAR * FileExtensi
 	return DependencyWasFile;
 #endif // File reading
 #else
-	#error Unsupported platform.
+	#error Unexpected platform
 #endif // _WIN32
 }
 

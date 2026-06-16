@@ -379,7 +379,7 @@ namespace DarkEdif
 	#elif defined(__wasi__)
 		// FIXME(wasm): stub
 	#else
-		#error Platform unsupported.
+		#error Unexpected platform
 	#endif
 		/** Updates screen display manually. Runtime does not auto-redraw in some display modes.
 		 * @param zone If NULL or not specified, the whole surface. */

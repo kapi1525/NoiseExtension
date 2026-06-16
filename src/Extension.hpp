@@ -38,7 +38,7 @@ public:
 #elif defined(__wasi__)
     Extension(const EDITDATA* const edPtr, const CreateObjectInfo* const cobPtr);
 #else
-    #error Unsupported platform.
+    #error Unexpected platform
 #endif
 	~Extension();
 

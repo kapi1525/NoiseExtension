@@ -225,7 +225,7 @@ namespace Edif
 #elif defined(__wasi__)
 		Runtime(Extension* ext);
 #else
-	#error Unsupported platform.
+	#error Unexpected platform
 #endif
 
 		DarkEdif::FontInfoMultiPlat* extFont = NULL;
