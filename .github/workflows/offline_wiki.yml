@@ -17,12 +17,12 @@ jobs:
 
     steps:
     - name: Checkout main repo
-      uses: actions/checkout@v6
+      uses: actions/checkout@v7
       with:
         path: 'NoiseExtension'
 
     - name: Checkout wiki repo
-      uses: actions/checkout@v6
+      uses: actions/checkout@v7
       with:
         repository: 'kapi1525/NoiseExtension.wiki'
         path: 'NoiseExtension.wiki'
