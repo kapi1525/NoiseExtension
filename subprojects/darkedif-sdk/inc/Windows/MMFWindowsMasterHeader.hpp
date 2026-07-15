@@ -2490,6 +2490,7 @@ struct AltVals {
 	NO_DEFAULT_CTORS_OR_DTORS(AltVals);
 DarkEdifInternalAccessProtected:
 	friend RunObject;
+    friend constexpr std::uint16_t RDSize();
 	union {
 		struct CF25 {
 			CValueMultiPlat * Values;

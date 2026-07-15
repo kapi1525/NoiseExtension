@@ -181,7 +181,6 @@ namespace DarkEdif {
 		};
 
 	protected:
-		class DebugItem;
 		Extension *const ext;
 		std::vector<DebugItem> debugItems;
 		std::vector<std::uint16_t> debugItemIDs;

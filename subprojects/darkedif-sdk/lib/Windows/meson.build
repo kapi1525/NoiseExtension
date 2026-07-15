@@ -65,29 +65,33 @@ endif
 
 # Additional build arguments
 
-if meson.get_compiler('cpp').get_id() == 'msvc'
-    sdk_cpp_args += [
-        '/Zc:__cplusplus',
-        '/permissive',      # FIXME: Make this not needed
-    ]
-endif
+sdk_cpp_args += meson.get_compiler('cpp').get_supported_arguments(
+    '/Zc:__cplusplus',
+    '/permissive',      # FIXME: Make this not needed
+    checked: 'warn',
+)
 
 
 # Linker arguments
 
-if meson.get_compiler('cpp').get_linker_id() == 'link'
-    sdk_link_args += [
-        '/LARGEADDRESSAWARE',
-        '/NOIMPLIB',                # This breaks when useing default meson install, they should add a native way to disable implib.
-    ]
-endif
+sdk_link_args += meson.get_compiler('cpp').get_supported_link_arguments(
+    '/LARGEADDRESSAWARE',
+    '/NOIMPLIB',                # This breaks when useing default meson install, they should add a native way to disable implib.
+    # checked: 'warn',
+)
 
 
 # rc arguments
 
 sdk_rc_args = []
 foreach def : sdk_defines_rc
-    sdk_rc_args += '/D' + def
+    if meson.get_compiler('cpp').get_id() == 'msvc'
+        # rc.exe
+        sdk_rc_args += '/D' + def
+    else
+        # llvm-windres
+        sdk_rc_args += '-D' + def
+    endif
 endforeach
 
 
