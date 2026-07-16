@@ -74,11 +74,12 @@ sdk_cpp_args += meson.get_compiler('cpp').get_supported_arguments(
 
 # Linker arguments
 
-sdk_link_args += meson.get_compiler('cpp').get_supported_link_arguments(
+sdk_link_args += [
     '/LARGEADDRESSAWARE',
     '/NOIMPLIB',                # This breaks when useing default meson install, they should add a native way to disable implib.
-    # checked: 'warn',
-)
+    '/subsystem:windows',
+    '/export:LoadObject=LoadObject',
+]
 
 
 # rc arguments

@@ -46,6 +46,7 @@ int FusionAPI Initialize(mv *mV, int quiet)
 	return Edif::Init(mV, quiet != FALSE);
 }
 
+extern HANDLE updateThread;
 // The counterpart of Initialize(). Called just before freeing the DLL.
 // DarkEdif users shouldn't need to modify this function.
 int FusionAPI Free(mv *mV)
@@ -59,7 +60,6 @@ int FusionAPI Free(mv *mV)
 	// and at this point we've waited 3 full seconds
 #pragma warning(push)
 #pragma warning(disable: 6258)
-	extern HANDLE updateThread;
 	if (updateThread != NULL && WaitForSingleObject(updateThread, 3000) == WAIT_TIMEOUT)
 		TerminateThread(updateThread, 2);
 #pragma warning(pop)
@@ -78,7 +78,7 @@ extern void LoadObjectWipe(EDITDATA* edPtr);
 // Routine called for each object when the object is read from the MFA file (edit time)
 // or from the CCN or EXE file (run time).
 // DarkEdif users shouldn't need to modify this function.
-int FusionAPI LoadObject(mv * mV, const char * fileName, EDITDATA * edPtr, int reserved)
+extern "C" int FusionAPI LoadObject(mv * mV, const char * fileName, EDITDATA * edPtr, int reserved)
 {
 #pragma DllExportHint
 	Edif::Init(mV, edPtr);
