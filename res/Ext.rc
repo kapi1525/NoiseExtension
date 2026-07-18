@@ -1,6 +1,6 @@
 // Microsoft Visual C++ generated resource script.
 //
-#include "resource.h"
+#include "Resource.h"
 
 // Wraps str into double-quotes, like "str". This function cannot be defined via /D.
 #define DE_1STRIFY(X) #X
@@ -109,7 +109,7 @@ END
 
 1 TEXTINCLUDE
 BEGIN
-	"resource.h\0"
+	"Resource.h\0"
 END
 
 2 TEXTINCLUDE

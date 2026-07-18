@@ -254,7 +254,7 @@ void FusionAPI PrepareAndroidBuild(mv* mV, EDITDATA* edPtr, const TCHAR * androi
 /*
 // Called for every object instance(?) during HTML5 build time
 // could be used to copy extra files
-BOOL WINAPI DLLExport PrepareHtml5Build(EDITDATA* edPtr, mv* mV, int count, int buildType, DWORD flags, LPCTSTR destHtml, LPCTSTR srcFolderPath, LPCTSTR resFolderPath, LPCTSTR htmlPath, LPCTSTR srcFolderName, LPCTSTR resFolderName, LPCTSTR appName, LPCTSTR batchPath, LPCTSTR tempPath, int width, int height) {
+BOOL FusionAPI PrepareHtml5Build(EDITDATA* edPtr, mv* mV, int count, int buildType, DWORD flags, LPCTSTR destHtml, LPCTSTR srcFolderPath, LPCTSTR resFolderPath, LPCTSTR htmlPath, LPCTSTR srcFolderName, LPCTSTR resFolderName, LPCTSTR appName, LPCTSTR batchPath, LPCTSTR tempPath, int width, int height) {
 #pragma DllExportHint
     if(count > 0) {
         return;

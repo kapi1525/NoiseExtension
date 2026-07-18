@@ -4508,7 +4508,7 @@ void DarkEdif::DLL::GeneratePropDataFromJSON()
 			if (propSet[itemNeeded].type != json_string)
 			{
 				MsgBox::Error(_T("Property set error"), _T("Missing property set item %s in property set name %s."),
-					UTF8ToTString(itemNeeded).c_str(), es.setName);
+					UTF8ToTString(itemNeeded).c_str(), es.setName.c_str());
 				return false;
 			}
 			const std::string_view itemName = propSet[itemNeeded];
@@ -4517,7 +4517,7 @@ void DarkEdif::DLL::GeneratePropDataFromJSON()
 			if (idxIt == props.u.array.end())
 			{
 				MsgBox::Error(_T("Property set error"), _T("Property set \"%s\" requests item name \"%s\", which was not found."),
-					UTF8ToTString(itemNeeded).c_str(), es.setName);
+					UTF8ToTString(itemNeeded).c_str(), es.setName.c_str());
 				return false;
 			}
 			writeTo = std::distance(props.u.array.begin(), idxIt);
