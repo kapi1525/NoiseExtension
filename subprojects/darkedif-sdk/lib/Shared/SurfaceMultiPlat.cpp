@@ -1082,7 +1082,7 @@ DarkEdif::Surface::Surface(RunHeader * rhPtr, cSurface* surf, bool isFrameSurfac
 	else
 		LOGI(_T("%sCreated surface, describing as: \"%s\".\n"), debugID, Describe().c_str());
 }
-extern "C" FusionAPIImport void* FusionAPI ModifSpriteEffect(void* ptrWin, Sprite * ptSpr, DWORD effect, LPARAM effectParam);
+extern "C" FusionAPIImport void* FusionAPI ModifSpriteEffect(void* ptrWin, CSprite * ptSpr, DWORD effect, LPARAM effectParam) EXDEF;
 #endif
 std::size_t DarkEdif::Surface::Internal_CreateMask(void* mask, const std::uint32_t flags)
 {
@@ -1722,7 +1722,7 @@ DarkEdif::Surface::Surface(RunHeader* const rhPtr, bool needBitmapFuncs, bool ne
 	format = PixelFormat::ABGR;
 	hasGeometryCapacity = needBitmapFuncs;
 	hasTextCapacity = needTextFuncs;
-#elif defined(__APPLE__) // apple
+#elif defined(__APPLE__)
 	//img = [CImage alloc];
 	//[img initWithWidth: (int)width andHeight : (int)height] ;
 
@@ -1862,7 +1862,7 @@ std::tstring DarkEdif::Surface::Describe() const {
 	result << _T("cSurface 0x"sv) << (void*)surf;
 #elif defined(__ANDROID__)
 	result << _T("Java BMP ref 0x"sv) << (void *)textSurface.ref;
-#elif defined(__APPLE__) // apple
+#elif defined(__APPLE__)
 	result << _T("CBitmap 0x"sv) << (void*)bmp; // << _T(", CImage 0x") << (void*)img;
 #elif defined(__wasi__)
 	// FIXME(wasm): stub

@@ -1,3 +1,5 @@
+// Suppress warnings for popping up for DE's own internal usage
+#define DARKEDIF_INTERNAL_INCLUDE
 #include "Common.hpp"
 #include "Edif.hpp"
 #include "DarkEdif.hpp"
@@ -9,6 +11,7 @@
 #include "MMF2Lib/CRunApp.h"
 #include "MMF2Lib/CRCom.h"
 #include "MMF2Lib/CRSpr.h"
+#include "MMF2Lib/CRunFrame.h"
 #endif
 
 struct EdifGlobal
@@ -99,7 +102,7 @@ std::vector<short> qualToOi::HalfVector(std::size_t first)
 		get_OiList(0);
 	for (std::size_t i = first; i < OiAndOiListLength; i += 2)
 		list.push_back(OiAndOiList[i]);
-#elif defined(__APPLE__) // apple
+#elif defined(__APPLE__)
 	const short* const qoiList = ((CQualToOiList*)this)->qoiList;
 	for (std::size_t i = first; qoiList[i] != -1; i += 2)
 		list.push_back(qoiList[i]);
@@ -115,6 +118,51 @@ std::vector<short> qualToOi::GetAllOiList() {
 }
 std::vector<short> qualToOi::GetAllOi() {
 	return HalfVector(0);
+}
+
+const TCHAR * CRunFrameMultiPlat::get_name()
+{
+#ifdef _WIN32
+	return name;
+#elif defined(__APPLE__)
+	return [((CRunFrame*)this)->frameName UTF8String];
+#elif defined(__ANDROID__)
+	if (frameName.empty())
+	{
+		const jfieldID fieldID = threadEnv->GetFieldID(meClass, "frameName", "Ljava/lang/String;");
+		JNIExceptionCheck();
+		JavaAndCString javaFrameName((jstring)threadEnv->GetObjectField(me, fieldID));
+		frameName = std::string(javaFrameName.str());
+	}
+	return frameName.c_str();
+#elif defined(__wasi__)
+	// FIXME: STUB
+#else
+#error Unexpected platform
+#endif
+}
+
+int CRunAppMultiPlat::get_nCurrentFrame()
+{
+#ifdef _WIN32
+	return nCurrentFrame;
+#elif defined(__APPLE__)
+	return ((CRunApp*)this)->currentFrame;
+#elif defined(__ANDROID__)
+	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
+	if (!nCurrentFrame.has_value())
+	{
+		static jfieldID fieldID = threadEnv->GetFieldID(meClass, "currentFrame", "I");
+		JNIExceptionCheck();
+		nCurrentFrame = threadEnv->GetIntField(me, fieldID);
+		JNIExceptionCheck();
+	}
+	return nCurrentFrame.value();
+#elif defined(__wasi__)
+	// FIXME: STUB
+#else
+#error Unexpected platform
+#endif
 }
 
 CRunAppMultiPlat* CRunAppMultiPlat::get_ParentApp() {
@@ -144,6 +192,7 @@ CRunAppMultiPlat* CRunAppMultiPlat::get_ParentApp() {
 #endif
 }
 
+// Gets current Fusion frame number (1+)
 std::size_t CRunAppMultiPlat::GetNumFusionFrames() {
 #ifdef _WIN32
 	return hdr.NbFrames;
@@ -161,11 +210,120 @@ std::size_t CRunAppMultiPlat::GetNumFusionFrames() {
 	return numTotalFrames;
 #elif defined(__wasi__)
 	// FIXME: STUB
-	return 0;
 #else
 	#error Unexpected platform
 #endif
 }
+
+// Gets frame pointer
+CRunFrameMultiPlat* CRunAppMultiPlat::get_Frame()
+{
+#ifdef _WIN32
+	return Frame;
+#elif defined(__APPLE__)
+	return (CRunFrameMultiPlat *)((CRunApp*)this)->frame;
+#elif defined(__ANDROID__)
+	if (!frame)
+	{
+		const jfieldID fieldID = threadEnv->GetFieldID(meClass, "frame", "LApplication/CRunFrame;");
+		JNIExceptionCheck();
+		const jobject javaCurrentFrame = threadEnv->GetObjectField(me, fieldID);
+		JNIExceptionCheck();
+		assert(javaCurrentFrame); // should never be null
+		frame = std::make_unique<CRunFrameMultiPlat>(javaCurrentFrame, runtime);
+	}
+	return frame.get();
+#elif defined(__wasi__)
+	// FIXME: STUB
+#else
+#error Unexpected platform
+#endif
+}
+
+// Gets application name
+const TCHAR * CRunAppMultiPlat::get_name()
+{
+#ifdef _WIN32
+	// TODO: Is this ANSI or Unicode?
+	return name;
+#elif defined(__APPLE__)
+	// NSString to C++ string
+	return [((CRunApp*)this)->appName UTF8String];
+#elif defined(__ANDROID__)
+	if (appName.empty())
+	{
+		const jfieldID fieldID = threadEnv->GetFieldID(meClass, "appName", "Ljava/lang/String;");
+		JNIExceptionCheck();
+		JavaAndCString javaAppName((jstring)threadEnv->GetObjectField(me, fieldID));
+		JNIExceptionCheck();
+		appName = std::tstring(javaAppName.str());
+	}
+	return appName.c_str();
+#elif defined(__wasi__)
+	// FIXME: STUB
+#else
+#error Unexpected platform
+#endif
+}
+
+// Gets application filepath
+const TCHAR * CRunAppMultiPlat::get_appFileName()
+{
+#ifdef _WIN32
+	// TODO: Is this ANSI or Unicode?
+	return appFileName;
+#elif defined(__ANDROID__) || defined(__APPLE__)
+	LOGV("Reading CRunAppMultiPlat::appFileName variable, not available in non-Windows\n");
+	return "<Not available in non-Windows>";
+#elif defined(__wasi__)
+	// FIXME: STUB
+#else
+#error Unexpected platform
+#endif
+}
+// Gets editor filepath
+const TCHAR * CRunAppMultiPlat::get_editorFileName()
+{
+#ifdef _WIN32
+	// TODO: Is this ANSI or Unicode?
+	return editorFileName;
+#elif defined(__APPLE__)
+	// NSString to C++ string
+	return [((CRunApp*)this)->appEditorPathname UTF8String];
+#elif defined(__ANDROID__)
+	// available in chunk CHUNK_APPEDITORFILENAME 0x222E, but high effort
+	LOGV("Reading CRunAppMultiPlat::editorFileName variable, not available in Android\n");
+	return "<Not available in Android>";
+#elif defined(__wasi__)
+	// FIXME: STUB
+#else
+#error Unexpected platform
+#endif
+}
+
+// Gets original MFA filepath
+const TCHAR * CRunAppMultiPlat::get_targetFileName()
+{
+#ifdef _WIN32
+	// TODO: Is this ANSI or Unicode?
+	return targetFileName;
+#elif defined(__APPLE__)
+	// NSString to C++ string
+	return [((CRunApp*)this)->appTargetPathname UTF8String];
+#elif defined(__ANDROID__)
+	// available in chunk CHUNK_APPTARGETFILENAME 0x222F, but high effort
+	LOGV("Reading CRunAppMultiPlat::targetFileName variable, not available in Android\n");
+	return "<Not available in Android>";
+#elif defined(__wasi__)
+	// FIXME: STUB
+#else
+#error Unexpected platform
+#endif
+}
+
+
+// Static definition
+int Edif::Runtime::actionLoopIncrement = 0;
 
 #if TEXT_OEFLAG_EXTENSION
 std::uint32_t Edif::Runtime::GetRunObjectTextColor() const
@@ -226,7 +384,6 @@ void Edif::Runtime::Rehandle()
 	CallRunTimeFunction2(hoPtr, RFUNCTION::REHANDLE, 0, 0);
 }
 
-//static int steadilyIncreasing = 0;
 void Edif::Runtime::GenerateEvent(int EventID)
 {
 	auto rhPtr = hoPtr->hoAdRunHeader;
@@ -239,8 +396,8 @@ void Edif::Runtime::GenerateEvent(int EventID)
 
 	// This action count won't be reset, so to allow multiple of the same event with different object selection,
 	// we change the count every time, and in an increasing manner.
-	//rhPtr->SetRH2ActionCount(oldActionCount + (++steadilyIncreasing));
-	//rhPtr->SetRH2ActionLoopCount(0);
+	rhPtr->SetRH2ActionCount(oldActionCount + (++actionLoopIncrement));
+	rhPtr->SetRH2ActionLoopCount(0);
 
 	// Saving tokens allows events to be run from inside expressions
 	// https://community.clickteam.com/forum/thread/108993-application-crashed-in-some-cases-when-calling-an-event-via-expression/?postID=769763#post769763
@@ -1342,7 +1499,6 @@ void Edif::Runtime::Rehandle()
 	// GenEdifFunction reHandle
 }
 
-static int steadilyIncreasing = 0;
 void Edif::Runtime::GenerateEvent(int EventID)
 {
 	const auto& rhPtr = this->ObjectSelection.pExtension->rhPtr;
@@ -1356,7 +1512,7 @@ void Edif::Runtime::GenerateEvent(int EventID)
 
 	// This action count won't be reset, so to allow multiple of the same event with different object selection,
 	// we change the count every time, and in an increasing manner.
-	rhPtr->SetRH2ActionCount(oldActionCount + (++steadilyIncreasing));
+	rhPtr->SetRH2ActionCount(oldActionCount + (++actionLoopIncrement));
 	rhPtr->SetRH2ActionLoopCount(0);
 
 	// In older Fusion builds, the expression token became invalidated and that was the only problem.
@@ -1594,7 +1750,7 @@ void Edif::Runtime::AttachJVMAccessForThisThread(const char* threadName, bool as
 
 	pthread_setname_np(pthread_self(), threadName);
 
-	JavaVMAttachArgs args = {0};
+	JavaVMAttachArgs args = {};
 	args.name = threadName;
 	args.group = NULL;
 	args.version = JNI_VERSION_1_6;
@@ -1906,7 +2062,7 @@ ProjectFunc void setRunObjectTextColor(JNIEnv*, jobject, jlong ext, int rgb) {
 
 
 // Edit this to monitor specific jobject/jclass references. End with null.
-const char * globalToMonitor[] = { NULL };
+const char * const globalToMonitor[] = { NULL };
 
 // Gets the RH2 event count, used in object selection
 int RunHeader::GetRH2EventCount()
@@ -3103,18 +3259,12 @@ AltVals::AltVals(RunObject * ro) : ro(ro)
 	}
 }
 
-int CRunAppMultiPlat::get_nCurrentFrame()
+CRunFrameMultiPlat::CRunFrameMultiPlat(jobject me, Edif::Runtime* runtime) :
+	me(me, "CRunFrame"), meClass(threadEnv->GetObjectClass(me), "CRunFrame class"), runtime(runtime)
 {
-	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
-	if (!nCurrentFrame.has_value())
-	{
-		static jfieldID fieldID = threadEnv->GetFieldID(meClass, "currentFrame", "I");
-		JNIExceptionCheck();
-		nCurrentFrame = threadEnv->GetIntField(me, fieldID);
-		JNIExceptionCheck();
-	}
-	return nCurrentFrame.value();
+
 }
+
 CRunAppMultiPlat::CRunAppMultiPlat(jobject me, Edif::Runtime* runtime) :
 	me(me, "CRunApp"), meClass(threadEnv->GetObjectClass(me), "CRunApp class"), runtime(runtime)
 {
@@ -3812,7 +3962,7 @@ EventGroupMP::EventGroupMP(jobject me, Edif::Runtime * runtime) :
 	}
 }
 
-#elif defined(__APPLE__) // iOS
+#elif defined(__APPLE__)
 #include "MMF2Lib/CRunExtension.h"
 #include "MMF2Lib/CRun.h"
 #include "MMF2Lib/CObject.h"
@@ -4396,6 +4546,10 @@ std::uint16_t EventGroupMP::get_evgIdentifier() const {
 std::uint16_t EventGroupMP::get_evgInhibit() const {
 	return *(std::uint16_t*)&((tagEVG*)this)->evgInhibit;
 }
+EventGroupFlags EventGroupMP::get_evgFlags() const {
+	return *(EventGroupFlags*)&((tagEVG*)this)->evgFlags;
+}
+
 
 event2* EventGroupMP::GetCAByIndex(size_t index)
 {
@@ -4404,7 +4558,7 @@ event2* EventGroupMP::GetCAByIndex(size_t index)
 		return nullptr;
 
 	event2* ret = (event2*)(&((event2*)this)[1]);
-	for (size_t i = 0; i < index && ret; i++) {
+	for (size_t i = 0; i < index && ret; ++i) {
 		ret = ret->Next();
 	}
 	return ret;
