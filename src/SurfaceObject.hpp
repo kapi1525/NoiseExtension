@@ -41,7 +41,7 @@ struct SURFACE {
     HeaderObject rHo;
     rCom rc;
     rMvt rm;
-    CSprite rs;
+    RunSprite rs;
     AltVals rv;
 
     void* rRd;
