@@ -33,7 +33,7 @@ jobs:
         run: git fetch --tags --force
 
       - name: Setup python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: 'pypy3.11'
 
@@ -75,7 +75,7 @@ jobs:
         run: git fetch --tags --force
 
       - name: Setup python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: 'pypy3.11'
 
@@ -118,7 +118,7 @@ jobs:
         run: git fetch --tags --force
 
       - name: Setup python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: 'pypy3.11'
 
