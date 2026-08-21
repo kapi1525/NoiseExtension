@@ -1,0 +1,1 @@
+defexportsgen = [find_program(files('defexportsgen.py'), required: false), '@OUTPUT@', '@INPUT@']

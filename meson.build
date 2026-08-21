@@ -8,7 +8,7 @@ project(
         'warning_level': '1',
         'prefix':        meson.project_source_root() / 'MFX',   # Install prefix
     },
-    meson_version: '>=1.4',
+    meson_version: '>=1.12',
 )
 
 fs = import('fs')
@@ -31,21 +31,38 @@ sdk = subproject('darkedif-sdk', default_options: {
 })
 
 source = []
+resource = []
 include = [include_directories('inc')]
+vs_defs = default()
 subdir('src')
 subdir('res')
 
+cpp = meson.get_compiler('cpp')
+# DllExportHint macro doesn't work with clang-cl, this extra steps finds all the functions that need to be exported.
+if cpp.get_id() == 'clang-cl'
+    vs_defs = custom_target(
+        command: sdk.get_variable('defexportsgen'),
+        # Preprocessing the source files stipts out all the unused functions
+        input: cpp.preprocess(
+            source,
+            dependencies: sdk.get_variable('darkedif_sdk_dep'),
+            include_directories: include
+        ),
+        output: 'ext.def'
+    )
+endif
 
 
 ext = build_target(
     meson.project_name(),
-    source,
+    source, resource,
     target_type: sdk.get_variable('sdk_ext_target_type'),
     dependencies: sdk.get_variable('darkedif_sdk_dep'),
     include_directories: include,
     name_suffix: sdk.get_variable('sdk_ext_name_suffix'),
     install: sdk.get_variable('sdk_can_simply_install'),
     install_dir: get_option('prefix') / sdk.get_variable('ext_install_path'),
+    vs_module_defs: vs_defs,
 )
 
 if host_machine.system() == 'wasi'

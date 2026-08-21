@@ -27,7 +27,7 @@ if sdk.get_variable('runtime_build')
     )
 endif
 
-source += custom_target('embed_json',
+resource += custom_target('embed_json',
     input: darkext_json,
     output: 'DarkExt.json.h',
     command: [sdk.get_variable('bin2hpp'), '@INPUT@', '@OUTPUT@', 'DarkExtJSON', 'DarkExtJSON_len'],
@@ -39,7 +39,7 @@ include += include_directories('.')
 
 # Windows resources
 if host_machine.system() == 'windows'
-    source += import('windows').compile_resources(
+    resource += import('windows').compile_resources(
         'Ext.rc',
         args: sdk.get_variable('sdk_rc_args'),
         depend_files: [
