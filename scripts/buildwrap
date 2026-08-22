@@ -1,0 +1,151 @@
+#!/usr/bin/env python3
+# meson can't build for multiple platforms at once, with a single command line
+# so this script wraps meson to allow that.
+# Written primarly for linux, but should work on windows.
+# You need to update the cross files with paths to compilers on your system for all platforms to work.
+#
+# Needs to be run from extension root directory!
+#
+# USAGE: scripts/buildwrap <command> <special flags> <extra meson flags>
+#
+# Avaiable commands:
+# setup     - runs meson setup for all targets
+# compile   - runs meson compile for all targets in a build directory
+# install   - runs meson install for all targets in a build directory
+#
+# Recognized command line flags:
+#   --release                               - --buildtype release, by default debug config is used, windows-runtime is skipped in debug.
+#   --skip-target=<name>                    - skips a specified target
+#   --target-cross-config=<target>:<cross>  - force the use of selected cross config - can be used to force clang-cl on windows
+#
+# extra unrecognized args will be passed to meson
+
+
+import subprocess
+import os
+import sys
+import platform
+
+
+
+command = None
+do_release_build = False
+targets_to_skip = []
+targets_forced_cross_config = {}
+extra_meson_args = []
+base_build_dir = 'build'
+
+for i in range(len(sys.argv)):
+    arg = sys.argv[i]
+    if i == 0:
+        # first argument is the script name
+        continue
+    if i == 1:
+        if arg == 'setup' or arg == 'compile' or arg == 'install':
+            command = arg
+        else:
+            print('Unknown command, expected "setup", "compile" or "install", but got: ' + arg)
+            exit(-1)
+    else:
+        if arg == '--release':
+            do_release_build = True
+        elif arg.startswith('--skip-target='):
+            targets_to_skip += arg.split('=')[1]
+        elif arg.startswith('--target-cross-config='):
+            arg = arg.split('=')[1].split(':')
+            targets_forced_cross_config[arg[0]] = arg[1]
+        else:
+            extra_meson_args += [arg]
+
+
+
+targets_config = {
+    'windows-editor': {
+        'cross': {
+            # Default cross file overrides per build platform
+            'Linux': 'clang-cl',
+            # Named cross file configs, can be forced.
+            'default': None,
+            'clang-cl': 'cross/windows-clang-cl.ini',
+        },
+        'args': ['-Deditor_build=true'],
+    },
+    'windows-runtime': {
+        'cross': {
+            'Linux': 'clang-cl',
+            'default': None,
+            'clang-cl': 'cross/windows-clang-cl.ini',
+        },
+        'skip-if-debug': True,
+    },
+    'android-aarch64': {
+        'cross': 'cross/android-aarch64.ini',
+    },
+    'android-armv7a': {
+        'cross': 'cross/android-armv7a.ini',
+    },
+    'android-x86_64': {
+        'cross': 'cross/android-x86_64.ini',
+    },
+    'android-i686': {
+        'cross': 'cross/android-i686.ini',
+    },
+    'wasm-wasi': {
+        'cross': 'cross/wasm-wasi.ini',
+    },
+}
+
+
+def runChecked(cmd) -> bool:
+    print('[cmd] ', str(cmd))
+    ret = subprocess.run(cmd)
+    if ret.returncode == 0:
+        return True
+    else:
+        print('cmd "', str(cmd), '" failed with exit code: ', ret.returncode)
+        return False
+
+
+
+if command == 'setup':
+    if do_release_build:
+        extra_meson_args += ['--buildtype', 'release']
+
+    for target_name in targets_config:
+        target = targets_config[target_name]
+
+        if target_name in targets_to_skip:
+            continue
+
+        if target.get('skip-if-debug', False) and not do_release_build:
+            continue
+
+        build_dir = os.path.abspath(os.path.join(base_build_dir, target_name))
+        cmd = ['meson', 'setup', build_dir]
+
+        if isinstance(target.get('cross', None), str):
+            cmd += ['--cross-file', target['cross']]
+        elif target.get('cross', None) is not None:
+            cross_config = targets_forced_cross_config.get(target_name, target['cross'].get(platform.system(), 'default'))
+
+            if target['cross'][cross_config] is not None:
+                cmd += ['--cross-file', target['cross'][cross_config]]
+
+        cmd += target.get('args', [])
+        cmd += extra_meson_args
+
+        if not runChecked(cmd):
+            exit(-1)
+
+
+
+elif command == 'compile' or command == 'install':
+    for target in os.listdir(base_build_dir):
+        build_dir = os.path.abspath(os.path.join(base_build_dir, target))
+        if not os.path.isdir(build_dir):
+            continue
+
+        cmd = ['meson', command, '-C', build_dir] + extra_meson_args
+
+        if not runChecked(cmd):
+            exit(-1)
