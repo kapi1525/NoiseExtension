@@ -46,6 +46,7 @@ if cpp.get_id() == 'clang-cl'
         input: cpp.preprocess(
             source,
             dependencies: sdk.get_variable('darkedif_sdk_dep'),
+            depends: resource,
             include_directories: include
         ),
         output: 'ext.def'

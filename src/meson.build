@@ -19,7 +19,7 @@ else
             'Extension.hpp',
         ),
         output: 'Temp_ACECallTable.hpp',
-        command: sdk.get_variable('acecalltablegen_cmd'),
+        command: sdk.get_variable('acecalltablegen'),
     )
 endif
 

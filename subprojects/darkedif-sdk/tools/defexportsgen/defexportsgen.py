@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 
+# defexportsgen <output .def> <input source files...>
+
 import sys
-import re
+
+
 
 out_def_filepath = ""
 
