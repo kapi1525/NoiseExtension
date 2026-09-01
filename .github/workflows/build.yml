@@ -127,7 +127,7 @@ jobs:
 
       - name: Download wasi-sdk
         id: wasi-sdk
-        uses: bytecodealliance/setup-wasi-sdk-action@b2de090b44eb70013ee96b393727d473b35e1728
+        uses: bytecodealliance/setup-wasi-sdk-action@77d09f3df1e8da344d8403cf8631af8977938b4c
         with:
           version: 33
           add-to-path: false
