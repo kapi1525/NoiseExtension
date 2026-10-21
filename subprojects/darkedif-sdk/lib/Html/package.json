@@ -7,9 +7,9 @@
     "dependencies": {
         "@bjorn3/browser_wasi_shim": "0.4.2",
         "cpy-cli": "7.0.0",
-        "esbuild": "0.28.0"
+        "esbuild": "0.28.2"
     },
     "devDependencies": {
-        "typescript": "6.0.3"
+        "typescript": "7.0.2"
     }
 }

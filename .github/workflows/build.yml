@@ -107,7 +107,7 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      BINARYEN_VERSION: version_129
+      BINARYEN_VERSION: version_133
 
     steps:
       - name: Checkout
@@ -127,9 +127,9 @@ jobs:
 
       - name: Download wasi-sdk
         id: wasi-sdk
-        uses: bytecodealliance/setup-wasi-sdk-action@b2de090b44eb70013ee96b393727d473b35e1728
+        uses: bytecodealliance/setup-wasi-sdk-action@v1
         with:
-          version: 33
+          version: 34
           add-to-path: false
 
       - name: Download wasm-opt
