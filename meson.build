@@ -89,7 +89,7 @@ if host_machine.system() == 'wasi'
 
     # javascript wrapper that loads the webassembly
     ext_js_out = meson.project_name() + '.js'
-    npx = [sdk.get_variable('npm'), 'exec', '--prefix', sdk.get_variable('npm_prefix'), '--']
+    npx = [sdk.get_variable('npm'), 'exec', '--']
 
     run_target(
         'ts validate',
